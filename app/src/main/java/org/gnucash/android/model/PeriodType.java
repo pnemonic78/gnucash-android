@@ -26,8 +26,49 @@ import java.util.Locale;
  * @see org.gnucash.android.model.ScheduledAction
 */
 public enum PeriodType {
-    DAY, WEEK, MONTH, YEAR; // TODO: 22.10.2015 add support for hourly
+    // TODO: 22.10.2015 add support for hourly
+    ONCE("once"),
+    DAY("day"),
+    WEEK("week"),
+    MONTH("month"),
+    END_OF_MONTH("end of month"),
+    NTH_WEEKDAY("nth weekday"),
+    LAST_WEEKDAY("last weekday"),
+    YEAR("year");
 
+    private final String value;
+
+    PeriodType(String value) {
+        this.value = value;
+    }
+
+    /**
+     * Get the value.
+     * @return the value.
+     */
+    public String getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return getValue();
+    }
+
+    /**
+     * Find the relevant period type.
+     * @param value the period value.
+     * @return the period type.
+     * @throws IllegalArgumentException if the period type is not found.
+     */
+    public static PeriodType find(String value) throws IllegalArgumentException {
+        for (PeriodType v : PeriodType.values()) {
+            if (v.getValue().equals(value)) {
+                return v;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
 
     /**
      * Returns the frequency description of this period type.
@@ -39,8 +80,11 @@ public enum PeriodType {
             case DAY:
                 return "DAILY";
             case WEEK:
+            case NTH_WEEKDAY:
+            case LAST_WEEKDAY:
                 return "WEEKLY";
             case MONTH:
+            case END_OF_MONTH:
                 return "MONTHLY";
             case YEAR:
                 return "YEARLY";

@@ -83,7 +83,7 @@ public class GncXmlHandler extends DefaultHandler {
     /**
      * Tag for logging
      */
-    private static final String LOG_TAG = "GnuCashAccountImporter";
+    private static final String LOG_TAG = "GncXmlHandler";
 
     /*
         ^             anchor for start of string
@@ -736,7 +736,7 @@ public class GncXmlHandler extends DefaultHandler {
                 break;
             case GncXmlHelper.TAG_RX_PERIOD_TYPE:
                 try {
-                    PeriodType periodType = PeriodType.valueOf(characterString.toUpperCase());
+                    PeriodType periodType = PeriodType.find(characterString.toLowerCase());
                     mRecurrence.setPeriodType(periodType);
                     mRecurrence.setMultiplier(mRecurrenceMultiplier);
                 } catch (IllegalArgumentException ex){ //the period type constant is not supported
