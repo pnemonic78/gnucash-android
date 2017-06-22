@@ -20,13 +20,11 @@ import android.support.annotation.NonNull;
 
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 
 import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -151,10 +149,13 @@ public class ScheduledAction extends BaseModel{
             return  -1;
 
         LocalDateTime startTime = LocalDateTime.fromDateFields(new Date(mStartDate));
-        int multiplier = mRecurrence.getPeriodType().getMultiplier();
+        int multiplier = mRecurrence.getMultiplier();
 
         int factor = (mExecutionCount-1) * multiplier;
         switch (mRecurrence.getPeriodType()){
+            case HOUR:
+                startTime = startTime.plusHours(factor);
+                break;
             case DAY:
                 startTime = startTime.plusDays(factor);
                 break;
@@ -214,14 +215,17 @@ public class ScheduledAction extends BaseModel{
             return mStartDate;
         }
 
-        int multiplier = mRecurrence.getPeriodType().getMultiplier();
+        int multiplier = mRecurrence.getMultiplier();
         LocalDateTime nextScheduledExecution = LocalDateTime.fromDateFields(new Date(startTime));
         switch (mRecurrence.getPeriodType()) {
+            case HOUR:
+                nextScheduledExecution = nextScheduledExecution.plusHours(multiplier);
+                break;
             case DAY:
                 nextScheduledExecution = nextScheduledExecution.plusDays(multiplier);
                 break;
             case WEEK:
-                nextScheduledExecution = nextScheduledExecution.plusWeeks(multiplier);
+                nextScheduledExecution = computeNextWeeklyExecutionStartingAt(nextScheduledExecution);
                 break;
             case MONTH:
                 nextScheduledExecution = nextScheduledExecution.plusMonths(multiplier);
@@ -231,6 +235,50 @@ public class ScheduledAction extends BaseModel{
                 break;
         }
         return nextScheduledExecution.toDate().getTime();
+    }
+
+    /**
+     * Computes the next time that this weekly scheduled action is supposed to be
+     * executed starting at startTime.
+     *
+     * If no weekdays have been set (GnuCash desktop allows it), it will return a
+     * date in the future to ensure ScheduledActionService doesn't execute it.
+     *
+     * @param startTime LocalDateTime to use as start to compute the next schedule.
+     *
+     * @return Next run time as a LocalDateTime. A date in the future, if no weekdays
+     *      were set in the Recurrence.
+     */
+    @NonNull
+    private LocalDateTime computeNextWeeklyExecutionStartingAt(LocalDateTime startTime) {
+        if (mRecurrence.getByDays().isEmpty())
+            return LocalDateTime.now().plusDays(1); // Just a date in the future
+
+        // Look into the week of startTime for another scheduled weekday
+        for (int weekDay : mRecurrence.getByDays() ) {
+            int jodaWeekDay = convertCalendarWeekdayToJoda(weekDay);
+            LocalDateTime candidateNextDueTime = startTime.withDayOfWeek(jodaWeekDay);
+            if (candidateNextDueTime.isAfter(startTime))
+                return candidateNextDueTime;
+        }
+
+        // Return the first scheduled weekday from the next due week
+        int firstScheduledWeekday = convertCalendarWeekdayToJoda(mRecurrence.getByDays().get(0));
+        return startTime.plusWeeks(mRecurrence.getMultiplier())
+                        .withDayOfWeek(firstScheduledWeekday);
+    }
+
+    /**
+     * Converts a java.util.Calendar weekday constant to the
+     * org.joda.time.DateTimeConstants equivalent.
+     *
+     * @param calendarWeekday weekday constant from java.util.Calendar
+     * @return weekday constant equivalent from org.joda.time.DateTimeConstants
+     */
+    private int convertCalendarWeekdayToJoda(int calendarWeekday) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_WEEK, calendarWeekday);
+        return LocalDateTime.fromCalendarFields(cal).getDayOfWeek();
     }
 
     /**
@@ -501,8 +549,8 @@ public class ScheduledAction extends BaseModel{
      * @see #setRecurrence(Recurrence)
      */
     public void setRecurrence(PeriodType periodType, int ordinal){
-        periodType.setMultiplier(ordinal);
         Recurrence recurrence = new Recurrence(periodType);
+        recurrence.setMultiplier(ordinal);
         setRecurrence(recurrence);
     }
 
@@ -539,7 +587,7 @@ public class ScheduledAction extends BaseModel{
     public static ScheduledAction parseScheduledAction(Transaction transaction, long period){
         ScheduledAction scheduledAction = new ScheduledAction(ActionType.TRANSACTION);
         scheduledAction.mActionUID = transaction.getUID();
-        Recurrence recurrence = new Recurrence(PeriodType.parse(period));
+        Recurrence recurrence = Recurrence.fromLegacyPeriod(period);
         scheduledAction.setRecurrence(recurrence);
         return scheduledAction;
     }

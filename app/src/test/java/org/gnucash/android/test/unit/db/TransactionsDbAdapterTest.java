@@ -119,7 +119,7 @@ public class TransactionsDbAdapterTest {
 		Transaction trn = mTransactionsDbAdapter.getRecord(transaction.getUID());
 		assertThat(trn.getSplits()).hasSize(2);
 
-		String imbalanceAccountUID = mAccountsDbAdapter.getImbalanceAccountUID(Currency.getInstance(Money.DEFAULT_CURRENCY_CODE));
+		String imbalanceAccountUID = mAccountsDbAdapter.getImbalanceAccountUID(Commodity.getInstance(Money.DEFAULT_CURRENCY_CODE));
 		assertThat(trn.getSplits()).extracting("mAccountUID").contains(imbalanceAccountUID);
 	}
 
@@ -142,7 +142,7 @@ public class TransactionsDbAdapterTest {
 
 		savedBalance = transaction.getBalance(bravoAccount.getUID());
 		assertThat(savedBalance.getNumerator()).isEqualTo(secondSplitAmount.negate().getNumerator());
-		assertThat(savedBalance.getCurrency()).isEqualTo(secondSplitAmount.getCurrency());
+		assertThat(savedBalance.getCommodity()).isEqualTo(secondSplitAmount.getCommodity());
 	}
 
 	@After

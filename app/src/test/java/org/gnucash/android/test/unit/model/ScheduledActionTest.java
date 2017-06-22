@@ -20,12 +20,17 @@ import org.gnucash.android.model.PeriodType;
 import org.gnucash.android.model.Recurrence;
 import org.gnucash.android.model.ScheduledAction;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.junit.Test;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+
 /**
  * Test scheduled actions
  */
@@ -98,9 +103,9 @@ public class ScheduledActionTest {
     public void testComputingNextScheduledExecution(){
         ScheduledAction scheduledAction = new ScheduledAction(ScheduledAction.ActionType.TRANSACTION);
         PeriodType periodType = PeriodType.MONTH;
-        periodType.setMultiplier(2);
 
         Recurrence recurrence = new Recurrence(periodType);
+        recurrence.setMultiplier(2);
         DateTime startDate = new DateTime(2015, 8, 15, 12, 0);
         recurrence.setPeriodStart(new Timestamp(startDate.getMillis()));
         scheduledAction.setRecurrence(recurrence);
@@ -116,8 +121,8 @@ public class ScheduledActionTest {
     public void testComputingTimeOfLastSchedule(){
         ScheduledAction scheduledAction = new ScheduledAction(ScheduledAction.ActionType.TRANSACTION);
         PeriodType periodType = PeriodType.WEEK;
-        periodType.setMultiplier(2);
         Recurrence recurrence = new Recurrence(periodType);
+        recurrence.setMultiplier(2);
         scheduledAction.setRecurrence(recurrence);
         DateTime startDate = new DateTime(2016, 6, 6, 9, 0);
         scheduledAction.setStartTime(startDate.getMillis());
@@ -128,6 +133,67 @@ public class ScheduledActionTest {
         DateTime expectedDate = new DateTime(2016, 7, 4, 9, 0);
         assertThat(scheduledAction.getTimeOfLastSchedule()).isEqualTo(expectedDate.getMillis());
 
+    }
+
+    /**
+     * Weekly actions scheduled to run on multiple weekdays should be due
+     * in each of them in the same week.
+     *
+     * For an action scheduled on Mondays and Thursdays, we test that, if
+     * the last run was on Monday, the next should be due on the Thursday
+     * of the same week instead of the following week.
+     */
+    @Test
+    public void multiWeekdayWeeklyActions_shouldBeDueOnEachWeekdaySet() {
+        ScheduledAction scheduledAction = new ScheduledAction(ScheduledAction.ActionType.BACKUP);
+        Recurrence recurrence = new Recurrence(PeriodType.WEEK);
+        recurrence.setByDays(Arrays.asList(Calendar.MONDAY, Calendar.THURSDAY));
+        scheduledAction.setRecurrence(recurrence);
+        scheduledAction.setStartTime(new DateTime(2016, 6, 6, 9, 0).getMillis());
+        scheduledAction.setLastRun(new DateTime(2017, 4, 17, 9, 0).getMillis()); // Monday
+
+        long expectedNextDueDate = new DateTime(2017, 4, 20, 9, 0).getMillis(); // Thursday
+        assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())
+                .isEqualTo(expectedNextDueDate);
+    }
+
+    /**
+     * Weekly actions scheduled with multiplier should skip intermediate
+     * weeks and be due in the specified weekday.
+     */
+    @Test
+    public void weeklyActionsWithMultiplier_shouldBeDueOnTheWeekdaySet() {
+        ScheduledAction scheduledAction = new ScheduledAction(ScheduledAction.ActionType.BACKUP);
+        Recurrence recurrence = new Recurrence(PeriodType.WEEK);
+        recurrence.setMultiplier(2);
+        recurrence.setByDays(Collections.singletonList(Calendar.WEDNESDAY));
+        scheduledAction.setRecurrence(recurrence);
+        scheduledAction.setStartTime(new DateTime(2016, 6, 6, 9, 0).getMillis());
+        scheduledAction.setLastRun(new DateTime(2017, 4, 12, 9, 0).getMillis()); // Wednesday
+
+        // Wednesday, 2 weeks after the last run
+        long expectedNextDueDate = new DateTime(2017, 4, 26, 9, 0).getMillis();
+        assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())
+                .isEqualTo(expectedNextDueDate);
+    }
+
+    /**
+     * Weekly actions should return a date in the future when no
+     * weekdays have been set in the recurrence.
+     *
+     * See ScheduledAction.computeNextTimeBasedScheduledExecutionTime()
+     */
+    @Test
+    public void weeklyActionsWithoutWeekdaySet_shouldReturnDateInTheFuture() {
+        ScheduledAction scheduledAction = new ScheduledAction(ScheduledAction.ActionType.BACKUP);
+        Recurrence recurrence = new Recurrence(PeriodType.WEEK);
+        recurrence.setByDays(Collections.<Integer>emptyList());
+        scheduledAction.setRecurrence(recurrence);
+        scheduledAction.setStartTime(new DateTime(2016, 6, 6, 9, 0).getMillis());
+        scheduledAction.setLastRun(new DateTime(2017, 4, 12, 9, 0).getMillis());
+
+        long now = LocalDateTime.now().toDate().getTime();
+        assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime()).isGreaterThan(now);
     }
 
     private long getTimeInMillis(int year, int month, int day) {

@@ -66,7 +66,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import butterknife.Bind;
+import butterknife.BindView;
 
 /**
  * Activity for displaying, creating and editing transactions
@@ -111,11 +111,11 @@ public class TransactionsActivity extends BaseDrawerActivity implements
      */
     private Cursor mAccountsCursor = null;
 
-    @Bind(R.id.pager)            ViewPager mViewPager;
-    @Bind(R.id.toolbar_spinner)  Spinner mToolbarSpinner;
-    @Bind(R.id.tab_layout)       TabLayout mTabLayout;
-    @Bind(R.id.transactions_sum) TextView mSumTextView;
-    @Bind(R.id.fab_create_transaction) FloatingActionButton mCreateFloatingButton;
+    @BindView(R.id.pager)            ViewPager mViewPager;
+    @BindView(R.id.toolbar_spinner)  Spinner mToolbarSpinner;
+    @BindView(R.id.tab_layout)       TabLayout mTabLayout;
+    @BindView(R.id.transactions_sum) TextView mSumTextView;
+    @BindView(R.id.fab_create_transaction) FloatingActionButton mCreateFloatingButton;
 
     private SparseArray<Refreshable> mFragmentPageReferenceMap = new SparseArray<>();
 
@@ -142,6 +142,10 @@ public class TransactionsActivity extends BaseDrawerActivity implements
                     mPagerAdapter.notifyDataSetChanged();
                     mTabLayout.addTab(mTabLayout.newTab().setText(R.string.section_header_transactions));
                 }
+            }
+            if (view != null) {
+                // Hide the favorite icon of the selected account to avoid clutter
+                ((TextView) view).setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
             }
             //refresh any fragments in the tab with the new account UID
             refresh();
@@ -256,12 +260,8 @@ public class TransactionsActivity extends BaseDrawerActivity implements
         if (mPagerAdapter != null)
             mPagerAdapter.notifyDataSetChanged();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            // make sure the account balance task is truely multi-thread
-            new AccountBalanceTask(mSumTextView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mAccountUID);
-        } else {
-            new AccountBalanceTask(mSumTextView).execute(mAccountUID);
-        }
+        new AccountBalanceTask(mSumTextView).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mAccountUID);
+
     }
 
     @Override

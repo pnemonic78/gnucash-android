@@ -48,9 +48,8 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Currency;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -59,26 +58,26 @@ import butterknife.ButterKnife;
  */
 public class TransferFundsDialogFragment extends DialogFragment {
 
-    @Bind(R.id.from_currency)           TextView mFromCurrencyLabel;
-    @Bind(R.id.to_currency)             TextView mToCurrencyLabel;
-    @Bind(R.id.target_currency)         TextView mConvertedAmountCurrencyLabel;
-    @Bind(R.id.amount_to_convert)       TextView mStartAmountLabel;
-    @Bind(R.id.input_exchange_rate)     EditText mExchangeRateInput;
-    @Bind(R.id.input_converted_amount)  EditText mConvertedAmountInput;
-    @Bind(R.id.btn_fetch_exchange_rate) Button mFetchExchangeRateButton;
-    @Bind(R.id.radio_exchange_rate)     RadioButton mExchangeRateRadioButton;
-    @Bind(R.id.radio_converted_amount)  RadioButton mConvertedAmountRadioButton;
-    @Bind(R.id.label_exchange_rate_example)
+    @BindView(R.id.from_currency)           TextView mFromCurrencyLabel;
+    @BindView(R.id.to_currency)             TextView mToCurrencyLabel;
+    @BindView(R.id.target_currency)         TextView mConvertedAmountCurrencyLabel;
+    @BindView(R.id.amount_to_convert)       TextView mStartAmountLabel;
+    @BindView(R.id.input_exchange_rate)     EditText mExchangeRateInput;
+    @BindView(R.id.input_converted_amount)  EditText mConvertedAmountInput;
+    @BindView(R.id.btn_fetch_exchange_rate) Button mFetchExchangeRateButton;
+    @BindView(R.id.radio_exchange_rate)     RadioButton mExchangeRateRadioButton;
+    @BindView(R.id.radio_converted_amount)  RadioButton mConvertedAmountRadioButton;
+    @BindView(R.id.label_exchange_rate_example)
     TextView mSampleExchangeRate;
-    @Bind(R.id.exchange_rate_text_input_layout)
+    @BindView(R.id.exchange_rate_text_input_layout)
     TextInputLayout mExchangeRateInputLayout;
-    @Bind(R.id.converted_amount_text_input_layout)
+    @BindView(R.id.converted_amount_text_input_layout)
     TextInputLayout mConvertedAmountInputLayout;
 
-    @Bind(R.id.btn_save) Button mSaveButton;
-    @Bind(R.id.btn_cancel) Button mCancelButton;
+    @BindView(R.id.btn_save) Button mSaveButton;
+    @BindView(R.id.btn_cancel) Button mCancelButton;
     Money mOriginAmount;
-    String mTargetCurrencyCode;
+    private Commodity mTargetCommodity;
 
     Money mConvertedAmount;
     OnTransferFundsListener mOnTransferFundsListener;
@@ -87,7 +86,7 @@ public class TransferFundsDialogFragment extends DialogFragment {
                                                           OnTransferFundsListener transferFundsListener){
         TransferFundsDialogFragment fragment = new TransferFundsDialogFragment();
         fragment.mOriginAmount = transactionAmount;
-        fragment.mTargetCurrencyCode = Currency.getInstance(targetCurrencyCode).getCurrencyCode();
+        fragment.mTargetCommodity = CommoditiesDbAdapter.getInstance().getCommodity(targetCurrencyCode);
         fragment.mOnTransferFundsListener = transferFundsListener;
         return fragment;
     }
@@ -99,20 +98,19 @@ public class TransferFundsDialogFragment extends DialogFragment {
         ButterKnife.bind(this, view);
 
         TransactionsActivity.displayBalance(mStartAmountLabel, mOriginAmount);
-        String fromCurrencyCode = mOriginAmount.getCurrency().getCurrencyCode();
+        String fromCurrencyCode = mOriginAmount.getCommodity().getCurrencyCode();
         mFromCurrencyLabel.setText(fromCurrencyCode);
-        mToCurrencyLabel.setText(mTargetCurrencyCode);
-        mConvertedAmountCurrencyLabel.setText(mTargetCurrencyCode);
+        mToCurrencyLabel.setText(mTargetCommodity.getCurrencyCode());
+        mConvertedAmountCurrencyLabel.setText(mTargetCommodity.getCurrencyCode());
 
         mSampleExchangeRate.setText(String.format(getString(R.string.sample_exchange_rate),
                                                   fromCurrencyCode,
-                                                  mTargetCurrencyCode));
+                                                  mTargetCommodity.getCurrencyCode()));
         final InputLayoutErrorClearer textChangeListener = new InputLayoutErrorClearer();
 
         CommoditiesDbAdapter commoditiesDbAdapter = CommoditiesDbAdapter.getInstance();
         String commodityUID = commoditiesDbAdapter.getCommodityUID(fromCurrencyCode);
-        Commodity currencyCommodity = commoditiesDbAdapter.getCommodity(mTargetCurrencyCode);
-        String currencyUID = currencyCommodity.getUID();
+        String currencyUID = mTargetCommodity.getUID();
         PricesDbAdapter pricesDbAdapter = PricesDbAdapter.getInstance();
         Pair<Long, Long> pricePair = pricesDbAdapter.getPrice(commodityUID, currencyUID);
 
@@ -127,7 +125,7 @@ public class TransferFundsDialogFragment extends DialogFragment {
             BigDecimal denominator = new BigDecimal(pricePair.second);
             // convertedAmount = mOriginAmount * numerator / denominator
             BigDecimal convertedAmount = mOriginAmount.asBigDecimal().multiply(numerator)
-                .divide(denominator, currencyCommodity.getSmallestFractionDigits(), BigDecimal.ROUND_HALF_EVEN);
+                .divide(denominator, mTargetCommodity.getSmallestFractionDigits(), BigDecimal.ROUND_HALF_EVEN);
             DecimalFormat formatter = (DecimalFormat) NumberFormat.getNumberInstance();
             mConvertedAmountInput.setText(formatter.format(convertedAmount));
         }
@@ -197,9 +195,8 @@ public class TransferFundsDialogFragment extends DialogFragment {
     private void transferFunds() {
         Price price = null;
 
-        CommoditiesDbAdapter commoditiesDbAdapter = CommoditiesDbAdapter.getInstance();
-        String originCommodityUID = commoditiesDbAdapter.getCommodityUID(mOriginAmount.getCurrency().getCurrencyCode());
-        String targetCommodityUID = commoditiesDbAdapter.getCommodityUID(mTargetCurrencyCode);
+        String originCommodityUID = mOriginAmount.getCommodity().getUID();
+        String targetCommodityUID = mTargetCommodity.getUID();
 
         if (mExchangeRateRadioButton.isChecked()) {
             BigDecimal rate;
@@ -211,8 +208,7 @@ public class TransferFundsDialogFragment extends DialogFragment {
             }
             price = new Price(originCommodityUID, targetCommodityUID, rate);
 
-            Commodity targetCommodity = Commodity.getInstance(mTargetCurrencyCode);
-            mConvertedAmount = mOriginAmount.multiply(rate).withCurrency(targetCommodity);
+            mConvertedAmount = mOriginAmount.multiply(rate).withCurrency(mTargetCommodity);
         }
 
         if (mConvertedAmountRadioButton.isChecked()) {
@@ -223,7 +219,7 @@ public class TransferFundsDialogFragment extends DialogFragment {
                 mConvertedAmountInputLayout.setError(getString(R.string.error_invalid_amount));
                 return;
             }
-            mConvertedAmount = new Money(amount, Commodity.getInstance(mTargetCurrencyCode));
+            mConvertedAmount = new Money(amount, mTargetCommodity);
 
             price = new Price(originCommodityUID, targetCommodityUID);
             // fractions cannot be exactly represented by BigDecimal.

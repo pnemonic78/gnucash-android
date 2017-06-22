@@ -74,7 +74,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -87,20 +87,20 @@ public class AccountFormFragment extends Fragment {
     /**
      * Tag for the color picker dialog fragment
      */
-    public static final String COLOR_PICKER_DIALOG_TAG = "color_picker_dialog";
+    private static final String COLOR_PICKER_DIALOG_TAG = "color_picker_dialog";
 
     /**
 	 * EditText for the name of the account to be created/edited
 	 */
-	@Bind(R.id.input_account_name) EditText mNameEditText;
+	@BindView(R.id.input_account_name) EditText mNameEditText;
 
-    @Bind(R.id.name_text_input_layout) TextInputLayout mTextInputLayout;
+    @BindView(R.id.name_text_input_layout) TextInputLayout mTextInputLayout;
 
 	/**
 	 * Spinner for selecting the currency of the account
 	 * Currencies listed are those specified by ISO 4217
 	 */
-	@Bind(R.id.input_currency_spinner) Spinner mCurrencySpinner;
+	@BindView(R.id.input_currency_spinner) Spinner mCurrencySpinner;
 	
 	/**
 	 * Accounts database adapter
@@ -154,39 +154,39 @@ public class AccountFormFragment extends Fragment {
     /**
      * Spinner for parent account list
      */
-	@Bind(R.id.input_parent_account) Spinner mParentAccountSpinner;
+	@BindView(R.id.input_parent_account) Spinner mParentAccountSpinner;
 
     /**
      * Checkbox which activates the parent account spinner when selected
      * Leaving this unchecked means it is a top-level root account
      */
-	@Bind(R.id.checkbox_parent_account) CheckBox mParentCheckBox;
+	@BindView(R.id.checkbox_parent_account) CheckBox mParentCheckBox;
 
     /**
      * Spinner for the account type
      * @see org.gnucash.android.model.AccountType
      */
-    @Bind(R.id.input_account_type_spinner) Spinner mAccountTypeSpinner;
+    @BindView(R.id.input_account_type_spinner) Spinner mAccountTypeSpinner;
 
     /**
      * Checkbox for activating the default transfer account spinner
      */
-    @Bind(R.id.checkbox_default_transfer_account) CheckBox mDefaultTransferAccountCheckBox;
+    @BindView(R.id.checkbox_default_transfer_account) CheckBox mDefaultTransferAccountCheckBox;
 
     /**
      * Spinner for selecting the default transfer account
      */
-    @Bind(R.id.input_default_transfer_account) Spinner mDefaulTransferAccountSpinner;
+    @BindView(R.id.input_default_transfer_account) Spinner mDefaultTransferAccountSpinner;
 
     /**
      * Account description input text view
      */
-    @Bind(R.id.input_account_description) EditText mDescriptionEditText;
+    @BindView(R.id.input_account_description) EditText mDescriptionEditText;
 
     /**
      * Checkbox indicating if account is a placeholder account
      */
-    @Bind(R.id.checkbox_placeholder_account) CheckBox mPlaceholderCheckBox;
+    @BindView(R.id.checkbox_placeholder_account) CheckBox mPlaceholderCheckBox;
 
     /**
      * Cursor adapter which binds to the spinner for default transfer account
@@ -203,15 +203,16 @@ public class AccountFormFragment extends Fragment {
     /**
      * Trigger for color picker dialog
      */
-    @Bind(R.id.input_color_picker) ColorSquare mColorSquare;
+    @BindView(R.id.input_color_picker) ColorSquare mColorSquare;
 
-    private ColorPickerSwatch.OnColorSelectedListener mColorSelectedListener = new ColorPickerSwatch.OnColorSelectedListener() {
-        @Override
-        public void onColorSelected(int color) {
-            mColorSquare.setBackgroundColor(color);
-            mSelectedColor = color;
-        }
-    };
+    private final ColorPickerSwatch.OnColorSelectedListener mColorSelectedListener =
+            new ColorPickerSwatch.OnColorSelectedListener() {
+                @Override
+                public void onColorSelected(int color) {
+                    mColorSquare.setBackgroundColor(color);
+                    mSelectedColor = color;
+                }
+            };
 
 
     /**
@@ -294,11 +295,11 @@ public class AccountFormFragment extends Fragment {
             }
         });
 
-        mDefaulTransferAccountSpinner.setEnabled(false);
+        mDefaultTransferAccountSpinner.setEnabled(false);
         mDefaultTransferAccountCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                mDefaulTransferAccountSpinner.setEnabled(isChecked);
+                mDefaultTransferAccountSpinner.setEnabled(isChecked);
             }
         });
 
@@ -408,6 +409,7 @@ public class AccountFormFragment extends Fragment {
         }
 
         mPlaceholderCheckBox.setChecked(account.isPlaceholderAccount());
+        mSelectedColor = account.getColor();
         mColorSquare.setBackgroundColor(account.getColor());
 
         setAccountTypeSelection(account.getAccountType());
@@ -495,13 +497,13 @@ public class AccountFormFragment extends Fragment {
     private void setDefaultTransferAccountSelection(long defaultTransferAccountId, boolean enableTransferAccount) {
         if (defaultTransferAccountId > 0) {
             mDefaultTransferAccountCheckBox.setChecked(enableTransferAccount);
-            mDefaulTransferAccountSpinner.setEnabled(enableTransferAccount);
+            mDefaultTransferAccountSpinner.setEnabled(enableTransferAccount);
         } else
             return;
 
         for (int pos = 0; pos < mDefaultTransferAccountCursorAdapter.getCount(); pos++) {
             if (mDefaultTransferAccountCursorAdapter.getItemId(pos) == defaultTransferAccountId) {
-                mDefaulTransferAccountSpinner.setSelection(pos);
+                mDefaultTransferAccountSpinner.setSelection(pos);
                 break;
             }
         }
@@ -520,6 +522,7 @@ public class AccountFormFragment extends Fragment {
              int color = colorTypedArray.getColor(i, getResources().getColor(R.color.title_green));
              colorOptions[i] = color;
         }
+        colorTypedArray.recycle();
         return colorOptions;
     }
     /**
@@ -573,13 +576,13 @@ public class AccountFormFragment extends Fragment {
         Cursor defaultTransferAccountCursor = mAccountsDbAdapter.fetchAccountsOrderedByFullName(condition,
                 new String[]{AccountType.ROOT.name()});
 
-        if (mDefaulTransferAccountSpinner.getCount() <= 0) {
+        if (mDefaultTransferAccountSpinner.getCount() <= 0) {
             setDefaultTransferAccountInputsVisible(false);
         }
 
         mDefaultTransferAccountCursorAdapter = new QualifiedAccountNameCursorAdapter(getActivity(),
                 defaultTransferAccountCursor);
-        mDefaulTransferAccountSpinner.setAdapter(mDefaultTransferAccountCursorAdapter);
+        mDefaultTransferAccountSpinner.setAdapter(mDefaultTransferAccountCursorAdapter);
     }
 
     /**
@@ -712,7 +715,7 @@ public class AccountFormFragment extends Fragment {
 	
 	@Override
 	public void onDestroy() {
-		super.onDestroyView();
+		super.onDestroy();
 		if (mParentAccountCursor != null)
 			mParentAccountCursor.close();
         if (mDefaultTransferAccountCursorAdapter != null) {
@@ -732,7 +735,7 @@ public class AccountFormFragment extends Fragment {
         boolean nameChanged = false;
 		if (mAccount == null){
 			String name = getEnteredName();
-			if (name == null || name.length() == 0){
+			if (name.length() == 0){
                 mTextInputLayout.setErrorEnabled(true);
                 mTextInputLayout.setError(getString(R.string.toast_no_account_name_entered));
 				return;				
@@ -770,8 +773,8 @@ public class AccountFormFragment extends Fragment {
         mAccount.setParentUID(newParentAccountUID);
 
         if (mDefaultTransferAccountCheckBox.isChecked()
-                && mDefaulTransferAccountSpinner.getSelectedItemId() != Spinner.INVALID_ROW_ID){
-            long id = mDefaulTransferAccountSpinner.getSelectedItemId();
+                && mDefaultTransferAccountSpinner.getSelectedItemId() != Spinner.INVALID_ROW_ID){
+            long id = mDefaultTransferAccountSpinner.getSelectedItemId();
             mAccount.setDefaultTransferAccountUID(mAccountsDbAdapter.getUID(id));
         } else {
             //explicitly set in case of removal of default account
@@ -841,7 +844,7 @@ public class AccountFormFragment extends Fragment {
 	 * Retrieves the name of the account which has been entered in the EditText
 	 * @return Name of the account which has been entered in the EditText
 	 */
-	public String getEnteredName(){
+    private String getEnteredName(){
 		return mNameEditText.getText().toString().trim();
 	}
 

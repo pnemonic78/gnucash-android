@@ -36,10 +36,9 @@ import android.view.View;
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
-import org.gnucash.android.model.Book;
 import org.gnucash.android.ui.passcode.PasscodeLockActivity;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -50,7 +49,7 @@ public class PreferenceActivity extends PasscodeLockActivity implements
 
     public static final String ACTION_MANAGE_BOOKS = "org.gnucash.android.intent.action.MANAGE_BOOKS";
 
-    @Bind(R.id.slidingpane_layout) SlidingPaneLayout mSlidingPaneLayout;
+    @BindView(R.id.slidingpane_layout) SlidingPaneLayout mSlidingPaneLayout;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -94,7 +93,6 @@ public class PreferenceActivity extends PasscodeLockActivity implements
         actionBar.setDisplayHomeAsUpEnabled(true);
     }
 
-    @TargetApi(Build.VERSION_CODES.KITKAT) //for one of the exceptions caught
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
         String key = pref.getKey();
@@ -129,13 +127,9 @@ public class PreferenceActivity extends PasscodeLockActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    android.app.FragmentManager fm = getFragmentManager();
-                    if (fm.getBackStackEntryCount() > 0) {
-                        fm.popBackStack();
-                    } else {
-                        finish();
-                    }
+                android.app.FragmentManager fm = getFragmentManager();
+                if (fm.getBackStackEntryCount() > 0) {
+                    fm.popBackStack();
                 } else {
                     finish();
                 }

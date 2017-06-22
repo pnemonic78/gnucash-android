@@ -35,7 +35,7 @@ import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
-import com.dropbox.sync.android.DbxAccountManager;
+import com.dropbox.core.android.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -51,6 +51,7 @@ import org.gnucash.android.export.Exporter;
 import org.gnucash.android.export.xml.GncXmlExporter;
 import org.gnucash.android.importer.ImportAsyncTask;
 import org.gnucash.android.ui.settings.dialog.OwnCloudDialogFragment;
+import org.gnucash.android.util.BookUtils;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -76,6 +77,11 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 	public static final int REQUEST_RESOLVE_CONNECTION = 0x12;
 
 	/**
+	 * Request code for the backup file where to save backups
+	 */
+	private static final int REQUEST_BACKUP_FILE = 0x13;
+
+	/**
 	 * Testing app key for DropBox API
 	 */
 	final static public String DROPBOX_APP_KEY      = "dhjh8ke9wf05948";
@@ -84,9 +90,12 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 	 * Testing app secret for DropBox API
 	 */
 	final static public String DROPBOX_APP_SECRET   = "h2t9fphj3nr4wkw";
+
+	/**
+	 * String for tagging log statements
+	 */
 	public static final String LOG_TAG = "BackupPrefFragment";
 
-	private DbxAccountManager mDbxAccountManager;
 	/**
 	 * Client for Google Drive Sync
 	 */
@@ -107,11 +116,6 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setTitle(R.string.title_backup_prefs);
 
-		String dropboxAppKey = getString(R.string.dropbox_app_key, DROPBOX_APP_KEY);
-		String dropboxAppSecret = getString(R.string.dropbox_app_secret, DROPBOX_APP_SECRET);
-		mDbxAccountManager = DbxAccountManager.getInstance(getActivity().getApplicationContext(),
-				dropboxAppKey, dropboxAppSecret);
-
 		mGoogleApiClient = getGoogleApiClient(getActivity());
 		
 	}	
@@ -119,11 +123,13 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 	@Override
 	public void onResume() {
 		super.onResume();
-		SharedPreferences manager = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+		//if we are returning from DropBox authentication, save the key which was generated
+
 		String keyDefaultEmail = getString(R.string.key_default_export_email);		
 		Preference pref = findPreference(keyDefaultEmail);
-		String defaultEmail = manager.getString(keyDefaultEmail, null);
+		String defaultEmail = sharedPrefs.getString(keyDefaultEmail, null);
 		if (defaultEmail != null && !defaultEmail.trim().isEmpty()){
 			pref.setSummary(defaultEmail);			
 		}
@@ -131,7 +137,7 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 
         String keyDefaultExportFormat = getString(R.string.key_default_export_format);
         pref = findPreference(keyDefaultExportFormat);
-        String defaultExportFormat = manager.getString(keyDefaultExportFormat, null);
+        String defaultExportFormat = sharedPrefs.getString(keyDefaultExportFormat, null);
         if (defaultExportFormat != null && !defaultExportFormat.trim().isEmpty()){
             pref.setSummary(defaultExportFormat);
         }
@@ -143,13 +149,16 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 		pref = findPreference(getString(R.string.key_create_backup));
 		pref.setOnPreferenceClickListener(this);
 
+		pref = findPreference(getString(R.string.key_backup_location));
+		pref.setOnPreferenceClickListener(this);
+		String defaultBackupLocation = BookUtils.getBookBackupFileUri(BooksDbAdapter.getInstance().getActiveBookUID());
+		if (defaultBackupLocation != null){
+			pref.setSummary(Uri.parse(defaultBackupLocation).getAuthority());
+		}
+
 		pref = findPreference(getString(R.string.key_dropbox_sync));
 		pref.setOnPreferenceClickListener(this);
 		toggleDropboxPreference(pref);
-
-		pref = findPreference(getString(R.string.key_google_drive_sync));
-		pref.setOnPreferenceClickListener(this);
-		toggleGoogleDrivePreference(pref);
 
 		pref = findPreference(getString(R.string.key_owncloud_sync));
 		pref.setOnPreferenceClickListener(this);
@@ -164,15 +173,18 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 			restoreBackup();
 		}
 
+		if (key.equals(getString(R.string.key_backup_location))){
+			Intent createIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+			createIntent.setType("application/zip");
+			createIntent.addCategory(Intent.CATEGORY_OPENABLE);
+			String bookName = BooksDbAdapter.getInstance().getActiveBookDisplayName();
+			createIntent.putExtra(Intent.EXTRA_TITLE, Exporter.sanitizeFilename(bookName)+ "_" + getString(R.string.label_backup_filename));
+			startActivityForResult(createIntent, REQUEST_BACKUP_FILE);
+		}
 
 		if (key.equals(getString(R.string.key_dropbox_sync))){
 			toggleDropboxSync();
 			toggleDropboxPreference(preference);
-		}
-
-		if (key.equals(getString(R.string.key_google_drive_sync))){
-			toggleGoogleDriveSync();
-			toggleGoogleDrivePreference(preference);
 		}
 
 		if (key.equals(getString(R.string.key_owncloud_sync))){
@@ -225,7 +237,9 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 	 * @param pref DropBox Sync preference
 	 */
 	public void toggleDropboxPreference(Preference pref) {
-		((CheckBoxPreference)pref).setChecked(mDbxAccountManager.hasLinkedAccount());
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		String accessToken = prefs.getString(getString(R.string.key_dropbox_access_token), null);
+		((CheckBoxPreference)pref).setChecked(accessToken != null);
 	}
 
 	/**
@@ -253,10 +267,12 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 	 * If a link exists, it is removed else DropBox authorization is started
 	 */
 	private void toggleDropboxSync() {
-		if (mDbxAccountManager.hasLinkedAccount()){
-			mDbxAccountManager.unlink();
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		String accessToken = prefs.getString(getString(R.string.key_dropbox_access_token), null);
+		if (accessToken == null){
+			Auth.startOAuth2Authentication(getActivity(), getString(R.string.dropbox_app_key));
 		} else {
-			mDbxAccountManager.startLink(getActivity(), REQUEST_LINK_TO_DBX);
+			prefs.edit().remove(getString(R.string.key_dropbox_access_token)).apply();
 		}
 	}
 
@@ -354,11 +370,34 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 	private void restoreBackup() {
 		Log.i("Settings", "Opening GnuCash XML backups for restore");
 		String bookUID = BooksDbAdapter.getInstance().getActiveBookUID();
+
+		final String defaultBackupFile = BookUtils.getBookBackupFileUri(bookUID);
+		if (defaultBackupFile != null){
+			android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity())
+					.setTitle(R.string.title_confirm_restore_backup)
+					.setMessage(R.string.msg_confirm_restore_backup_into_new_book)
+					.setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.dismiss();
+						}
+					})
+					.setPositiveButton(R.string.btn_restore, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i) {
+							new ImportAsyncTask(getActivity()).execute(Uri.parse(defaultBackupFile));
+						}
+					});
+			builder.create().show();
+			return; //stop here if the default backup file exists
+		}
+
+		//If no default location was set, look in the internal SD card location
 		File[] backupFiles = new File(Exporter.getBackupFolderPath(bookUID)).listFiles();
 		if (backupFiles == null || backupFiles.length == 0){
 			android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity())
-					.setTitle("No backups found")
-					.setMessage("There are no existing backup files to restore from")
+					.setTitle(R.string.title_no_backups_found)
+					.setMessage(R.string.msg_no_backups_to_restore_from)
 					.setNegativeButton(R.string.label_dismiss, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
@@ -422,6 +461,27 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 					if (pref == null) //if we are in a preference header fragment, this may return null
 						break;
 					toggleDropboxPreference(pref);
+				}
+				break;
+
+			case REQUEST_BACKUP_FILE:
+				if (resultCode == Activity.RESULT_OK){
+					Uri backupFileUri = null;
+					if (data != null){
+						backupFileUri = data.getData();
+					}
+
+					final int takeFlags = data.getFlags()
+							& (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+					getActivity().getContentResolver().takePersistableUriPermission(backupFileUri, takeFlags);
+
+					PreferenceActivity.getActiveBookSharedPreferences()
+							.edit()
+							.putString(BookUtils.KEY_BACKUP_FILE, backupFileUri.toString())
+							.apply();
+
+					Preference pref = findPreference(getString(R.string.key_backup_location));
+					pref.setSummary(backupFileUri.getAuthority());
 				}
 				break;
 		}

@@ -35,7 +35,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -45,13 +45,14 @@ import butterknife.ButterKnife;
  */
 public class DateRangePickerDialogFragment extends DialogFragment{
 
-    @Bind(R.id.calendar_view) CalendarPickerView mCalendarPickerView;
-    @Bind(R.id.btn_save)    Button mDoneButton;
-    @Bind(R.id.btn_cancel)  Button mCancelButton;
+    @BindView(R.id.calendar_view) CalendarPickerView mCalendarPickerView;
+    @BindView(R.id.btn_save)    Button mDoneButton;
+    @BindView(R.id.btn_cancel)  Button mCancelButton;
 
     private Date mStartRange = LocalDate.now().minusMonths(1).toDate();
     private Date mEndRange = LocalDate.now().toDate();
     private OnDateRangeSetListener mDateRangeSetListener;
+    private static final long ONE_DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
 
     public static DateRangePickerDialogFragment newInstance(OnDateRangeSetListener dateRangeSetListener){
         DateRangePickerDialogFragment fragment = new DateRangePickerDialogFragment();
@@ -89,7 +90,11 @@ public class DateRangePickerDialogFragment extends DialogFragment{
             public void onClick(View v) {
                 List<Date> selectedDates = mCalendarPickerView.getSelectedDates();
                 Date startDate = selectedDates.get(0);
-                Date endDate = selectedDates.size() == 2 ? selectedDates.get(1) : new Date();
+                // If only one day is selected (no interval) start and end should be the same (the selected one)
+                Date endDate = selectedDates.size() > 1 ? selectedDates.get(selectedDates.size() - 1) : new Date(startDate.getTime());
+                // CaledarPicker returns the start of the selected day but we want all transactions of that day to be included.
+                // Therefore we have to add 24 hours to the endDate.
+                endDate.setTime(endDate.getTime() + ONE_DAY_IN_MILLIS);
                 mDateRangeSetListener.onDateRangeSet(startDate, endDate);
                 dismiss();
             }

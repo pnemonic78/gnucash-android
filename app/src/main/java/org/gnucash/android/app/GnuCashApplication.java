@@ -27,12 +27,12 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.multidex.MultiDexApplication;
 import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
-import com.facebook.stetho.Stetho;
 import com.uservoice.uservoicesdk.Config;
 import com.uservoice.uservoicesdk.UserVoice;
 
@@ -53,7 +53,6 @@ import org.gnucash.android.db.adapter.TransactionsDbAdapter;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
 import org.gnucash.android.service.ScheduledActionService;
-import org.gnucash.android.ui.account.AccountsActivity;
 import org.gnucash.android.ui.settings.PreferenceActivity;
 
 import java.util.Currency;
@@ -66,7 +65,12 @@ import io.fabric.sdk.android.Fabric;
  * @author Ngewi Fet <ngewif@gmail.com>
  *
  */
-public class GnuCashApplication extends Application{
+public class GnuCashApplication extends MultiDexApplication {
+
+    /**
+     * Authority (domain) for the file provider. Also used in the app manifest
+     */
+    public static final String FILE_PROVIDER_AUTHORITY = BuildConfig.APPLICATION_ID + ".fileprovider";
 
     /**
      * Lifetime of passcode session
@@ -129,15 +133,14 @@ public class GnuCashApplication extends Application{
         initializeDatabaseAdapters();
         setDefaultCurrencyCode(getDefaultCurrencyCode());
 
-        if (BuildConfig.DEBUG && !isRoboUnitTest())
-            setUpRemoteDebuggingFromChrome();
+        StethoUtils.install(this);
     }
 
     /**
      * Initialize database adapter singletons for use in the application
      * This method should be called every time a new book is opened
      */
-    private static void initializeDatabaseAdapters() {
+    public static void initializeDatabaseAdapters() {
         if (mDbHelper != null){ //close if open
             mDbHelper.getReadableDatabase().close();
         }
@@ -205,24 +208,6 @@ public class GnuCashApplication extends Application{
     }
 
     /**
-     * Loads the book with GUID {@code bookUID} and opens the AccountsActivity
-     * @param bookUID GUID of the book to be loaded
-     */
-    public static void loadBook(@NonNull String bookUID){
-        activateBook(bookUID);
-        AccountsActivity.start(getAppContext());
-    }
-
-    /**
-     * Activates the book with unique identifer {@code bookUID}, and refreshes the database adapters
-     * @param bookUID GUID of the book to be activated
-     */
-    public static void activateBook(@NonNull String bookUID){
-        mBooksDbAdapter.setActive(bookUID);
-        initializeDatabaseAdapters();
-    }
-
-    /**
      * Returns the currently active database in the application
      * @return Currently active {@link SQLiteDatabase}
      */
@@ -244,14 +229,6 @@ public class GnuCashApplication extends Application{
      */
     public static boolean isCrashlyticsEnabled(){
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.key_enable_crashlytics), false);
-    }
-
-    /**
-     * Returns {@code true} if the app is being run by robolectric
-     * @return {@code true} if in unit testing, {@code false} otherwise
-     */
-    public static boolean isRoboUnitTest(){
-        return "robolectric".equals(Build.FINGERPRINT);
     }
 
     /**
@@ -360,7 +337,7 @@ public class GnuCashApplication extends Application{
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES,
-                AlarmManager.INTERVAL_HALF_DAY, pendingIntent);
+                AlarmManager.INTERVAL_HOUR, pendingIntent);
 
         context.startService(alarmIntent); //run the service the first time
     }
@@ -382,18 +359,4 @@ public class GnuCashApplication extends Application{
         UserVoice.init(config, this);
     }
 
-    /**
-     * Sets up Stetho to enable remote debugging from Chrome developer tools.
-     *
-     * <p>Among other things, allows access to the database and preferences.
-     * See http://facebook.github.io/stetho/#features</p>
-     */
-    private void setUpRemoteDebuggingFromChrome() {
-        Stetho.Initializer initializer =
-                Stetho.newInitializerBuilder(this)
-                        .enableWebKitInspector(
-                                Stetho.defaultInspectorModulesProvider(this))
-                        .build();
-        Stetho.initialize(initializer);
-    }
 }
