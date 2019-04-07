@@ -6,7 +6,7 @@ apply plugin: 'io.fabric'
 def versionMajor = 2
 def versionMinor = 4
 def versionPatch = 0
-def versionBuild = 1
+def versionBuild = 3
 
 static def buildTime() {
     def df = new SimpleDateFormat("yyyyMMdd HH:mm 'UTC'")
@@ -223,7 +223,7 @@ dependencies {
         exclude module: 'httpclient'
     }
 
-    implementation('com.crashlytics.sdk.android:crashlytics:2.6.7@aar') {
+    implementation('com.crashlytics.sdk.android:crashlytics:2.9.5@aar') {
         transitive = true;
     }
 
