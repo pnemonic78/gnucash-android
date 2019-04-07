@@ -1,5 +1,43 @@
 Change Log
 ===============================================================================
+Version 2.4.0 *(2018-06-15)*
+----------------------------
+* Feature #665: Adds CSV export format
+* Feature #544: Add extra checkbox confirmation for irreversible actions
+* Feature #767: Backup before destructive actions
+* Feature #465: Account balances now include future transactions
+* Fixed #764: Crash when importing XML files from Gnucash desktop v2.7 and up
+* Fixed #768: ScheduledActionService crashes on Android 8 (Oreo)
+* Fixed #731: Double display of Persian currency symbol
+* Fixed #771: QIF export crashes due to illegal denominator
+* Fixed #757: Backups are created every hour
+* Fixed #766: Backups are kept forever
+
+
+Version 2.3.0 *(2018-01-10)*
+----------------------------
+* Feature #544: Use double confirmation dialog boxes before irreversible actions
+* Fixed #723, #743: Split transactions saved with incorrect sign
+* Fixed #686: Google Drive XML export broken
+* Fixed #750: Double-minus sign in QIF export
+* Fixed #709: Upgrade Dropbox SDK
+* Fixed #651: NextCloud login not working
+* Fixed: Sometimes crash might occur because an active book is not set
+* Improved #696: QIF files are now always zipped regardless of the export destination
+* Improved: Remove .zip extension from backup files and XML exports
+* Improved: Split handling and saving
+
+Version 2.2.1 *(2017-08-31)*
+----------------------------
+* Fixed #343: Transaction notes are not exported in QIF exports
+* Fixed #649: Commas in the account name cause errors in report generation
+* Fixed #689: Long press on the transaction amount brings up QWERTY keyboard
+* Fixed #695: Long list of splits not fully visible in transaction detail view
+* Fixed #699: Transaction detail screen footer disappears after editing transaction
+* Fixed #701: Split memos disappear after transaction edit
+* Fixed: Imported weekly scheduled actions no having the days of the week set
+* Updated translations - new language Turkish
+
 Version 2.2.0 *(2017-05-05)*
 ----------------------------
 * Feature #646: Option to select backup file using Storage Access Framework

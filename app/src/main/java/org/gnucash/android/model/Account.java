@@ -269,7 +269,7 @@ public class Account extends BaseModel {
     public Money getBalance() {
         Money balance = Money.createZeroInstance(mCommodity.getCurrencyCode());
         for (Transaction transaction : mTransactionsList) {
-            balance.add(transaction.getBalance(getUID()));
+            balance = balance.add(transaction.getBalance(getUID()));
         }
         return balance;
     }
@@ -280,6 +280,14 @@ public class Account extends BaseModel {
      */
     public int getColor() {
         return mColor;
+    }
+
+    /**
+     * Returns the account color as an RGB hex string
+     * @return Hex color of the account
+     */
+    public String getColorHexString(){
+        return String.format("#%06X", (0xFFFFFF & mColor));
     }
 
     /**

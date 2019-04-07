@@ -17,11 +17,12 @@ package org.gnucash.android.test.unit.importer;
 
 import android.database.sqlite.SQLiteDatabase;
 
-import org.gnucash.android.BuildConfig;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.DatabaseHelper;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.db.adapter.RecurrenceDbAdapter;
+import org.gnucash.android.db.adapter.ScheduledActionDbAdapter;
 import org.gnucash.android.db.adapter.SplitsDbAdapter;
 import org.gnucash.android.db.adapter.TransactionsDbAdapter;
 import org.gnucash.android.export.xml.GncXmlHelper;
@@ -29,15 +30,16 @@ import org.gnucash.android.importer.GncXmlHandler;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.AccountType;
 import org.gnucash.android.model.Money;
+import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.model.Split;
 import org.gnucash.android.model.Transaction;
 import org.gnucash.android.model.TransactionType;
-import org.gnucash.android.test.unit.testutil.GnucashTestRunner;
 import org.gnucash.android.test.unit.testutil.ShadowCrashlytics;
 import org.gnucash.android.test.unit.testutil.ShadowUserVoice;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -47,6 +49,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -58,12 +62,13 @@ import static org.junit.Assert.fail;
 /**
  * Imports GnuCash XML files and checks the objects defined in them are imported correctly.
  */
-@RunWith(GnucashTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 21, packageName = "org.gnucash.android", shadows = {ShadowCrashlytics.class, ShadowUserVoice.class})
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 21, packageName = "org.gnucash.android", shadows = {ShadowCrashlytics.class, ShadowUserVoice.class})
 public class GncXmlHandlerTest {
     private BooksDbAdapter mBooksDbAdapter;
     private TransactionsDbAdapter mTransactionsDbAdapter;
     private AccountsDbAdapter mAccountsDbAdapter;
+    private ScheduledActionDbAdapter mScheduledActionDbAdapter;
 
     @Before
     public void setUp() throws Exception {
@@ -95,6 +100,8 @@ public class GncXmlHandlerTest {
         SQLiteDatabase mainDb = databaseHelper.getReadableDatabase();
         mTransactionsDbAdapter = new TransactionsDbAdapter(mainDb, new SplitsDbAdapter(mainDb));
         mAccountsDbAdapter = new AccountsDbAdapter(mainDb, mTransactionsDbAdapter);
+        RecurrenceDbAdapter recurrenceDbAdapter = new RecurrenceDbAdapter(mainDb);
+        mScheduledActionDbAdapter = new ScheduledActionDbAdapter(mainDb, recurrenceDbAdapter);
     }
 
     /**
@@ -332,6 +339,31 @@ public class GncXmlHandlerTest {
         // of from the slots
         //assertThat(split2.getQuantity()).isEqualTo(new Money("20", "USD"));
         assertThat(split2.isPairOf(split1)).isTrue();
+    }
+
+    /**
+     * Tests that importing a weekly scheduled action sets the days of the
+     * week of the recursion.
+     */
+    @Test
+    public void importingScheduledAction_shouldSetByDays() throws ParseException {
+        String bookUID = importGnuCashXml("importingScheduledAction_shouldSetByDays.xml");
+        setUpDbAdapters(bookUID);
+
+        ScheduledAction scheduledTransaction =
+                mScheduledActionDbAdapter.getRecord("b5a13acb5a9459ebed10d06b75bbad10");
+
+        // There are 3 byDays but, for now, getting one is enough to ensure it is executed
+        assertThat(scheduledTransaction.getRecurrence().getByDays().size()).isGreaterThanOrEqualTo(1);
+
+        // Until we implement parsing of days of the week for scheduled actions,
+        // we'll just use the day of the week of the start time.
+        int dayOfWeekFromByDays = scheduledTransaction.getRecurrence().getByDays().get(0);
+        Date startTime = new Date(scheduledTransaction.getStartTime());
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startTime);
+        int dayOfWeekFromStartTime = calendar.get(Calendar.DAY_OF_WEEK);
+        assertThat(dayOfWeekFromByDays).isEqualTo(dayOfWeekFromStartTime);
     }
 
     /**
