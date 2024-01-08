@@ -97,9 +97,7 @@ public class TransactionDetailActivity extends PasscodeLockActivity {
         int themeColor = AccountsDbAdapter.getActiveAccountColorResource(mAccountUID);
         actionBar.setBackgroundDrawable(new ColorDrawable(themeColor));
         mToolBar.setBackgroundColor(themeColor);
-        if (Build.VERSION.SDK_INT > 20)
-            getWindow().setStatusBarColor(GnuCashApplication.darken(themeColor));
-
+        getWindow().setStatusBarColor(GnuCashApplication.darken(themeColor));
     }
 
     class SplitAmountViewHolder {

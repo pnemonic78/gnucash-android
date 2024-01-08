@@ -240,8 +240,7 @@ public class ReportsActivity extends BaseDrawerActivity implements AdapterView.O
         if (getSupportActionBar() != null)
             getSupportActionBar().setBackgroundDrawable(new ColorDrawable(resolvedColor));
 
-        if (Build.VERSION.SDK_INT > 20)
-            getWindow().setStatusBarColor(GnuCashApplication.darken(resolvedColor));
+        getWindow().setStatusBarColor(GnuCashApplication.darken(resolvedColor));
     }
 
     /**
