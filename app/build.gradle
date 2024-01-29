@@ -25,7 +25,7 @@ android {
     compileSdk 33
     defaultConfig {
         applicationId "org.gnucash.pnemonic"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 33
         versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -34,7 +34,6 @@ android {
         buildConfigField "boolean", "CAN_REQUEST_RATING", "false"
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
 
-        multiDexEnabled true
         testInstrumentationRunner "org.gnucash.android.test.ui.util.GnucashAndroidTestRunner"
 
     }
@@ -183,7 +182,6 @@ dependencies {
 
     implementation 'net.objecthunter:exp4j:0.4.7'
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
-    implementation 'androidx.multidex:multidex:2.0.1'
 
     implementation 'com.google.android.gms:play-services-drive:17.0.0'
 
@@ -216,7 +214,6 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.9'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.assertj:assertj-core:3.22.0'
-    testImplementation 'org.robolectric:shadows-multidex:3.0'
 }
 
 def androidEspressoVersion = "3.5.1"
