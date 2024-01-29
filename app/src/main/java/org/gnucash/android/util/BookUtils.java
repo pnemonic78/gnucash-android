@@ -1,5 +1,7 @@
 package org.gnucash.android.util;
 
+import static org.gnucash.android.app.GnuCashApplication.getAppContext;
+
 import androidx.annotation.NonNull;
 
 import org.gnucash.android.app.GnuCashApplication;
@@ -18,7 +20,7 @@ public class BookUtils {
      */
     public static void activateBook(@NonNull String bookUID) {
         GnuCashApplication.getBooksDbAdapter().setActive(bookUID);
-        GnuCashApplication.initializeDatabaseAdapters();
+        GnuCashApplication.initializeDatabaseAdapters(getAppContext());
     }
 
     /**
@@ -28,6 +30,6 @@ public class BookUtils {
      */
     public static void loadBook(@NonNull String bookUID) {
         activateBook(bookUID);
-        AccountsActivity.start(GnuCashApplication.getAppContext());
+        AccountsActivity.start(getAppContext());
     }
 }
