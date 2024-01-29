@@ -24,7 +24,7 @@ static def gitSha() {
 android {
     compileSdk 33
     defaultConfig {
-        applicationId "org.gnucash.pnemonic"
+        applicationId "org.gnucash.pocket.pnemonic"
         minSdkVersion 21
         targetSdkVersion 33
         versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
