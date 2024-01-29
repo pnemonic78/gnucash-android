@@ -24,8 +24,7 @@ static def gitSha() {
 android {
     compileSdk 33
     defaultConfig {
-        applicationId "org.gnucash.android"
-        testApplicationId 'org.gnucash.android.test'
+        applicationId "org.gnucash.pnemonic"
         minSdkVersion 19
         targetSdkVersion 33
         versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
@@ -94,8 +93,8 @@ android {
 
     productFlavors {
         development {
-            applicationId 'org.gnucash.android.devel'
-            testApplicationId 'org.gnucash.android.devel.test'
+            applicationIdSuffix '.devel'
+//            testApplicationId 'org.gnucash.android.devel.test'
             resValue "string", "app_name", "GnuCash-devel"
             versionName "${versionMajor}.${versionMinor}.${versionPatch}-dev${versionBuild}_r${gitSha()}"
             resValue "string", "app_version_name", "${versionName}"
