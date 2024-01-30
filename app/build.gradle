@@ -46,7 +46,7 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
-            outputFileName = "GnucashAndroid_v${variant.versionName}.apk"
+            outputFileName = "gnucash-pocket-${variant.versionName}.apk"
         }
     }
 
@@ -92,9 +92,9 @@ android {
 
     productFlavors {
         development {
+            isDefault = true
             applicationIdSuffix '.devel'
-//            testApplicationId 'org.gnucash.android.devel.test'
-            resValue "string", "app_name", "GnuCash-devel"
+            resValue "string", "app_name", "GnuCash-dev"
             versionName "${versionMajor}.${versionMinor}.${versionPatch}-dev${versionBuild}_r${gitSha()}"
             resValue "string", "app_version_name", "${versionName}"
 
@@ -104,7 +104,7 @@ android {
         }
 
         beta {
-            resValue "string", "app_name", "GnuCash - beta"
+            resValue "string", "app_name", "GnuCash-beta"
             versionName "${versionMajor}.${versionMinor}.${versionPatch}-beta${versionBuild}"
             resValue "string", "app_version_name", "${versionName}"
 
@@ -135,6 +135,13 @@ android {
         }
     }
 
+    bundle {
+        language {
+            // This is disabled so that the App Bundle does NOT split the APK for each language.
+            // We're gonna use the same APK for all languages.
+            enableSplit false
+        }
+    }
 
     compileOptions { //we want switch with strings during xml parsing
         encoding "UTF-8"
