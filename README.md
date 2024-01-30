@@ -10,7 +10,7 @@ Accounts            |  Transactions          |  Reports
 :-------------------------:|:-------------------------:|:-------------------------:
 ![Accounts List](docs/images/v2.0.0_home.png)  |  ![Transactions List](docs/images/v2.0.0_transactions_list.png) |  ![Reports](docs/images/v2.0.0_reports.png)
 
-The application supports Android 4.4 KitKat (API level 19) and above.
+The application supports Android 5.0 Lollipop (API level 21) and above.
 
 Features include:
 
@@ -29,7 +29,7 @@ Features include:
 
   * **Scheduled Transactions**: GnuCash has the ability to automatically create and enter transactions.
 
-  * **Export to GnuCash XML**, QIF or OFX. Also, scheduled exports to 3rd-party sync services like DropBox and Google Drive
+  * **Export to GnuCash XML**, QIF, CSV or OFX. Also, scheduled exports to 3rd-party sync services like DropBox and Google Drive
 
   * **Reports**: View summary of transactions (income and expenses) as pie/bar/line charts
 
@@ -42,19 +42,15 @@ the app store, from github or building it yourself.
 
 ### App Store
 
-<a href="http://play.google.com/store/apps/details?id=org.gnucash.android">
-  <img alt="Android app on Google Play" src="http://developer.android.com/images/brand/en_generic_rgb_wo_60.png" />
+<a href="https://play.google.com/store/apps/details?id=org.gnucash.pocket.pnemonic">
+  <img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_generic_rgb_wo_60.png" />
 </a>
-
-### From GitHub
-
-Download the .apk from https://github.com/codinguser/gnucash-android/releases
 
 ## Building
 
 ### With Gradle
 
-This project requires the [Android SDK](http://developer.android.com/sdk/index.html)
+This project requires the [Android SDK](https://developer.android.com/sdk/index.html)
 to be installed in your development environment. In addition you'll need to set
 the `ANDROID_HOME` environment variable to the location of your SDK. For example:
 
@@ -68,8 +64,8 @@ It will build the project for you and install it to the connected Android device
 The app is configured to allow you to install a development and production version in parallel on your device.
 
 ### With Android Studio
-The easiest way to build is to install [Android Studio](https://developer.android.com/sdk/index.html) v2.+
-with [Gradle](https://www.gradle.org/) v3.4.1
+The easiest way to build is to install [Android Studio](https://developer.android.com/sdk/index.html)
+with [Gradle](https://www.gradle.org/)
 Once installed, then you can import the project into Android Studio:
 
 1. Open `File`
@@ -78,10 +74,6 @@ Once installed, then you can import the project into Android Studio:
 4. Click `OK`
 
 Then, Gradle will do everything for you.
-
-## Support
-
-Google+ Community: https://plus.google.com/communities/104728406764752407046
 
 ## Contributing
 
@@ -103,7 +95,7 @@ GnuCash Android is free software; you can redistribute it and/or
 modify it under the terms of the Apache license, version 2.0.
 You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+       https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

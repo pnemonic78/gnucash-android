@@ -19,7 +19,7 @@ You can also import an existing account hierarchy from GnuCash desktop.
 
 <b>&bull; Scheduled Transactions</b>: GnuCash has the ability to automatically create and enter transactions.
 
-<b>&bull; Export to GnuCash XML, QIF or OFX</b>: GnuCash can export your accounts/transactions in different formats for use in other programs. Also, scheduled exports to 3rd-party sync services like DropBox and Google Drive can be enabled.
+<b>&bull; Export to GnuCash XML, QIF, CSV, or OFX</b>: GnuCash can export your accounts/transactions in different formats for use in other programs. Also, scheduled exports to 3rd-party sync services like DropBox and Google Drive can be enabled.
 
 <b>&bull; Reports</b>: View summary of transactions (income and expenses) as pie/bar/line charts
 
