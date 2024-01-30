@@ -3,7 +3,7 @@
 
 # Introduction
 
-GnuCash Android is a companion expense-tracker application for GnuCash (desktop) designed for Android.
+GnuCash Pocket is a companion expense-tracker application for GnuCash (desktop) designed for Android.
 It allows you to record transactions on-the-go and later import the data into GnuCash for the desktop.
 
 Accounts            |  Transactions          |  Reports
@@ -91,7 +91,7 @@ For development, it is recommended to use the Android Studio for development whi
 Import the project into the IDE using the build.gradle file. The IDE will resolve dependencies automatically.
 
 # License
-GnuCash Android is free software; you can redistribute it and/or
+GnuCash Pocket is free software; you can redistribute it and/or
 modify it under the terms of the Apache license, version 2.0.
 You may obtain a copy of the License at
 
