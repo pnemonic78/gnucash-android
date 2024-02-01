@@ -120,7 +120,7 @@ public class GnuCashApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Context context = getApplicationContext();
+        final Context context = getApplicationContext();
         GnuCashApplication.context = context;
 
         FirebaseApp.initializeApp(context);
@@ -154,12 +154,10 @@ public class GnuCashApplication extends Application {
         }
 
         try {
-            mDbHelper = new DatabaseHelper(context,
-                    mBooksDbAdapter.getActiveBookUID());
+            mDbHelper = new DatabaseHelper(context, mBooksDbAdapter.getActiveBookUID());
         } catch (BooksDbAdapter.NoActiveBookFoundException e) {
             mBooksDbAdapter.fixBooksDatabase();
-            mDbHelper = new DatabaseHelper(context,
-                    mBooksDbAdapter.getActiveBookUID());
+            mDbHelper = new DatabaseHelper(context, mBooksDbAdapter.getActiveBookUID());
         }
         SQLiteDatabase mainDb;
         try {
