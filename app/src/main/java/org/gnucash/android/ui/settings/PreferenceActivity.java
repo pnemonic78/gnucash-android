@@ -19,22 +19,26 @@ package org.gnucash.android.ui.settings;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.MenuItem;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.os.BuildCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
+
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
-import org.gnucash.android.ui.account.AccountsActivity;
 import org.gnucash.android.ui.passcode.PasscodeLockActivity;
 
 import butterknife.ButterKnife;
@@ -56,9 +60,9 @@ public class PreferenceActivity extends PasscodeLockActivity implements
 
         String action = getIntent().getAction();
         if (action != null && action.equals(ACTION_MANAGE_BOOKS)) {
-            loadFragment(new BookManagerFragment());
+            loadFragment(new BookManagerFragment(), false);
         } else {
-            loadFragment(new PreferenceHeadersFragment());
+            loadFragment(new PreferenceHeadersFragment(), false);
         }
 
         ActionBar actionBar = getSupportActionBar();
@@ -78,17 +82,18 @@ public class PreferenceActivity extends PasscodeLockActivity implements
     }
 
     @Override
-    public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        Fragment fragment = null;
+    public boolean onPreferenceStartFragment(@NonNull PreferenceFragmentCompat caller, @NonNull Preference pref) {
+        String fragmentClassName = pref.getFragment();
+        if (TextUtils.isEmpty(fragmentClassName)) return false;
         try {
-            Class<?> clazz = Class.forName(pref.getFragment());
-            fragment = (Fragment) clazz.newInstance();
+            Class<?> clazz = Class.forName(fragmentClassName);
+            Fragment fragment = (Fragment) clazz.newInstance();
+            loadFragment(fragment, true);
+            return true;
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+            FirebaseCrashlytics.getInstance().recordException(e);
             //if we do not have a matching class, do nothing
-            return false;
         }
-        loadFragment(fragment);
         return false;
     }
 
@@ -97,12 +102,12 @@ public class PreferenceActivity extends PasscodeLockActivity implements
      *
      * @param fragment BaseReportFragment instance
      */
-    private void loadFragment(Fragment fragment) {
+    private void loadFragment(Fragment fragment, boolean stack) {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack(null)
-                .commit();
+        FragmentTransaction tx = fragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment);
+        if (stack) tx.addToBackStack(null);
+        tx.commit();
     }
 
     @Override
@@ -123,11 +128,6 @@ public class PreferenceActivity extends PasscodeLockActivity implements
     }
 
     private void handleBackPressed() {
-        String action = getIntent().getAction();
-        if (action != null && action.equals(ACTION_MANAGE_BOOKS)) {
-            AccountsActivity.start(this);
-            finish();
-        }
         FragmentManager fm = getSupportFragmentManager();
         if (fm.getBackStackEntryCount() > 0) {
             fm.popBackStack();

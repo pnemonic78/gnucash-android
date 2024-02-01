@@ -253,11 +253,7 @@ public abstract class BaseDrawerActivity extends PasscodeLockActivity {
             break;
 
             case R.id.nav_item_favorites: { //favorite accounts
-                Intent intent = new Intent(this, AccountsActivity.class);
-                intent.putExtra(AccountsActivity.EXTRA_TAB_INDEX,
-                        AccountsActivity.INDEX_FAVORITE_ACCOUNTS_FRAGMENT);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
+                AccountsActivity.start(this, AccountsActivity.INDEX_FAVORITE_ACCOUNTS_FRAGMENT);
             }
             break;
 
@@ -356,13 +352,13 @@ public abstract class BaseDrawerActivity extends PasscodeLockActivity {
                     intent.setAction(PreferenceActivity.ACTION_MANAGE_BOOKS);
                     startActivity(intent);
                     mDrawerLayout.closeDrawer(mNavigationView);
-                    finish();
                     return true;
                 }
                 String bookUID = bookUIDs[id];
                 if (!bookUID.equals(booksDbAdapter.getActiveBookUID())) {
                     BookUtils.loadBook(context, bookUID);
                     finish();
+                    return true;
                 }
                 AccountsActivity.start(context);
                 return true;
