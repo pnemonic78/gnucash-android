@@ -21,8 +21,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
+import androidx.core.os.BuildCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
@@ -32,6 +34,7 @@ import androidx.preference.PreferenceManager;
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.ui.account.AccountsActivity;
 import org.gnucash.android.ui.passcode.PasscodeLockActivity;
 
 import butterknife.ButterKnife;
@@ -63,11 +66,19 @@ public class PreferenceActivity extends PasscodeLockActivity implements
         actionBar.setTitle(R.string.title_settings);
         actionBar.setHomeButtonEnabled(true);
         actionBar.setDisplayHomeAsUpEnabled(true);
+
+        if (BuildCompat.isAtLeastT()) {
+            getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    handleBackPressed();
+                }
+            });
+        }
     }
 
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        String key = pref.getKey();
         Fragment fragment = null;
         try {
             Class<?> clazz = Class.forName(pref.getFragment());
@@ -98,16 +109,30 @@ public class PreferenceActivity extends PasscodeLockActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                android.app.FragmentManager fm = getFragmentManager();
-                if (fm.getBackStackEntryCount() > 0) {
-                    fm.popBackStack();
-                } else {
-                    finish();
-                }
+                handleBackPressed();
                 return true;
 
             default:
                 return false;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleBackPressed();
+    }
+
+    private void handleBackPressed() {
+        String action = getIntent().getAction();
+        if (action != null && action.equals(ACTION_MANAGE_BOOKS)) {
+            AccountsActivity.start(this);
+            finish();
+        }
+        FragmentManager fm = getSupportFragmentManager();
+        if (fm.getBackStackEntryCount() > 0) {
+            fm.popBackStack();
+        } else {
+            finish();
         }
     }
 
