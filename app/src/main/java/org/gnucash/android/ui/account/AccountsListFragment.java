@@ -27,7 +27,6 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -71,6 +70,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import timber.log.Timber;
 
 /**
  * Fragment for displaying the list of accounts in the database
@@ -102,11 +102,6 @@ public class AccountsListFragment extends Fragment implements
      * Default value is {@link DisplayMode#TOP_LEVEL}
      */
     private DisplayMode mDisplayMode = DisplayMode.TOP_LEVEL;
-
-    /**
-     * Logging tag
-     */
-    protected static final String TAG = "AccountsListFragment";
 
     /**
      * Tag to save {@link AccountsListFragment#mDisplayMode} to fragment state
@@ -342,7 +337,7 @@ public class AccountsListFragment extends Fragment implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.d(TAG, "Creating the accounts loader");
+        Timber.d("Creating the accounts loader");
         Bundle arguments = getArguments();
         String accountUID = arguments == null ? null : arguments.getString(UxArgument.PARENT_ACCOUNT_UID);
 
@@ -355,14 +350,14 @@ public class AccountsListFragment extends Fragment implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> loaderCursor, Cursor cursor) {
-        Log.d(TAG, "Accounts loader finished. Swapping in cursor");
+        Timber.d("Accounts loader finished. Swapping in cursor");
         mAccountRecyclerAdapter.swapCursor(cursor);
         mAccountRecyclerAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> arg0) {
-        Log.d(TAG, "Resetting the accounts loader");
+        Timber.d("Resetting the accounts loader");
         mAccountRecyclerAdapter.swapCursor(null);
     }
 
