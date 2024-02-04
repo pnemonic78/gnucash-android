@@ -22,11 +22,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.SystemClock;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
-
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
@@ -49,12 +46,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
+import timber.log.Timber;
+
 
 /**
  * Deals with all backup-related tasks.
  */
 public class BackupManager {
-    private static final String LOG_TAG = "BackupManager";
+
     public static final String KEY_BACKUP_FILE = "book_backup_file_key";
 
     /**
@@ -81,9 +80,7 @@ public class BackupManager {
                 new GncXmlExporter(params).generateExport(writer);
                 writer.close();
             } catch (IOException ex) {
-                Log.e(LOG_TAG, "Auto backup failed for book " + bookUID);
-                ex.printStackTrace();
-                FirebaseCrashlytics.getInstance().recordException(ex);
+                Timber.e(ex, "Auto backup failed for book %s", bookUID);
             }
         }
     }
@@ -124,8 +121,7 @@ public class BackupManager {
             writer.close();
             return true;
         } catch (IOException | Exporter.ExporterException e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
-            Log.e("GncXmlExporter", "Error creating XML  backup", e);
+            Timber.e(e, "Error creating XML  backup");
             return false;
         }
     }
@@ -183,7 +179,7 @@ public class BackupManager {
     }
 
     public static void schedulePeriodicBackups(Context context) {
-        Log.i(LOG_TAG, "Scheduling backup job");
+        Timber.i("Scheduling backup job");
         Intent intent = new Intent(context, PeriodicJobReceiver.class);
         intent.setAction(PeriodicJobReceiver.ACTION_BACKUP);
         PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent,

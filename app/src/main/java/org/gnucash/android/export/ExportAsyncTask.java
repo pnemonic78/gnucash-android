@@ -27,7 +27,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -42,7 +41,6 @@ import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudClientFactory;
 import com.owncloud.android.lib.common.OwnCloudCredentialsFactory;
@@ -80,6 +78,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import timber.log.Timber;
+
 /**
  * Asynchronous task for exporting transactions.
  *
@@ -94,12 +94,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
 
     private ProgressDialog mProgressDialog;
 
-    private SQLiteDatabase mDb;
-
-    /**
-     * Log tag
-     */
-    public static final String TAG = "ExportAsyncTask";
+    private final SQLiteDatabase mDb;
 
     /**
      * Export parameters
@@ -145,9 +140,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
         try {
             mExportedFiles = mExporter.generateExport();
         } catch (final Exception e) {
-            Log.e(TAG, "Error exporting: " + e.getMessage());
-            FirebaseCrashlytics.getInstance().recordException(e);
-            e.printStackTrace();
+            Timber.e(e, "Error exporting: %s", e.getMessage());
             if (mContext instanceof Activity) {
                 ((Activity) mContext).runOnUiThread(new Runnable() {
                     @Override
@@ -168,8 +161,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
         try {
             moveToTarget();
         } catch (Exporter.ExporterException e) {
-            FirebaseCrashlytics.getInstance().log("Error sending exported files to target");
-            FirebaseCrashlytics.getInstance().recordException(e);
+            Timber.e(e, "Error sending exported files to target");
             return false;
         }
 
@@ -284,7 +276,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
     private void moveExportToUri() throws Exporter.ExporterException {
         Uri exportUri = Uri.parse(mExportParams.getExportLocation());
         if (exportUri == null) {
-            Log.w(TAG, "No URI found for export destination");
+            Timber.w("No URI found for export destination");
             return;
         }
 
@@ -307,7 +299,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
      */
     @Deprecated
     private void moveExportToGoogleDrive() throws Exporter.ExporterException {
-        Log.i(TAG, "Moving exported file to Google Drive");
+        Timber.i("Moving exported file to Google Drive");
         final GoogleApiClient googleApiClient = BackupPreferenceFragment.getGoogleApiClient(GnuCashApplication.getAppContext());
         googleApiClient.blockingConnect();
 
@@ -347,7 +339,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
                 if (!driveFileResult.getStatus().isSuccess())
                     throw new Exporter.ExporterException(mExportParams, "Error creating file in Google Drive");
 
-                Log.i(TAG, "Created file with id: " + driveFileResult.getDriveFile().getDriveId());
+                Timber.i("Created file with id: %s", driveFileResult.getDriveFile().getDriveId());
             }
         } catch (IOException e) {
             throw new Exporter.ExporterException(mExportParams, e);
@@ -358,7 +350,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
      * Move the exported files (in the cache directory) to Dropbox
      */
     private void moveExportToDropbox() {
-        Log.i(TAG, "Uploading exported files to DropBox");
+        Timber.i("Uploading exported files to DropBox");
 
         DbxClientV2 dbxClient = DropboxHelper.getClient();
 
@@ -369,12 +361,11 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
                 FileMetadata metadata = dbxClient.files()
                         .uploadBuilder("/" + exportedFile.getName())
                         .uploadAndFinish(inputStream);
-                Log.i(TAG, "Successfully uploaded file " + metadata.getName() + " to DropBox");
+                Timber.i("Successfully uploaded file " + metadata.getName() + " to DropBox");
                 inputStream.close();
                 exportedFile.delete(); //delete file to prevent cache accumulation
             } catch (IOException e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
-                Log.e(TAG, e.getMessage());
+                Timber.e(e);
             } catch (com.dropbox.core.DbxException e) {
                 e.printStackTrace();
             }
@@ -382,7 +373,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
     }
 
     private void moveExportToOwnCloud() throws Exporter.ExporterException {
-        Log.i(TAG, "Copying exported file to ownCloud");
+        Timber.i("Copying exported file to ownCloud");
 
         SharedPreferences mPrefs = mContext.getSharedPreferences(mContext.getString(R.string.owncloud_pref), Context.MODE_PRIVATE);
 
@@ -407,8 +398,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
             RemoteOperationResult dirResult = new CreateRemoteFolderOperation(
                     mOC_dir, true).execute(mClient);
             if (!dirResult.isSuccess()) {
-                Log.w(TAG, "Error creating folder (it may happen if it already exists): "
-                        + dirResult.getLogMessage());
+                Timber.w("Error creating folder (it may happen if it already exists): %s", dirResult.getLogMessage());
             }
         }
         for (String exportedFilePath : mExportedFiles) {
@@ -440,7 +430,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
      */
     @Deprecated
     private List<String> moveExportToSDCard() throws Exporter.ExporterException {
-        Log.i(TAG, "Moving exported file to external storage");
+        Timber.i("Moving exported file to external storage");
         new File(Exporter.getExportFolderPath(mExporter.mBookUID));
         List<String> dstFiles = new ArrayList<>();
 
@@ -467,7 +457,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Boolean> {
      * and deletes all non-template transactions in the database.
      */
     private void backupAndDeleteTransactions() {
-        Log.i(TAG, "Backup and deleting transactions after export");
+        Timber.i("Backup and deleting transactions after export");
         BackupManager.backupActiveBook(); //create backup before deleting everything
         List<Transaction> openingBalances = new ArrayList<>();
         boolean preserveOpeningBalances = GnuCashApplication.shouldSaveOpeningBalances(false);
