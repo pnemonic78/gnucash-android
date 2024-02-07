@@ -287,7 +287,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Integer> {
                 // Now we always get just one file exported (multi-currency QIFs are zipped)
                 org.gnucash.android.util.FileUtils.moveFile(exportedFiles.get(0), outputStream);
             } catch (IOException ex) {
-                throw new Exporter.ExporterException(exportParams, "Error when moving file to URI");
+                throw new Exporter.ExporterException(exportParams, ex);
             }
         }
     }
