@@ -46,7 +46,7 @@ class Money : Comparable<Money> {
     /**
      * Amount value held by this object
      */
-    private var _amount: BigDecimal? = null
+    private var _amount: BigDecimal = BigDecimal.ZERO
 
     /**
      * Rounding mode to be applied when performing operations
@@ -60,9 +60,9 @@ class Money : Comparable<Money> {
      * @param amount    Value of the amount
      * @param commodity Commodity of the money
      */
-    constructor(amount: BigDecimal?, commodity: Commodity?) {
+    constructor(amount: BigDecimal, commodity: Commodity?) {
         this.commodity = commodity
-        setAmount(amount!!) //commodity has to be set first. Because we use it's scale
+        setAmount(amount) //commodity has to be set first. Because we use it's scale
     }
 
     /**
