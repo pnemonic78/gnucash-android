@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.model
 
-import org.gnucash.android.model.Commodity.Companion.getInstance
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode
@@ -23,7 +22,6 @@ import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.jvm.Throws
-import org.gnucash.android.model.Commodity.Companion.getInstance
 import timber.log.Timber
 
 /**
@@ -53,7 +51,7 @@ class Money : Number, Comparable<Money> {
      * Rounding mode to be applied when performing operations
      * Defaults to [RoundingMode.HALF_EVEN]
      */
-    protected var roundingMode = RoundingMode.HALF_EVEN
+    private var roundingMode = RoundingMode.HALF_EVEN
 
     /**
      * Creates a new money amount
@@ -75,7 +73,7 @@ class Money : Number, Comparable<Money> {
      */
     constructor(amount: String?, currencyCode: String?) {
         //commodity has to be set first
-        commodity = getInstance(currencyCode)
+        commodity = Commodity.getInstance(currencyCode)
         setAmount(BigDecimal(amount))
     }
 
@@ -131,7 +129,7 @@ class Money : Number, Comparable<Money> {
      * @param currencyCode ISO 4217 currency code
      */
     private fun setCommodity(currencyCode: String) {
-        commodity = getInstance(currencyCode)
+        commodity = Commodity.getInstance(currencyCode)
     }
 
     /**
@@ -534,7 +532,7 @@ class Money : Number, Comparable<Money> {
          */
         @JvmStatic
         fun createZeroInstance(currencyCode: String): Money {
-            val commodity = getInstance(currencyCode)
+            val commodity = Commodity.getInstance(currencyCode)
             return Money(BigDecimal.ZERO, commodity)
         }
     }
