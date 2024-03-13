@@ -59,9 +59,9 @@ public class DeleteAllTransactionsConfirmationDialog extends DoubleConfirmationD
                 .setPositiveButton(R.string.alert_dialog_ok_delete,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                BackupManager.backupActiveBook();
-
                                 Context context = getActivity();
+                                BackupManager.backupActiveBook(context);
+
                                 AccountsDbAdapter accountsDbAdapter = AccountsDbAdapter.getInstance();
                                 List<Transaction> openingBalances = new ArrayList<>();
                                 boolean preserveOpeningBalances = GnuCashApplication.shouldSaveOpeningBalances(false);
