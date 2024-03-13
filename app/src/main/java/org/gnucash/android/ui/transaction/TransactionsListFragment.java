@@ -367,7 +367,7 @@ public class TransactionsListFragment extends Fragment implements
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.context_menu_delete:
-                        BackupManager.backupActiveBook();
+                        BackupManager.backupActiveBook(getContext());
                         mTransactionsDbAdapter.deleteRecord(transactionId);
                         WidgetConfigurationActivity.updateAllWidgets(getActivity());
                         refresh();

@@ -251,7 +251,7 @@ public class AccountsListFragment extends Fragment implements
         if (acc.getTransactionCount() > 0 || mAccountsDbAdapter.getSubAccountCount(acc.getUID()) > 0) {
             showConfirmationDialog(rowId);
         } else {
-            BackupManager.backupActiveBook();
+            BackupManager.backupActiveBook(getContext());
             // Avoid calling AccountsDbAdapter.deleteRecord(long). See #654
             String uid = mAccountsDbAdapter.getUID(rowId);
             mAccountsDbAdapter.deleteRecord(uid);

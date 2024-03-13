@@ -69,7 +69,7 @@ public class BackupManager {
         for (String bookUID : bookUIDs) {
             String backupFile = getBookBackupFileUri(bookUID);
             if (backupFile == null) {
-                backupBook(bookUID);
+                backupBook(context, bookUID);
                 continue;
             }
 
@@ -94,7 +94,16 @@ public class BackupManager {
      * @return {@code true} if backup was successful, {@code false} otherwise
      */
     public static boolean backupActiveBook() {
-        return backupBook(BooksDbAdapter.getInstance().getActiveBookUID());
+        return backupActiveBook(GnuCashApplication.getAppContext());
+    }
+
+    /**
+     * Backs up the active book to the directory {@link #getBackupFolderPath(String)}.
+     *
+     * @return {@code true} if backup was successful, {@code false} otherwise
+     */
+    public static boolean backupActiveBook(Context context) {
+        return backupBook(context, BooksDbAdapter.getInstance().getActiveBookUID());
     }
 
     /**
@@ -105,11 +114,22 @@ public class BackupManager {
      * @return {@code true} if backup was successful, {@code false} otherwise
      */
     public static boolean backupBook(String bookUID) {
+        return backupBook(GnuCashApplication.getAppContext(), bookUID);
+    }
+
+    /**
+     * Backs up the book with UID {@code bookUID} to the directory
+     * {@link #getBackupFolderPath(String)}.
+     *
+     * @param bookUID Unique ID of the book
+     * @return {@code true} if backup was successful, {@code false} otherwise
+     */
+    public static boolean backupBook(Context context, String bookUID) {
         OutputStream outputStream;
         try {
             String backupFile = getBookBackupFileUri(bookUID);
             if (backupFile != null) {
-                outputStream = GnuCashApplication.getAppContext().getContentResolver().openOutputStream(Uri.parse(backupFile));
+                outputStream = context.getContentResolver().openOutputStream(Uri.parse(backupFile));
             } else { //no Uri set by user, use default location on SD card
                 backupFile = getBackupFilePath(bookUID);
                 outputStream = new FileOutputStream(backupFile);

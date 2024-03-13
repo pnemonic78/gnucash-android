@@ -292,7 +292,7 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
         //when someone launches the app to view a (.gnucash or .gnca) file
         Uri data = intent.getData();
         if (data != null) {
-            BackupManager.backupActiveBook();
+            BackupManager.backupActiveBook(this);
             intent.setData(null);
             new ImportAsyncTask(this).execute(data);
             removeFirstRunFlag();
@@ -509,7 +509,7 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
      * @param onFinishTask Task to be executed when import is complete
      */
     public static void importXmlFileFromIntent(Activity context, Intent data, TaskDelegate onFinishTask) {
-        BackupManager.backupActiveBook();
+        BackupManager.backupActiveBook(context);
         new ImportAsyncTask(context, onFinishTask).execute(data.getData());
     }
 

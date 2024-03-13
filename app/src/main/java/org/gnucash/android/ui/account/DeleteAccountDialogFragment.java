@@ -212,7 +212,7 @@ public class DeleteAccountDialogFragment extends DialogFragment {
 
             @Override
             public void onClick(View v) {
-                BackupManager.backupActiveBook();
+                BackupManager.backupActiveBook(v.getContext());
 
                 AccountsDbAdapter accountsDbAdapter = AccountsDbAdapter.getInstance();
 
