@@ -595,10 +595,7 @@ public class ExportFormFragment extends Fragment implements
                         mExportParams.setExportLocation(location);
                         if (location != null) {
                             setExportUriText(location.toString());
-
-                            final int takeFlags = data.getFlags()
-                                & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                            requireContext().getContentResolver().takePersistableUriPermission(location, takeFlags);
+                            requireContext().getContentResolver().takePersistableUriPermission(location, data.getFlags());
                         } else {
                             setExportUriText(null);
                         }
