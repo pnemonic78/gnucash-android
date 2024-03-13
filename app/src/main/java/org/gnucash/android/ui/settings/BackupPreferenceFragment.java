@@ -462,14 +462,8 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
 
             case REQUEST_BACKUP_FILE:
                 if (resultCode == Activity.RESULT_OK) {
-                    Uri backupFileUri = null;
-                    if (data != null) {
-                        backupFileUri = data.getData();
-                    }
-
-                    final int takeFlags = data.getFlags()
-                            & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    requireContext().getContentResolver().takePersistableUriPermission(backupFileUri, takeFlags);
+                    Uri backupFileUri = data.getData();
+                    requireContext().getContentResolver().takePersistableUriPermission(backupFileUri, data.getFlags());
 
                     PreferenceActivity.getActiveBookSharedPreferences()
                             .edit()
