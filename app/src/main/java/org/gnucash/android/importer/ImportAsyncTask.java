@@ -28,6 +28,7 @@ import android.widget.Toast;
 import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.ui.common.GnucashProgressDialog;
 import org.gnucash.android.ui.util.TaskDelegate;
 import org.gnucash.android.util.BackupManager;
 import org.gnucash.android.util.BookUtils;
@@ -64,15 +65,9 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, Boolean> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        mProgressDialog = new ProgressDialog(mContext);
+        mProgressDialog = new GnucashProgressDialog(mContext);
         mProgressDialog.setTitle(R.string.title_progress_importing_accounts);
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.show();
-
-        //these methods must be called after progressDialog.show()
-        mProgressDialog.setProgressNumberFormat(null);
-        mProgressDialog.setProgressPercentFormat(null);
     }
 
     @Override
