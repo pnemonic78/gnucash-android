@@ -15,6 +15,8 @@
  */
 package org.gnucash.android.ui.common;
 
+import static org.gnucash.android.app.IntentExtKt.takePersistableUriPermission;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -311,7 +313,7 @@ public abstract class BaseDrawerActivity extends PasscodeLockActivity implements
                 break;
             case BaseDrawerActivity.REQUEST_OPEN_DOCUMENT: //this uses the Storage Access Framework
                 AccountsActivity.importXmlFileFromIntent(this, data, null);
-                getContentResolver().takePersistableUriPermission(data.getData(), data.getFlags());
+                takePersistableUriPermission(this, data);
                 break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);

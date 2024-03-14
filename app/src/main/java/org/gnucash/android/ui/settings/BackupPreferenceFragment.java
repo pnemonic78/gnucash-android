@@ -16,6 +16,8 @@
 
 package org.gnucash.android.ui.settings;
 
+import static org.gnucash.android.app.IntentExtKt.takePersistableUriPermission;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -463,7 +465,7 @@ public class BackupPreferenceFragment extends PreferenceFragmentCompat implement
             case REQUEST_BACKUP_FILE:
                 if (resultCode == Activity.RESULT_OK) {
                     Uri backupFileUri = data.getData();
-                    requireContext().getContentResolver().takePersistableUriPermission(backupFileUri, data.getFlags());
+                    takePersistableUriPermission(requireContext(), data);
 
                     PreferenceActivity.getActiveBookSharedPreferences()
                             .edit()
