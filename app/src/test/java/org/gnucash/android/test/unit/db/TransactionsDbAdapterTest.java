@@ -137,10 +137,10 @@ public class TransactionsDbAdapterTest {
         //balance is negated because the CASH account has inverse normal balance
         transaction = mTransactionsDbAdapter.getRecord(transaction.getUID());
         Money savedBalance = transaction.getBalance(alphaAccount.getUID());
-        assertThat(savedBalance).isEqualTo(firstSplitAmount.negate());
+        assertThat(savedBalance).isEqualTo(firstSplitAmount.not());
 
         savedBalance = transaction.getBalance(bravoAccount.getUID());
-        assertThat(savedBalance.getNumerator()).isEqualTo(secondSplitAmount.negate().getNumerator());
+        assertThat(savedBalance.getNumerator()).isEqualTo(secondSplitAmount.not().getNumerator());
         assertThat(savedBalance.getCommodity()).isEqualTo(secondSplitAmount.getCommodity());
     }
 
