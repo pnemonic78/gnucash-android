@@ -15,8 +15,7 @@
  */
 package org.gnucash.android.model
 
-import android.util.Log
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import org.gnucash.android.model.Commodity.Companion.getInstance
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode
@@ -25,6 +24,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlin.jvm.Throws
 import org.gnucash.android.model.Commodity.Companion.getInstance
+import timber.log.Timber
 
 /**
  * Money represents a money amount and a corresponding currency.
@@ -148,8 +148,7 @@ class Money : Number, Comparable<Money> {
             val msg = "Currency " + commodity!!.currencyCode +
                 " with scale " + scale +
                 " has amount " + _amount.toString()
-            FirebaseCrashlytics.getInstance().log(msg)
-            Log.e(javaClass.name, msg)
+            Timber.e(e, msg)
             throw e
         }
 

@@ -31,7 +31,6 @@ import android.content.Intent;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.InputType;
-import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
@@ -59,6 +58,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import timber.log.Timber;
 
 // TODO: Find out how to press the keys in the KeyboardView.
 @RunWith(AndroidJUnit4.class)
@@ -91,17 +92,6 @@ public class CalculatorEditTextTest {
     public static void prepTestCase() {
         String activeBookUID = BooksDbAdapter.getInstance().getActiveBookUID();
         mDbHelper = new DatabaseHelper(GnuCashApplication.getAppContext(), activeBookUID);
-
-//        SQLiteDatabase mDb;
-//        try {
-//            mDb = mDbHelper.getWritableDatabase();
-//        } catch (SQLException e) {
-//            Log.e("CalculatorEditTextTest", "Error getting database: " + e.getMessage());
-//            mDb = mDbHelper.getReadableDatabase();
-//        }
-//        mSplitsDbAdapter = new SplitsDbAdapter(mDb);
-//        mTransactionsDbAdapter = new TransactionsDbAdapter(mDb, mSplitsDbAdapter);
-//        mAccountsDbAdapter = new AccountsDbAdapter(mDb, mTransactionsDbAdapter);
 
         mSplitsDbAdapter = SplitsDbAdapter.getInstance();
         mTransactionsDbAdapter = TransactionsDbAdapter.getInstance();

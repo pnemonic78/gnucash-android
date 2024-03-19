@@ -25,7 +25,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -85,6 +84,7 @@ import java.util.GregorianCalendar;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import timber.log.Timber;
 
 
 /**
@@ -182,11 +182,6 @@ public class ExportFormFragment extends Fragment implements
     private String mRecurrenceRule;
 
     private final Calendar mExportStartCalendar = Calendar.getInstance();
-
-    /**
-     * Tag for logging
-     */
-    private static final String TAG = "ExportFormFragment";
 
     private final ExportParams mExportParams = new ExportParams();
 
@@ -330,7 +325,7 @@ public class ExportFormFragment extends Fragment implements
             exportParameters.setExportStartTime(new Timestamp(mExportStartCalendar.getTimeInMillis()));
         }
 
-        Log.i(TAG, "Commencing async export of transactions");
+        Timber.i("Commencing async export of transactions");
         new ExportAsyncTask(requireContext(), GnuCashApplication.getActiveDb()).execute(exportParameters);
 
         if (mRecurrenceRule != null) {
@@ -435,7 +430,7 @@ public class ExportFormFragment extends Fragment implements
                     Date date = TransactionFormFragment.DATE_FORMATTER.parse(mExportStartDate.getText().toString());
                     dateMillis = date.getTime();
                 } catch (ParseException e) {
-                    Log.e(getTag(), "Error converting input time to Date object");
+                    Timber.e(e, "Error converting input time to Date object");
                 }
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(dateMillis);
@@ -459,7 +454,7 @@ public class ExportFormFragment extends Fragment implements
                     Date date = TransactionFormFragment.TIME_FORMATTER.parse(mExportStartTime.getText().toString());
                     timeMillis = date.getTime();
                 } catch (ParseException e) {
-                    Log.e(getTag(), "Error converting input time to Date object");
+                    Timber.e(e, "Error converting input time to Date object");
                 }
 
                 Calendar calendar = Calendar.getInstance();
