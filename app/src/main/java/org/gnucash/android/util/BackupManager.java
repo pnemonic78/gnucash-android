@@ -70,6 +70,7 @@ public class BackupManager {
     static void backupAllBooks() {
         BooksDbAdapter booksDbAdapter = BooksDbAdapter.getInstance();
         List<String> bookUIDs = booksDbAdapter.getAllBookUIDs();
+        Context context = GnuCashApplication.getAppContext();
 
         for (String bookUID : bookUIDs) {
             backupBook(context, bookUID);

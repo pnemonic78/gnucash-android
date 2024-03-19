@@ -247,7 +247,7 @@ public class BooksDbAdapter extends DatabaseAdapter<Book> {
     private void setFirstBookAsActive() {
         List<Book> books = getAllRecords();
         if (books.isEmpty()) {
-            Log.w(LOG_TAG, "No books.");
+            Timber.w("No books.");
             return;
         }
         Book firstBook = books.get(0);
