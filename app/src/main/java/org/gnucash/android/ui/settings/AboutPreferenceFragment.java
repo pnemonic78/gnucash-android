@@ -25,8 +25,6 @@ import androidx.preference.PreferenceFragmentCompat;
 
 import org.gnucash.android.BuildConfig;
 import org.gnucash.android.R;
-import org.gnucash.android.ui.account.AccountsActivity;
-
 
 /**
  * Fragment for displaying information about the application
@@ -58,12 +56,5 @@ public class AboutPreferenceFragment extends PreferenceFragmentCompat {
         if (BuildConfig.FLAVOR.equals("development")) {
             pref.setSummary(pref.getSummary() + " - Built: " + BuildConfig.BUILD_TIME);
         }
-        pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                AccountsActivity.showWhatsNewDialog(getActivity());
-                return true;
-            }
-        });
     }
 }
