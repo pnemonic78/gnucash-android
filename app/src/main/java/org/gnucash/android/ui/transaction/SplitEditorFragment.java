@@ -191,7 +191,7 @@ public class SplitEditorFragment extends Fragment {
                 saveSplits();
                 return true;
 
-            case R.id.menu_add_split:
+            case R.id.menu_add:
                 addSplitView(null);
                 return true;
 
