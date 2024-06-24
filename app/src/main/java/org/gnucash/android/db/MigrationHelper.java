@@ -843,7 +843,7 @@ public class MigrationHelper {
             db.endTransaction();
         }
 
-        GnuCashApplication.startScheduledActionExecutionService(GnuCashApplication.getAppContext());
+        ScheduledActionService.schedulePeriodicActions(GnuCashApplication.getAppContext());
 
         return oldVersion;
     }
@@ -1494,7 +1494,7 @@ public class MigrationHelper {
             pendingIntent.cancel();
         }
 
-        GnuCashApplication.startScheduledActionExecutionService(context);
+        ScheduledActionService.schedulePeriodicActions(context);
     }
 
     /**
