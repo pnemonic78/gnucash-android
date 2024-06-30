@@ -406,6 +406,26 @@ public class ScheduledActionsListFragment extends ListFragment implements
         startActivity(intent);
     }
 
+    private String formatDescription(ScheduledAction scheduledAction) {
+        long runTime = scheduledAction.getLastRunTime();
+        final String label;
+        if (runTime > 0) {
+            long endTime = scheduledAction.getEndTime();
+            final String period;
+            if (endTime > 0 && endTime < System.currentTimeMillis()) {
+                period = getString(R.string.label_scheduled_action_ended);
+            } else {
+                period = scheduledAction.getRepeatString();
+            }
+            label = getString(R.string.label_scheduled_action,
+                period,
+                DateTimeFormat.shortDateTime().print(runTime));
+        } else {
+            label = scheduledAction.getRepeatString();
+        }
+        return label;
+    }
+
     /**
      * Extends a simple cursor adapter to bind transaction attributes to views
      *
@@ -474,9 +494,14 @@ public class ScheduledActionsListFragment extends ListFragment implements
             super.bindView(view, context, cursor);
 
             Transaction transaction = mTransactionsDbAdapter.buildModelInstance(cursor);
+            ScheduledActionDbAdapter scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance();
+            String scheduledActionUID = cursor.getString(cursor.getColumnIndexOrThrow("origin_scheduled_action_uid")); //column created from join when fetching scheduled transactions
+            ScheduledAction scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID);
 
             TextView amountTextView = view.findViewById(R.id.right_text);
             TextView descriptionTextView = view.findViewById(R.id.secondary_text);
+
+            view.setTag(scheduledActionUID);
 
             String text = "";
             List<Split> splits = transaction.getSplits();
@@ -493,19 +518,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
             }
             amountTextView.setText(text);
 
-            ScheduledActionDbAdapter scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance();
-            String scheduledActionUID = cursor.getString(cursor.getColumnIndexOrThrow("origin_scheduled_action_uid")); //column created from join when fetching scheduled transactions
-            view.setTag(scheduledActionUID);
-            ScheduledAction scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID);
-            long endTime = scheduledAction.getEndTime();
-            if (endTime > 0 && endTime < System.currentTimeMillis()) {
-                ((TextView) view.findViewById(R.id.primary_text))
-                    .setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray));
-                descriptionTextView.setText(getString(R.string.label_scheduled_action_ended,
-                    DateTimeFormat.shortDateTime().print(scheduledAction.getLastRunTime())));
-            } else {
-                descriptionTextView.setText(scheduledAction.getRepeatString());
-            }
+            descriptionTextView.setText(formatDescription(scheduledAction));
         }
     }
 
@@ -538,7 +551,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
                 exportDestination = exportDestination + " (" + getDocumentName(params.getExportLocation(), context) + ")";
             }
             String description = context.getString(
-                R.string.schedule_export_desription,
+                R.string.schedule_export_description,
                 params.getExportFormat().name(),
                 context.getString(scheduledAction.getActionType().labelId),
                 exportDestination
@@ -547,15 +560,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
 
             amountTextView.setVisibility(View.GONE);
 
-            descriptionTextView.setText(scheduledAction.getRepeatString());
-            long endTime = scheduledAction.getEndTime();
-            if (endTime > 0 && endTime < System.currentTimeMillis()) {
-                primaryTextView.setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray));
-                descriptionTextView.setText(getString(R.string.label_scheduled_action_ended,
-                    DateTimeFormat.shortDateTime().print(scheduledAction.getLastRunTime())));
-            } else {
-                descriptionTextView.setText(scheduledAction.getRepeatString());
-            }
+            descriptionTextView.setText(formatDescription(scheduledAction));
         }
     }
 
