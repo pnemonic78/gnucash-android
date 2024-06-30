@@ -379,26 +379,27 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
      * Show dialog with new features for this version
      */
     public static AlertDialog showWhatsNewDialog(Context context) {
-        Resources resources = context.getResources();
-        StringBuilder releaseTitle = new StringBuilder(resources.getString(R.string.title_whats_new));
-        PackageInfo packageInfo;
-        try {
-            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            releaseTitle.append(" - v").append(packageInfo.versionName);
-        } catch (NameNotFoundException e) {
-            Timber.e(e, "Error displaying 'Whats new' dialog");
-        }
-
-        return new AlertDialog.Builder(context)
-                .setTitle(releaseTitle.toString())
-                .setMessage(R.string.whats_new)
-                .setPositiveButton(R.string.label_dismiss, new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                }).show();
+//        Resources resources = context.getResources();
+//        StringBuilder releaseTitle = new StringBuilder(resources.getString(R.string.title_whats_new));
+//        PackageInfo packageInfo;
+//        try {
+//            packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+//            releaseTitle.append(" - v").append(packageInfo.versionName);
+//        } catch (NameNotFoundException e) {
+//            Timber.e(e, "Error displaying 'Whats new' dialog");
+//        }
+//
+//        return new AlertDialog.Builder(context)
+//                .setTitle(releaseTitle.toString())
+//                .setMessage(R.string.whats_new)
+//                .setPositiveButton(R.string.label_dismiss, new DialogInterface.OnClickListener() {
+//
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.dismiss();
+//                    }
+//                }).show();
+        return null;
     }
 
     /**
