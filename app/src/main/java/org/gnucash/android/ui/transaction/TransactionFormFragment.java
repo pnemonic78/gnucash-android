@@ -249,8 +249,7 @@ public class TransactionFormFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         Bundle args = getArguments();
 
-        SharedPreferences sharedPrefs = PreferenceActivity.getActiveBookSharedPreferences();
-        mUseDoubleEntry = sharedPrefs.getBoolean(getString(R.string.key_use_double_entry), false);
+        mUseDoubleEntry = GnuCashApplication.isDoubleEntryEnabled();
 
         mAccountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID);
         assert (mAccountUID != null);
@@ -459,14 +458,16 @@ public class TransactionFormFragment extends Fragment implements
      * Initialize views with default data for new transactions
      */
     private void initalizeViews() {
+        Context context = mTransactionTypeSwitch.getContext();
+
         long now = System.currentTimeMillis();
         mBinding.inputDate.setText(DATE_FORMATTER.print(now));
         mBinding.inputTime.setText(TIME_FORMATTER.print(now));
         mTime = mDate = Calendar.getInstance();
 
         mBinding.inputTransactionType.setAccountType(mAccountType);
-        String typePref = PreferenceActivity.getActiveBookSharedPreferences().getString(getString(R.string.key_default_transaction_type), "DEBIT");
-        mBinding.inputTransactionType.setChecked(TransactionType.valueOf(typePref));
+        TransactionType txType = GnuCashApplication.getDefaultTransactionType(context);
+        mBinding.inputTransactionType.setChecked(txType);
 
         String code = GnuCashApplication.getDefaultCurrencyCode();
         if (mAccountUID != null) {
