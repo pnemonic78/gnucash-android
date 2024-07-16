@@ -454,7 +454,7 @@ public class TransactionFormFragment extends Fragment implements
             ScheduledAction scheduledAction = ScheduledActionDbAdapter.getInstance().getRecord(scheduledActionUID);
             mRecurrenceRule = scheduledAction.getRuleString();
             mEventRecurrence.parse(mRecurrenceRule);
-            mBinding.inputRecurrence.setText(scheduledAction.getRepeatString());
+            mBinding.inputRecurrence.setText(scheduledAction.getRepeatString(requireContext()));
         }
     }
 
