@@ -8,7 +8,7 @@ apply plugin: 'kotlin-android'
 def versionMajor = 2
 def versionMinor = 5
 def versionPatch = 2
-def versionBuild = 0
+def versionBuild = 3
 
 static def buildTime() {
     def df = new SimpleDateFormat("yyyyMMdd HH:mm 'UTC'")
@@ -26,7 +26,7 @@ android {
     defaultConfig {
         applicationId "org.gnucash.pocket.pnemonic"
         minSdkVersion 21
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName "${versionMajor}.${versionMinor}.${versionPatch}"
         resValue "string", "app_version_name", "${versionName}"
