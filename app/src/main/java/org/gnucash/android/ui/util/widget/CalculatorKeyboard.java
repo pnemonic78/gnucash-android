@@ -68,12 +68,13 @@ import java.text.DecimalFormatSymbols;
  */
 public class CalculatorKeyboard {
 
-    private static final String ACCEPTED = "0123456789-+*/.()";
+    private static final String ACCEPTED = "0123456789+*/()";
     private static final int KEY_CODE_CLEAR = -3;
     private static final int KEY_CODE_DELETE = -5;
     private static final int KEY_CODE_EVALUATE = '=';
     private static final String KEY_LABEL_DECIMAL = ".";
     private static final String KEY_LABEL_EVALUATE = "=";
+    private static final String KEY_LABEL_MINUS = "-";
 
     /**
      * A link to the KeyboardView that is used to render this CalculatorKeyboard.
@@ -82,8 +83,6 @@ public class CalculatorKeyboard {
     private final Window window;
     private final InputMethodManager inputMethodManager;
     private final boolean isHapticFeedback;
-
-    private static final String LOCALE_DECIMAL_SEPARATOR = Character.toString(DecimalFormatSymbols.getInstance().getDecimalSeparator());
 
     /**
      * Returns true if the haptic feedback is enabled.
@@ -111,11 +110,17 @@ public class CalculatorKeyboard {
         window = getActivity(keyboardView).getWindow();
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
+        final DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
+        final String decimalSeparator = Character.toString(symbols.getDecimalSeparator());
+        final String minusSign = Character.toString(symbols.getMinusSign());
         Keyboard keyboard = new Keyboard(context, R.xml.calculator_keyboard);
         for (Keyboard.Key key : keyboard.getKeys()) {
-            if (KEY_LABEL_DECIMAL.equals(key.label)) {
-                key.label = LOCALE_DECIMAL_SEPARATOR;
-                break;
+            if (TextUtils.equals(KEY_LABEL_DECIMAL, key.label)) {
+                key.label = decimalSeparator;
+                key.text = decimalSeparator;
+            } else if (TextUtils.equals(KEY_LABEL_MINUS, key.label)) {
+                key.label = minusSign;
+                key.text = minusSign;
             }
         }
         keyboardView.setKeyboard(keyboard);
@@ -250,7 +255,11 @@ public class CalculatorKeyboard {
 
     @NonNull
     public static InputFilter getFilter() {
-        return DigitsKeyListener.getInstance(ACCEPTED);
+        final DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
+        final char decimalSeparator = symbols.getDecimalSeparator();
+        final char minusSign = symbols.getMinusSign();
+        final String accepted = ACCEPTED + decimalSeparator + minusSign;
+        return DigitsKeyListener.getInstance(accepted);
     }
 
     public static boolean onKeyDown(int keyCode, KeyEvent event) {
