@@ -553,7 +553,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
 
             amountTextView.setVisibility(View.GONE);
 
-            descriptionTextView.setText(scheduledAction.getRepeatString());
+            descriptionTextView.setText(scheduledAction.getRepeatString(context));
             long endTime = scheduledAction.getEndTime();
             if (endTime > 0 && endTime < System.currentTimeMillis()) {
                 primaryTextView.setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray));

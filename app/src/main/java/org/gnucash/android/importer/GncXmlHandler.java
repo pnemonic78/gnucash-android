@@ -741,7 +741,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                     mIgnoreScheduledAction = true;
                 }
                 break;
-            case GncXmlHelper.TAG_RX_WEEKEND_ADJ:
+            case TAG_RX_WEEKEND_ADJ:
                 WeekendAdjust weekendAdjust = WeekendAdjust.of(characterString);
                 mRecurrence.setWeekendAdjust(weekendAdjust);
                 break;

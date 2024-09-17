@@ -78,6 +78,7 @@ import org.gnucash.android.model.Transaction;
 import org.gnucash.android.receivers.AccountCreator;
 import org.gnucash.android.test.ui.util.DisableAnimationsRule;
 import org.gnucash.android.ui.account.AccountsActivity;
+import org.gnucash.android.ui.account.AccountsListFragment;
 import org.gnucash.android.ui.common.Refreshable;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

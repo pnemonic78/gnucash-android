@@ -289,7 +289,7 @@ public class TransactionFormFragment extends Fragment implements
         setListeners();
         //updateTransferAccountsList must only be called after initializing mAccountsDbAdapter
         updateTransferAccountsList();
-        initalizeViews();
+        initializeViews();
 
         if (mTransaction == null) {
             initTransactionNameAutocomplete();
@@ -1167,10 +1167,9 @@ public class TransactionFormFragment extends Fragment implements
             mRecurrenceViewClickListener.setRecurrence(rrule);
         }
 
-        final String repeatString;
+        String repeatString;
         if (!TextUtils.isEmpty(rrule)) {
             mEventRecurrence.parse(rrule);
-            Context context = mSaveTemplateCheckbox.getContext();
             repeatString = EventRecurrenceFormatter.getRepeatString(context, context.getResources(), mEventRecurrence, true);
 
             //when recurrence is set, we will definitely be saving a template
