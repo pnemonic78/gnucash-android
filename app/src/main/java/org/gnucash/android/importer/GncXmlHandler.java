@@ -112,7 +112,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
     private final List<Account> mTemplatAccountList;
 
     /**
-     * Map of the tempate accounts to the template transactions UIDs
+     * Map of the template accounts to the template transactions UIDs
      */
     private final Map<String, String> mTemplateAccountToTransactionMap;
 
