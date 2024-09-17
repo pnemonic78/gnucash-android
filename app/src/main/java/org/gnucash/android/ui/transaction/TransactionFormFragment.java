@@ -16,12 +16,15 @@
 
 package org.gnucash.android.ui.transaction;
 
+import static org.gnucash.android.ui.util.widget.ViewExtKt.setTextToEnd;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -83,6 +86,7 @@ import org.gnucash.android.ui.transaction.dialog.TransferFundsDialogFragment;
 import org.gnucash.android.ui.util.RecurrenceParser;
 import org.gnucash.android.ui.util.RecurrenceViewClickListener;
 import org.gnucash.android.ui.util.widget.CalculatorEditText;
+import org.gnucash.android.ui.util.widget.CalculatorKeyboard;
 import org.gnucash.android.ui.util.widget.TransactionTypeSwitch;
 import org.gnucash.android.util.QualifiedAccountNameCursorAdapter;
 import org.joda.time.format.DateTimeFormat;
@@ -214,6 +218,9 @@ public class TransactionFormFragment extends Fragment implements
     @BindView(R.id.layout_double_entry)
     View mDoubleEntryLayout;
 
+    @BindView(R.id.calculator_keyboard)
+    KeyboardView mKeyboardView;
+
     /**
      * Flag to note if double entry accounting is in use or not
      */
@@ -325,6 +332,15 @@ public class TransactionFormFragment extends Fragment implements
         TransferFundsDialogFragment fragment
             = TransferFundsDialogFragment.getInstance(amount, targetCurrencyCode, this);
         fragment.show(getParentFragmentManager(), "transfer_funds_editor;" + fromCurrencyCode + ";" + targetCurrencyCode + ";" + amount.toPlainString());
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        View view = getView();
+        if (view instanceof ViewGroup parent) {
+            mKeyboardView = CalculatorKeyboard.rebind(parent, mKeyboardView, mAmountEditText);
+        }
     }
 
     @Override
@@ -461,8 +477,7 @@ public class TransactionFormFragment extends Fragment implements
      * This method is called if the fragment is used for editing a transaction
      */
     private void initializeViewsWithTransaction(@NonNull Transaction transaction) {
-        mDescriptionEditText.setText(transaction.getDescription());
-        mDescriptionEditText.setSelection(mDescriptionEditText.getText().length());
+        setTextToEnd(mDescriptionEditText, transaction.getDescription());
 
         mTransactionTypeSwitch.setAccountType(mAccountType);
         mTransactionTypeSwitch.setChecked(transaction.getBalance(mAccountUID).isNegative());
@@ -543,9 +558,8 @@ public class TransactionFormFragment extends Fragment implements
     /**
      * Initialize views with default data for new transactions
      */
-    private void initalizeViews() {
+    private void initializeViews() {
         Context context = mTransactionTypeSwitch.getContext();
-
         long now = System.currentTimeMillis();
         mDateTextView.setText(DATE_FORMATTER.print(now));
         mTimeTextView.setText(TIME_FORMATTER.print(now));
@@ -563,6 +577,7 @@ public class TransactionFormFragment extends Fragment implements
         Commodity commodity = Commodity.getInstance(code);
         mCurrencyTextView.setText(commodity.getSymbol());
         mAmountEditText.setCommodity(commodity);
+        mAmountEditText.bindKeyboard(mKeyboardView);
 
         if (mUseDoubleEntry) {
             String currentAccountUID = mAccountUID;

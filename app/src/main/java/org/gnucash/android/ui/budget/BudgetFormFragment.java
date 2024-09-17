@@ -19,6 +19,7 @@ package org.gnucash.android.ui.budget;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
@@ -63,6 +64,7 @@ import org.gnucash.android.ui.transaction.TransactionFormFragment;
 import org.gnucash.android.ui.util.RecurrenceParser;
 import org.gnucash.android.ui.util.RecurrenceViewClickListener;
 import org.gnucash.android.ui.util.widget.CalculatorEditText;
+import org.gnucash.android.ui.util.widget.CalculatorKeyboard;
 import org.gnucash.android.util.QualifiedAccountNameCursorAdapter;
 
 import java.math.BigDecimal;
@@ -118,10 +120,6 @@ public class BudgetFormFragment extends Fragment implements RecurrencePickerDial
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_budget_form, container, false);
         ButterKnife.bind(this, view);
-
-        view.findViewById(R.id.btn_remove_item).setVisibility(View.GONE);
-        mBudgetAmountInput.bindListeners(mKeyboardView);
-        mStartDateInput.setText(TransactionFormFragment.DATE_FORMATTER.print(mStartDate.getTimeInMillis()));
         return view;
     }
 
@@ -138,10 +136,13 @@ public class BudgetFormFragment extends Fragment implements RecurrencePickerDial
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
+
+        view.findViewById(R.id.btn_remove_item).setVisibility(View.GONE);
+        mBudgetAmountInput.bindKeyboard(mKeyboardView);
+        mStartDateInput.setText(TransactionFormFragment.DATE_FORMATTER.print(mStartDate.getTimeInMillis()));
 
         mBudgetAccountSpinner.setAdapter(mAccountsCursorAdapter);
         String budgetUID = getArguments().getString(UxArgument.BUDGET_UID);
@@ -376,6 +377,15 @@ public class BudgetFormFragment extends Fragment implements RecurrencePickerDial
                 mBudgetAmountInput.setValue(budgetAmount.getAmount().asBigDecimal());
                 mBudgetAccountSpinner.setSelection(mAccountsCursorAdapter.getPosition(budgetAmount.getAccountUID()));
             }
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        View view = getView();
+        if (view instanceof ViewGroup parent) {
+            mKeyboardView = CalculatorKeyboard.rebind(parent, mKeyboardView, null);
         }
     }
 }
