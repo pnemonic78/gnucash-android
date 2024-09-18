@@ -19,7 +19,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
-import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -43,6 +42,7 @@ import androidx.fragment.app.Fragment;
 import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
+import org.gnucash.android.inputmethodservice.CalculatorKeyboardView;
 import org.gnucash.android.model.BudgetAmount;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
@@ -71,7 +71,7 @@ public class BudgetAmountEditorFragment extends Fragment {
     @BindView(R.id.budget_amount_layout)
     LinearLayout mBudgetAmountTableLayout;
     @BindView(R.id.calculator_keyboard)
-    KeyboardView mKeyboardView;
+    CalculatorKeyboardView mKeyboardView;
 
     public static BudgetAmountEditorFragment newInstance(Bundle args) {
         BudgetAmountEditorFragment fragment = new BudgetAmountEditorFragment();

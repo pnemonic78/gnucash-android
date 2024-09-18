@@ -32,4 +32,11 @@
     <color name="theme_accent">#FFAB00</color> <!-- A700 -->
 
     <color name="item_checked">#CCCCCC</color>
+
+    <color name="kbd_bg">#F4FFF6</color>
+    <color name="kbd_key_action">#66BC91</color>
+    <color name="kbd_key_clear">#B7CBBE</color>
+    <color name="kbd_key_delete">#B7CBBE</color>
+    <color name="kbd_key_digit">@android:color/white</color>
+    <color name="kbd_key_op">#BFFFDA</color>
 </resources>

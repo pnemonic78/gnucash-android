@@ -19,7 +19,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
-import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -50,6 +49,7 @@ import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter;
+import org.gnucash.android.inputmethodservice.CalculatorKeyboardView;
 import org.gnucash.android.model.AccountType;
 import org.gnucash.android.model.BaseModel;
 import org.gnucash.android.model.Commodity;
@@ -84,7 +84,7 @@ public class SplitEditorFragment extends Fragment {
     @BindView(R.id.split_list_layout)
     LinearLayout mSplitsLinearLayout;
     @BindView(R.id.calculator_keyboard)
-    KeyboardView mKeyboardView;
+    CalculatorKeyboardView mKeyboardView;
     @BindView(R.id.imbalance_textview)
     TextView mImbalanceTextView;
 
