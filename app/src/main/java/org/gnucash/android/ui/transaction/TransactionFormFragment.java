@@ -24,7 +24,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
-import android.inputmethodservice.KeyboardView;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.Pair;
@@ -67,6 +66,7 @@ import org.gnucash.android.db.adapter.DatabaseAdapter;
 import org.gnucash.android.db.adapter.PricesDbAdapter;
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter;
 import org.gnucash.android.db.adapter.TransactionsDbAdapter;
+import org.gnucash.android.inputmethodservice.CalculatorKeyboardView;
 import org.gnucash.android.model.AccountType;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
@@ -216,7 +216,7 @@ public class TransactionFormFragment extends Fragment implements
     View mDoubleEntryLayout;
 
     @BindView(R.id.calculator_keyboard)
-    KeyboardView mKeyboardView;
+    CalculatorKeyboardView mKeyboardView;
 
     /**
      * Flag to note if double entry accounting is in use or not
