@@ -479,7 +479,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
     }
 
     @Nullable
-    private String formatSchedule(@Nullable ScheduledAction scheduledAction) {
+    private String formatSchedule(@NonNull Context context, @Nullable ScheduledAction scheduledAction) {
         if (scheduledAction == null) return null;
         long endTime = scheduledAction.getEndTime();
         long lastTime = scheduledAction.getLastRunTime();
@@ -488,9 +488,9 @@ public class ScheduledActionsListFragment extends ListFragment implements
             return getString(R.string.label_scheduled_action_ended, DateTimeFormat.shortDateTime().print(lastTime));
         }
         if (lastTime > 0) {
-            return getString(R.string.label_scheduled_action_last, scheduledAction.getRepeatString(), DateTimeFormat.shortDateTime().print(lastTime));
+            return getString(R.string.label_scheduled_action_last, scheduledAction.getRepeatString(context), DateTimeFormat.shortDateTime().print(lastTime));
         }
-        return scheduledAction.getRepeatString();
+        return scheduledAction.getRepeatString(context);
     }
 
     /**
@@ -533,7 +533,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
             String scheduledActionUID = cursor.getString(cursor.getColumnIndexOrThrow("origin_scheduled_action_uid")); //column created from join when fetching scheduled transactions
             view.setTag(scheduledActionUID);
             ScheduledAction scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID);
-            descriptionTextView.setText(formatSchedule(scheduledAction));
+            descriptionTextView.setText(formatSchedule(context, scheduledAction));
         }
     }
 
@@ -575,7 +575,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
 
             amountTextView.setVisibility(View.GONE);
 
-            descriptionTextView.setText(formatSchedule(scheduledAction));
+            descriptionTextView.setText(formatSchedule(context, scheduledAction));
         }
     }
 

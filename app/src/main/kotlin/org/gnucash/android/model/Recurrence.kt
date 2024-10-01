@@ -285,7 +285,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      *
      * If there is no end date or the PeriodType is unknown, it returns -1
      *
-     * @return Number of occurrences, or` -1` if there is no end date
+     * @return Number of occurrences, or `-1` if there is no end date
      */
     val occurrences: Int
         get() {
