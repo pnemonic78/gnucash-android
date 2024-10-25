@@ -21,6 +21,8 @@ import android.content.Context;
 
 import org.gnucash.android.ui.homescreen.WidgetConfigurationActivity;
 
+import java.util.Arrays;
+
 /**
  * {@link AppWidgetProvider} which is responsible for managing widgets on the homescreen
  * It receives broadcasts related to updating and deleting widgets
@@ -33,6 +35,7 @@ public class TransactionAppWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager,
                          int[] appWidgetIds) {
+        System.out.println("±!@ onUpdate " + Arrays.toString(appWidgetIds));
         super.onUpdate(context, appWidgetManager, appWidgetIds);
         for (int appWidgetId : appWidgetIds) {
             WidgetConfigurationActivity.updateWidget(context, appWidgetId);
@@ -41,12 +44,14 @@ public class TransactionAppWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onEnabled(Context context) {
+        System.out.println("±!@ onEnabled");
         super.onEnabled(context);
         WidgetConfigurationActivity.updateAllWidgets(context);
     }
 
     @Override
     public void onDeleted(Context context, int[] appWidgetIds) {
+        System.out.println("±!@ onDeleted " + Arrays.toString(appWidgetIds));
         super.onDeleted(context, appWidgetIds);
         for (int appWidgetId : appWidgetIds) {
             WidgetConfigurationActivity.removeWidgetConfiguration(context, appWidgetId);

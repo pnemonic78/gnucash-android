@@ -4,14 +4,14 @@
 
     <item
         android:id="@+id/menu_goto_account"
-        android:icon="@drawable/ic_account_black"
+        android:icon="@drawable/ic_account"
         android:title="Go to Account"
         app:showAsAction="never"
         android:orderInCategory="1" />
 
     <item
         android:id="@+id/menu_edit_budget"
-        android:icon="@drawable/ic_edit_white"
+        android:icon="@drawable/ic_edit"
         android:title="Edit Budget"
         app:showAsAction="never"
         android:orderInCategory="2" />

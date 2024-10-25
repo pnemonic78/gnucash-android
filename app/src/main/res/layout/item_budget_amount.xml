@@ -51,7 +51,7 @@
                 android:hint="@string/label_transaction_amount"
                 android:inputType="none"
                 android:nextFocusDown="@+id/input_description"
-                android:background="@android:color/transparent"
+                android:background="@null"
                 android:textSize="20sp"
                 app:keyboardKeysLayout="@xml/calculator_keyboard" />
 
@@ -64,7 +64,7 @@
                 android:paddingEnd="6dp"
                 android:paddingStart="22dp"
                 android:paddingBottom="6dp"
-                android:src="@drawable/ic_close_black"
+                android:src="@drawable/ic_close"
                 tools:ignore="ContentDescription" />
         </TableRow>
 
@@ -79,7 +79,7 @@
 
             <ImageView
                 style="@style/FormIcon"
-                android:src="@drawable/ic_account_black" />
+                android:src="@drawable/ic_account" />
 
             <Spinner
                 android:id="@+id/input_budget_account_spinner"

@@ -37,10 +37,8 @@
                 android:layout_marginBottom="@dimen/form_row_bottom_margin"
                 android:ems="15"
                 android:inputType="textCapWords"
-                android:singleLine="true"
-                android:ellipsize="start"
                 android:hint="@string/label_account_name"
-                style="@style/ListItemText"></EditText>
+                style="@style/ListItemPrimaryText" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout

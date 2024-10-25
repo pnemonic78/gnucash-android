@@ -70,7 +70,7 @@
                 android:paddingBottom="4dp"
                 android:paddingLeft="24dp"
                 android:scaleType="centerInside"
-                android:src="@drawable/ic_more_vert_black"
+                android:src="@drawable/ic_more_vert"
                 tools:ignore="ContentDescription" />
 
             <LinearLayout
@@ -90,7 +90,7 @@
                     android:padding="5dp"
                     android:textSize="18sp"
                     android:gravity="right"
-                    android:textColor="@android:color/black"
+                    android:textColor="?android:textColorPrimary"
                     tools:text="$ 2000 of $ 2,500" />
 
                 <ProgressBar
