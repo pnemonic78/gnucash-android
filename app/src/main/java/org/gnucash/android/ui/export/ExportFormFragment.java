@@ -230,16 +230,16 @@ public class ExportFormFragment extends Fragment implements
 
         switch (exportTarget) {
             case DROPBOX, GOOGLE_DRIVE:
-                mDestinationSpinner.setSelection(TARGET_DROPBOX);
+                mBinding.spinnerExportDestination.setSelection(TARGET_DROPBOX);
                 break;
             case OWNCLOUD:
-                mDestinationSpinner.setSelection(TARGET_OWNCLOUD);
+                mBinding.spinnerExportDestination.setSelection(TARGET_OWNCLOUD);
                 break;
             case SD_CARD, URI:
-                mDestinationSpinner.setSelection(TARGET_URI);
+                mBinding.spinnerExportDestination.setSelection(TARGET_URI);
                 break;
             case SHARING:
-                mDestinationSpinner.setSelection(TARGET_SHARE);
+                mBinding.spinnerExportDestination.setSelection(TARGET_SHARE);
                 break;
         }
 
@@ -248,42 +248,42 @@ public class ExportFormFragment extends Fragment implements
         switch (exportFormat) {
             case CSVA:
             case CSVT:
-                mCsvTransactionsRadioButton.setChecked(true);
+                mBinding.radioCsvTransactionsFormat.setChecked(true);
                 break;
             case OFX:
-                mOfxRadioButton.setChecked(true);
+                mBinding.radioOfxFormat.setChecked(true);
                 break;
             case QIF:
-                mQifRadioButton.setChecked(true);
+                mBinding.radioQifFormat.setChecked(true);
                 break;
             case XML:
-                mXmlRadioButton.setChecked(true);
+                mBinding.radioXmlFormat.setChecked(true);
                 break;
         }
 
         switch (csvSeparator) {
             case ',':
-                mSeparatorCommaButton.setChecked(true);
+                mBinding.radioSeparatorCommaFormat.setChecked(true);
                 break;
             case ':':
-                mSeparatorColonButton.setChecked(true);
+                mBinding.radioSeparatorColonFormat.setChecked(true);
                 break;
             case ';':
-                mSeparatorSemicolonButton.setChecked(true);
+                mBinding.radioSeparatorSemicolonFormat.setChecked(true);
                 break;
         }
 
         long startTimeMills = startTime.getTime();
         if (startTimeMills > 0L) {
             mExportStartCalendar.setTimeInMillis(startTimeMills);
-            mExportStartDate.setText(TransactionFormFragment.DATE_FORMATTER.print(startTimeMills));
-            mExportStartTime.setText(TransactionFormFragment.TIME_FORMATTER.print(startTimeMills));
-            mExportAllSwitch.setChecked(false);
+            mBinding.exportStartDate.setText(TransactionFormFragment.DATE_FORMATTER.print(startTimeMills));
+            mBinding.exportStartTime.setText(TransactionFormFragment.TIME_FORMATTER.print(startTimeMills));
+            mBinding.switchExportAll.setChecked(false);
         } else {
-            mExportAllSwitch.setChecked(true);
+            mBinding.switchExportAll.setChecked(true);
         }
 
-        mDeleteAllCheckBox.setChecked(exportParams.shouldDeleteTransactionsAfterExport());
+        mBinding.checkboxPostExportDelete.setChecked(exportParams.shouldDeleteTransactionsAfterExport());
 
         String rrule = scheduledAction.getRuleString();
         onRecurrenceSet(rrule);
@@ -618,7 +618,7 @@ public class ExportFormFragment extends Fragment implements
 
         if (!TextUtils.isEmpty(rrule)) {
             mEventRecurrence.parse(rrule);
-            Context context = mRecurrenceTextView.getContext();
+            Context context = mBinding.inputRecurrence.getContext();
             repeatString = EventRecurrenceFormatter.getRepeatString(context, context.getResources(),
                 mEventRecurrence, true);
         }
