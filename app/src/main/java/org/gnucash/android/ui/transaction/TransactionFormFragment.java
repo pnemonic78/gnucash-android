@@ -458,7 +458,7 @@ public class TransactionFormFragment extends Fragment implements
      * Initialize views with default data for new transactions
      */
     private void initalizeViews() {
-        Context context = mTransactionTypeSwitch.getContext();
+        Context context = mBinding.inputTransactionType.getContext();
 
         long now = System.currentTimeMillis();
         mBinding.inputDate.setText(DATE_FORMATTER.print(now));
@@ -491,8 +491,8 @@ public class TransactionFormFragment extends Fragment implements
                 currentAccountUID = mAccountsDbAdapter.getParentAccountUID(currentAccountUID);
             } while (!currentAccountUID.equals(rootAccountUID));
         } else {
-            mDoubleEntryLayout.setVisibility(View.GONE);
-            mOpenSplitEditor.setVisibility(View.GONE);
+            mBinding.layoutDoubleEntry.setVisibility(View.GONE);
+            mBinding.btnSplitEditor.setVisibility(View.GONE);
         }
     }
 
@@ -820,7 +820,7 @@ public class TransactionFormFragment extends Fragment implements
             return;
         }
 
-        boolean isTemplate = mSaveTemplateCheckbox.isChecked();
+        boolean isTemplate = mBinding.checkboxSaveTemplate.isChecked();
         Transaction transactionOld = mTransaction;
         Transaction transaction = extractTransactionFromView();
         String scheduledActionUID = null;
