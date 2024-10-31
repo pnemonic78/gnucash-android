@@ -453,7 +453,7 @@ public class TransactionFormFragment extends Fragment implements
         mBinding.checkboxSaveTemplate.setChecked(mTransaction.isTemplate());
         String scheduledActionUID = getArguments().getString(UxArgument.SCHEDULED_ACTION_UID);
         if (scheduledActionUID != null && !scheduledActionUID.isEmpty()) {
-            Context context = mRecurrenceTextView.getContext();
+            Context context = mBinding.inputRecurrence.getContext();
             ScheduledAction scheduledAction = ScheduledActionDbAdapter.getInstance().getRecord(scheduledActionUID);
             mRecurrenceRule = scheduledAction.getRuleString();
             mEventRecurrence.parse(mRecurrenceRule);
@@ -1024,7 +1024,7 @@ public class TransactionFormFragment extends Fragment implements
     @Override
     public void onRecurrenceSet(String rrule) {
         Timber.i("TX reoccurs: %s", rrule);
-        Context context = mRecurrenceTextView.getContext();
+        Context context = mBinding.inputRecurrence.getContext();
         mRecurrenceRule = rrule;
         String repeatString = null;
         if (!TextUtils.isEmpty(rrule)) {
