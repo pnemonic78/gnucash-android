@@ -430,6 +430,7 @@ public class TransactionFormFragment extends Fragment implements
         mBinding.checkboxSaveTemplate.setChecked(mTransaction.isTemplate());
         String scheduledActionUID = transaction.getScheduledActionUID();
         if (!TextUtils.isEmpty(scheduledActionUID)) {
+            Context context = mBinding.inputRecurrence.getContext();
             ScheduledAction scheduledAction = ScheduledActionDbAdapter.getInstance().getRecord(scheduledActionUID);
             onRecurrenceSet(scheduledAction.getRuleString());
         }
@@ -1060,15 +1061,16 @@ public class TransactionFormFragment extends Fragment implements
 
     @Override
     public void onRecurrenceSet(String rrule) {
+        Timber.i("TX reoccurs: %s", rrule);
+        Context context = mBinding.inputRecurrence.getContext();
         mRecurrenceRule = rrule;
         if (mRecurrenceViewClickListener != null) {
             mRecurrenceViewClickListener.setRecurrence(rrule);
         }
 
-        final String repeatString;
+        String repeatString = null;
         if (!TextUtils.isEmpty(rrule)) {
             mEventRecurrence.parse(rrule);
-            Context context =  mBinding.checkboxSaveTemplate.getContext();
             repeatString = EventRecurrenceFormatter.getRepeatString(context, context.getResources(), mEventRecurrence, true);
 
             //when recurrence is set, we will definitely be saving a template
@@ -1078,6 +1080,9 @@ public class TransactionFormFragment extends Fragment implements
             repeatString = getString(R.string.label_tap_to_create_schedule);
             mBinding.checkboxSaveTemplate.setEnabled(true);
             mBinding.checkboxSaveTemplate.setChecked(false);
+        }
+        if (TextUtils.isEmpty(repeatString)) {
+            repeatString = context.getString(R.string.label_tap_to_create_schedule);
         }
 
         mBinding.inputRecurrence.setText(repeatString);
