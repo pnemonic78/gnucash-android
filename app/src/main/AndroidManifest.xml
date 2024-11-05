@@ -54,8 +54,6 @@
 
     <application
         android:name="org.gnucash.android.app.GnuCashApplication"
-        android:allowBackup="true"
-        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:largeHeap="true"
         android:theme="@style/Theme.Gnucash.NoActionBar">
