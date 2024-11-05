@@ -16,10 +16,13 @@
 
 package org.gnucash.android.ui.transaction;
 
+import static org.gnucash.android.ui.util.widget.ViewExtKt.setTextToEnd;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -62,6 +65,7 @@ import org.gnucash.android.db.adapter.DatabaseAdapter;
 import org.gnucash.android.db.adapter.PricesDbAdapter;
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter;
 import org.gnucash.android.db.adapter.TransactionsDbAdapter;
+import org.gnucash.android.inputmethodservice.CalculatorKeyboardView;
 import org.gnucash.android.model.AccountType;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
@@ -77,6 +81,7 @@ import org.gnucash.android.ui.settings.PreferenceActivity;
 import org.gnucash.android.ui.transaction.dialog.TransferFundsDialogFragment;
 import org.gnucash.android.ui.util.RecurrenceParser;
 import org.gnucash.android.ui.util.RecurrenceViewClickListener;
+import org.gnucash.android.ui.util.widget.CalculatorKeyboard;
 import org.gnucash.android.util.QualifiedAccountNameCursorAdapter;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -245,6 +250,16 @@ public class TransactionFormFragment extends Fragment implements
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        View view = getView();
+        if (view instanceof ViewGroup parent) {
+            CalculatorKeyboardView keyboardView = mBinding.calculatorKeyboard.calculatorKeyboard;
+            CalculatorKeyboard.rebind(parent, keyboardView, mBinding.inputTransactionAmount);
+        }
+    }
+
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle args = getArguments();
@@ -378,8 +393,7 @@ public class TransactionFormFragment extends Fragment implements
      * This method is called if the fragment is used for editing a transaction
      */
     private void initializeViewsWithTransaction(@NonNull Transaction transaction) {
-        mBinding.inputTransactionName.setText(transaction.getDescription());
-        mBinding.inputTransactionName.setSelection(mBinding.inputTransactionName.getText().length());
+        setTextToEnd(mBinding.inputTransactionName, transaction.getDescription());
 
         mBinding.inputTransactionType.setAccountType(mAccountType);
         mBinding.inputTransactionType.setChecked(transaction.getBalance(mAccountUID).isNegative());
@@ -478,6 +492,7 @@ public class TransactionFormFragment extends Fragment implements
         Commodity commodity = Commodity.getInstance(code);
         mBinding.currencySymbol.setText(commodity.getSymbol());
         mBinding.inputTransactionAmount.setCommodity(commodity);
+        mBinding.inputTransactionAmount.bindKeyboard(mBinding.calculatorKeyboard.calculatorKeyboard);
 
         if (mUseDoubleEntry) {
             String currentAccountUID = mAccountUID;

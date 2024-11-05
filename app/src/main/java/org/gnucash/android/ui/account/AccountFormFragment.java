@@ -18,6 +18,7 @@
 package org.gnucash.android.ui.account;
 
 import static org.gnucash.android.ui.colorpicker.ColorPickerDialog.COLOR_PICKER_DIALOG_TAG;
+import static org.gnucash.android.ui.util.widget.ViewExtKt.setTextToEnd;
 
 import android.app.Activity;
 import android.content.Context;
@@ -319,8 +320,7 @@ public class AccountFormFragment extends Fragment implements FragmentResultListe
             mBinding.inputCurrencySpinner.setEnabled(false);
         }
 
-        mBinding.inputAccountName.setText(account.getName());
-        mBinding.inputAccountName.setSelection(mBinding.inputAccountName.getText().length());
+        setTextToEnd(mBinding.inputAccountName, account.getName());
         mBinding.inputAccountDescription.setText(account.getDescription());
 
         if (mUseDoubleEntry) {

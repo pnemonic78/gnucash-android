@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -51,6 +52,7 @@ public class FormActivity extends PasscodeLockActivity {
 
     private String mAccountUID;
 
+    @Nullable
     private CalculatorKeyboard mOnBackListener;
 
     public enum FormType {
@@ -229,19 +231,17 @@ public class FormActivity extends PasscodeLockActivity {
     }
 
 
-    public void setOnBackListener(CalculatorKeyboard keyboard) {
+    public void setOnBackListener(@Nullable CalculatorKeyboard keyboard) {
         mOnBackListener = keyboard;
     }
 
     @Override
     public void onBackPressed() {
-        boolean eventProcessed = false;
+        if (mOnBackListener != null && mOnBackListener.onBackPressed()) {
+            return;
+        }
 
-        if (mOnBackListener != null)
-            eventProcessed = mOnBackListener.onBackPressed();
-
-        if (!eventProcessed)
-            super.onBackPressed();
+        super.onBackPressed();
     }
 
 }
