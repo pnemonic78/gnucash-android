@@ -15,11 +15,8 @@
  */
 package org.gnucash.android.app;
 
-import android.app.AlarmManager;
 import android.app.Application;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -152,6 +149,7 @@ public class GnuCashApplication extends Application {
     /**
      * Initialize database adapter singletons for use in the application
      * This method should be called every time a new book is opened
+     *
      * @param context the context.
      */
     public static void initializeDatabaseAdapters(Context context) {
@@ -422,15 +420,15 @@ public class GnuCashApplication extends Application {
      *     <li>{@link Commodity#DEFAULT_COMMODITY}</li>
      * </ul>
      *
-     * @param context the context.
+     * @param context      the context.
      * @param currencyCode ISO 4217 currency code
      * @see #getDefaultCurrencyCode()
      */
     public static void setDefaultCurrencyCode(@NonNull Context context, @NonNull String currencyCode) {
         PreferenceManager.getDefaultSharedPreferences(context)
-                .edit()
-                .putString(context.getString(R.string.key_default_currency), currencyCode)
-                .apply();
+            .edit()
+            .putString(context.getString(R.string.key_default_currency), currencyCode)
+            .apply();
         Commodity.DEFAULT_COMMODITY = Commodity.getInstance(currencyCode);
     }
 
@@ -460,32 +458,6 @@ public class GnuCashApplication extends Application {
     }
 
     /**
-     * Starts the service for scheduled events and schedules an alarm to call the service twice daily.
-     * <p>If the alarm already exists, this method does nothing. If not, the alarm will be created
-     * Hence, there is no harm in calling the method repeatedly</p>
-     *
-     * @param context Application context
-     */
-    public static void startScheduledActionExecutionService(Context context) {
-        Intent alarmIntent = new Intent(context, PeriodicJobReceiver.class);
-        alarmIntent.setAction(PeriodicJobReceiver.ACTION_SCHEDULED_ACTIONS);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent,
-                PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_MUTABLE);
-
-        if (pendingIntent != null) //if service is already scheduled, just return
-            return;
-        else
-            pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, PendingIntent.FLAG_MUTABLE);
-
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES,
-                AlarmManager.INTERVAL_HOUR, pendingIntent);
-
-        ScheduledActionService.enqueueWork(context);
-    }
-
-    /**
      * Sets up UserVoice.
      *
      * <p>Allows users to contact with us and access help topics.</p>
@@ -505,6 +477,7 @@ public class GnuCashApplication extends Application {
     /**
      * Returns <code>true</code> if setting is enabled to backup the book before deleting transactions,
      * <code>false</code> otherwise.
+     *
      * @param context The context.
      * @return <code>true</code> if the book should be backed-up.
      */
