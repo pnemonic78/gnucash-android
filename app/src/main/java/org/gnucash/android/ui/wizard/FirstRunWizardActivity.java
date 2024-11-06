@@ -192,7 +192,6 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
             mBinding.defaultButtons.btnSave.setText(mEditingAfterReview ? R.string.review : R.string.btn_wizard_next);
             mBinding.defaultButtons.btnSave.setBackground(btnSaveDefaultBackground);
             mBinding.defaultButtons.btnSave.setTextColor(btnSaveDefaultColor);
-            mBinding.defaultButtons.btnSave.setEnabled(position != mPagerAdapter.getCutOffPage());
         }
 
         mBinding.defaultButtons.btnCancel

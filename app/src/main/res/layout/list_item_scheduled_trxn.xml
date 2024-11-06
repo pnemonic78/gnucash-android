@@ -20,7 +20,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/ListItem"
-    style="@style/ListItem"
     android:layout_width="match_parent"
     android:descendantFocusability="blocksDescendants"
     android:paddingStart="0dp"

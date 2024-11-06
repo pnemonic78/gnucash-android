@@ -28,7 +28,7 @@
                 android:title="@string/nav_menu_favorites" />
             <!--
                         <item android:id="@+id/nav_item_budgets"
-                            android:icon="@drawable/ic_dashboard_black_24dp"
+                            android:icon="@drawable/ic_dashboard"
                             android:title="@string/nav_menu_budgets" />
             -->
             <item
