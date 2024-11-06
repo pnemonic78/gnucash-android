@@ -32,7 +32,6 @@ import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
 import org.gnucash.android.model.Commodity;
-import org.gnucash.android.model.TransactionType;
 import org.gnucash.android.ui.settings.dialog.DeleteAllTransactionsConfirmationDialog;
 
 import java.util.List;
@@ -65,14 +64,9 @@ public class TransactionsPreferenceFragment extends PreferenceFragmentCompat imp
     public void onResume() {
         super.onResume();
 
-        Context context = requireContext();
         SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
-        TransactionType defaultTransactionType = GnuCashApplication.getDefaultTransactionType(context);
-        Preference pref = findPreference(getString(R.string.key_default_transaction_type));
-        setLocalizedSummary(pref, defaultTransactionType.value);
-        pref.setOnPreferenceChangeListener(this);
 
-        pref = findPreference(getString(R.string.key_use_double_entry));
+        Preference pref = findPreference(getString(R.string.key_use_double_entry));
         pref.setOnPreferenceChangeListener(this);
 
         String keyCompactView = getString(R.string.key_use_compact_list);
@@ -102,8 +96,6 @@ public class TransactionsPreferenceFragment extends PreferenceFragmentCompat imp
         if (preference.getKey().equals(getString(R.string.key_use_double_entry))) {
             boolean useDoubleEntry = (Boolean) newValue;
             setImbalanceAccountsHidden(useDoubleEntry);
-        } else {
-            setLocalizedSummary(preference, newValue.toString());
         }
         return true;
     }
@@ -139,17 +131,4 @@ public class TransactionsPreferenceFragment extends PreferenceFragmentCompat imp
             }
         }
     }
-
-    /**
-     * Localizes the label for DEBIT/CREDIT in the settings summary
-     *
-     * @param preference Preference whose summary is to be localized
-     * @param value      New value for the preference summary
-     */
-    private void setLocalizedSummary(Preference preference, String value) {
-        TransactionType type = TransactionType.of(value);
-        String localizedLabel = (type == TransactionType.DEBIT) ? getString(R.string.label_debit) : getString(R.string.label_credit);
-        preference.setSummary(localizedLabel);
-    }
-
 }

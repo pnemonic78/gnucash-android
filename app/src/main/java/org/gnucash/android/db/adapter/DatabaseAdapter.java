@@ -873,6 +873,13 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
         }
     }
 
+    public void closeQuietly() {
+        try {
+            close();
+        } catch (IOException ignore) {
+        }
+    }
+
     public String getUID(Model model) {
         return model.getUID();
     }

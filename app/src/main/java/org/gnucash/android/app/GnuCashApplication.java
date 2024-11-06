@@ -60,7 +60,6 @@ import java.util.Locale;
 
 import timber.log.Timber;
 
-
 /**
  * An {@link Application} subclass for retrieving static context
  *

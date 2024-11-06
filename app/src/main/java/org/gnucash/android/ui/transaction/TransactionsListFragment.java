@@ -16,6 +16,8 @@
 
 package org.gnucash.android.ui.transaction;
 
+import static org.gnucash.android.ui.util.TextViewExtKt.displayBalance;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -32,6 +34,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -300,6 +303,8 @@ public class TransactionsListFragment extends Fragment implements
             public final ImageView editTransaction;
 
             private long transactionId;
+            @ColorInt
+            private final int colorBalanceZero;
 
             public TransactionViewHolder(CardviewCompactTransactionBinding binding) {
                 super(binding.getRoot());
@@ -309,6 +314,7 @@ public class TransactionsListFragment extends Fragment implements
                 optionsMenu = binding.optionsMenu;
                 transactionDate = null;
                 editTransaction = null;
+                colorBalanceZero = transactionAmount.getCurrentTextColor();
                 setup();
             }
 
@@ -320,6 +326,7 @@ public class TransactionsListFragment extends Fragment implements
                 optionsMenu = binding.optionsMenu;
                 transactionDate = binding.transactionDate;
                 editTransaction = binding.editTransaction;
+                colorBalanceZero = transactionAmount.getCurrentTextColor();
                 setup();
             }
 
@@ -369,7 +376,7 @@ public class TransactionsListFragment extends Fragment implements
 
                 final String transactionUID = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseSchema.TransactionEntry.COLUMN_UID));
                 Money amount = mTransactionsDbAdapter.getBalance(transactionUID, mAccountUID);
-                TransactionsActivity.displayBalance(transactionAmount, amount);
+                displayBalance(transactionAmount, amount, colorBalanceZero);
 
                 long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseSchema.TransactionEntry.COLUMN_TIMESTAMP));
                 String dateText = TransactionsActivity.getPrettyDateFormat(getActivity(), dateMillis);

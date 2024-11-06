@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
 
+<!--
  Copyright (c) 2012 - 2015 Ngewi Fet <ngewif@gmail.com>
  
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,9 +55,9 @@
 
     <application
         android:name="org.gnucash.android.app.GnuCashApplication"
-        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
         android:largeHeap="true"
-        android:theme="@style/Theme.Gnucash.NoActionBar">
+        android:theme="@style/Theme.GnuCash.NoActionBar">
         <activity
             android:name=".ui.account.AccountsActivity"
             android:exported="true">
@@ -105,14 +106,14 @@
         <activity android:name=".ui.transaction.ScheduledActionsActivity" />
         <activity
             android:name=".ui.passcode.PasscodePreferenceActivity"
-            android:theme="@style/Theme.Gnucash" />
+            android:theme="@style/Theme.GnuCash" />
         <activity android:name=".ui.transaction.TransactionsActivity" />
         <activity
             android:name=".ui.homescreen.WidgetConfigurationActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:label="@string/label_widget_configuration"
-            android:theme="@style/Dialog.WidgetConfiguration">
+            android:theme="@style/Theme.GnuCash.WidgetConfiguration">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
@@ -133,11 +134,11 @@
         <activity
             android:name=".ui.wizard.FirstRunWizardActivity"
             android:label="@string/title_setup_gnucash"
-            android:theme="@style/Theme.Gnucash" />
+            android:theme="@style/Theme.GnuCash" />
         <activity
             android:name=".ui.settings.PreferenceActivity"
             android:label="@string/title_settings"
-            android:theme="@style/Theme.Gnucash" />
+            android:theme="@style/Theme.GnuCash" />
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:configChanges="orientation|keyboard"
@@ -178,7 +179,7 @@
         </receiver>
         <receiver
             android:name=".receivers.TransactionAppWidgetProvider"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -189,7 +190,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
+            android:name="androidx.core.content.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

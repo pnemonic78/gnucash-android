@@ -15,6 +15,8 @@
  */
 package org.gnucash.android.ui.transaction;
 
+import static org.gnucash.android.ui.util.TextViewExtKt.displayBalance;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -35,6 +37,7 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -103,6 +106,8 @@ public class SplitEditorFragment extends Fragment {
     private final Collection<SplitViewHolder> transferAttempt = new ArrayList<>();
 
     private FragmentSplitEditorBinding mBinding;
+    @ColorInt
+    private int colorBalanceZero;
 
     /**
      * Create and return a new instance of the fragment with the appropriate paramenters
@@ -120,6 +125,7 @@ public class SplitEditorFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mBinding = FragmentSplitEditorBinding.inflate(inflater, container, false);
+        colorBalanceZero = mBinding.imbalanceTextview.getCurrentTextColor();
         return mBinding.getRoot();
     }
 
@@ -154,7 +160,7 @@ public class SplitEditorFragment extends Fragment {
             View splitView = addSplitView(split);
             splitView.findViewById(R.id.input_accounts_spinner).setEnabled(false);
             splitView.findViewById(R.id.btn_remove_split).setVisibility(View.GONE);
-            TransactionsActivity.displayBalance(mBinding.imbalanceTextview, new Money(mBaseAmount.negate(), mCommodity));
+            displayBalance(mBinding.imbalanceTextview, new Money(mBaseAmount.negate(), mCommodity), colorBalanceZero);
         }
 
     }
@@ -469,7 +475,7 @@ public class SplitEditorFragment extends Fragment {
                 }
             }
 
-            TransactionsActivity.displayBalance(mBinding.imbalanceTextview, new Money(imbalance, mCommodity));
+            displayBalance(mBinding.imbalanceTextview, new Money(imbalance, mCommodity), colorBalanceZero);
         }
     }
 

@@ -32,6 +32,7 @@
             <TableRow android:padding="@dimen/dialog_padding">
 
                 <TextView
+                    android:id="@+id/amount_label"
                     android:text="@string/label_transaction_amount"
                     android:textSize="16sp"
                     android:layout_weight="1"

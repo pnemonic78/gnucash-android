@@ -46,10 +46,8 @@
                     android:layout_height="wrap_content"
                     android:ems="15"
                     android:inputType="textCapWords"
-                    android:singleLine="true"
-                    android:ellipsize="start"
                     android:hint="Budget name"
-                    style="@style/ListItemText"></EditText>
+                    style="@style/ListItemPrimaryText" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TableRow
@@ -59,7 +57,7 @@
 
                 <ImageView
                     style="@style/FormIcon"
-                    android:src="@drawable/ic_notes_black" />
+                    android:src="@drawable/ic_notes" />
 
                 <EditText
                     android:id="@+id/input_description"
@@ -67,7 +65,7 @@
                     android:layout_weight="5"
                     android:layout_height="wrap_content"
                     android:singleLine="false"
-                    android:background="@android:color/transparent"
+                    android:background="@null"
                     android:hint="Description"
                     android:inputType="textMultiLine|textCapSentences" />
             </TableRow>
@@ -81,7 +79,7 @@
 
                 <ImageView
                     style="@style/FormIcon"
-                    android:src="@drawable/ic_repeat_black" />
+                    android:src="@drawable/ic_repeat" />
 
                 <TextView
                     android:id="@+id/input_recurrence"
@@ -115,7 +113,7 @@
                     android:clickable="true"
                     android:textSize="16sp"
                     android:padding="3dp"
-                    android:textColor="@android:color/black"
+                    android:textColor="?android:textColorPrimary"
                     android:gravity="left" />
             </TableRow>
 

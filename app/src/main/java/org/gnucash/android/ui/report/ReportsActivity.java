@@ -113,6 +113,10 @@ public class ReportsActivity extends BaseDrawerActivity implements AdapterView.O
     public void inflateView() {
         mBinding = ActivityReportsBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
+        mDrawerLayout = mBinding.drawerLayout;
+        mNavigationView = mBinding.navView;
+        mToolbar = mBinding.toolbarLayout.toolbar;
+        mToolbarProgress = mBinding.toolbarLayout.toolbarProgress.progress;
     }
 
     @Override

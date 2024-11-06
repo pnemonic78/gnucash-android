@@ -20,8 +20,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/ListItem"
+    style="@style/ListItem"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
     android:paddingStart="0dp"
     tools:ignore="RtlSymmetry">
@@ -30,6 +30,7 @@
         android:id="@+id/checkbox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:focusable="false"
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,11 +38,9 @@
 
     <TextView
         android:id="@+id/primary_text"
-        style="@style/ListItemText"
+        style="@style/ListItemPrimaryText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:singleLine="true"
         android:text="@string/label_transaction_name"
         android:textSize="15sp"
         app:layout_constraintEnd_toStartOf="@id/right_text"
@@ -50,14 +49,12 @@
 
     <TextView
         android:id="@+id/secondary_text"
+        style="@style/ListItemSecondaryText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="2"
-        android:singleLine="false"
         android:text="@string/label_transaction_name"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:textColorSecondary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@id/primary_text"
         app:layout_constraintTop_toBottomOf="@id/primary_text" />
@@ -70,6 +67,7 @@
         android:gravity="end"
         android:singleLine="true"
         android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="?android:textColorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/primary_text"
         tools:text="@tools:sample/us_zipcodes" />

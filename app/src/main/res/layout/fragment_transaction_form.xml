@@ -41,7 +41,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_span="4"
-                    android:background="@android:color/transparent"
+                    android:background="@null"
                     android:completionThreshold="1"
                     android:hint="@string/label_transaction_name"
                     android:imeOptions="actionNext"
@@ -84,7 +84,7 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:contentDescription="@string/title_split_editor"
-                    android:src="@drawable/ic_split_black" />
+                    android:src="@drawable/ic_split" />
 
                 <org.gnucash.android.ui.util.widget.TransactionTypeSwitch
                     android:id="@+id/input_transaction_type"
@@ -108,7 +108,7 @@
 
                 <ImageView
                     style="@style/FormIcon"
-                    android:src="@drawable/ic_account_black" />
+                    android:src="@drawable/ic_account" />
 
                 <Spinner
                     android:id="@+id/input_transfer_account_spinner"
@@ -123,7 +123,7 @@
 
                 <ImageView
                     style="@style/FormIcon"
-                    android:src="@drawable/ic_time_black" />
+                    android:src="@drawable/ic_time" />
 
                 <TextView
                     android:id="@+id/input_date"
@@ -146,14 +146,14 @@
 
                 <ImageView
                     style="@style/FormIcon"
-                    android:src="@drawable/ic_notes_black" />
+                    android:src="@drawable/ic_notes" />
 
                 <EditText
                     android:id="@+id/input_description"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@android:color/transparent"
+                    android:background="@null"
                     android:hint="@string/label_transaction_description"
                     android:inputType="textMultiLine|textCapSentences"
                     android:singleLine="false" />
@@ -165,7 +165,7 @@
 
                 <ImageView
                     style="@style/FormIcon"
-                    android:src="@drawable/ic_repeat_black" />
+                    android:src="@drawable/ic_repeat" />
 
                 <TextView
                     android:id="@+id/input_recurrence"

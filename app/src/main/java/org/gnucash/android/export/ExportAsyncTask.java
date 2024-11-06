@@ -564,12 +564,6 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Integer> {
     private void refreshViews() {
         if (mContext instanceof Refreshable) {
             ((Refreshable) mContext).refresh();
-        } else
-        if (mContext instanceof AccountsActivity) {
-            Fragment fragment =
-                ((AccountsActivity) mContext).getCurrentAccountListFragment();
-            if (fragment instanceof Refreshable)
-                ((Refreshable) fragment).refresh();
         }
     }
 }

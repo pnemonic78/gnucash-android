@@ -28,7 +28,7 @@
     <item android:state_enabled="true">
         <shape android:shape="oval">
             <padding android:bottom="5dp" android:left="5dp" android:right="5dp" android:top="5dp" />
-            <stroke android:color="@color/theme_primary" android:width="1dp" />
+            <stroke android:color="?colorPrimary" android:width="1dp" />
             <solid android:color="@color/transparent" />
         </shape>
     </item>
