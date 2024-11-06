@@ -205,5 +205,7 @@ class Commodity(
             val adapter = CommoditiesDbAdapter.getInstance()
             return adapter?.getCommodity(currencyCode) ?: DEFAULT_COMMODITY
         }
+
+        const val LABEL_SEPARATOR = " \u2014 "
     }
 }
