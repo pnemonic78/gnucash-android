@@ -456,7 +456,7 @@ public class TransactionFormFragment extends Fragment implements
         Commodity commodity = Commodity.getInstance(currencyCode);
         mBinding.inputTransactionAmount.setCommodity(commodity);
 
-        mBinding.checkboxSaveTemplate.setChecked(mTransaction.isTemplate());
+        mBinding.checkboxSaveTemplate.setChecked(transaction.isTemplate());
         String scheduledActionUID = transaction.getScheduledActionUID();
         if (!TextUtils.isEmpty(scheduledActionUID)) {
             Context context = mBinding.inputRecurrence.getContext();

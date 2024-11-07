@@ -276,7 +276,7 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
     private void gotoNextPage() {
         int position = mBinding.pager.getCurrentItem();
         int positionNext = position + 1;
-        int count = mPagerAdapter.getItemCount();
+        int count = mPagerAdapter.data.size() + STEP_REVIEW;
         if (positionNext >= count) {
             applySettings();
         } else if (mEditingAfterReview) {
