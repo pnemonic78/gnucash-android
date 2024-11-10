@@ -309,10 +309,10 @@ public class GncXmlExporter extends Exporter {
                 xmlSerializer.endTag(null, TAG_TRX_ID);
                 // currency
                 String currencyCode = cursor.getString(cursor.getColumnIndexOrThrow("trans_currency"));
-                trnCommodity = CommoditiesDbAdapter.getInstance().getCommodity(currencyCode);//Currency.getInstance(currencyCode);
+                trnCommodity = Commodity.getInstance(currencyCode);
                 xmlSerializer.startTag(null, TAG_TRX_CURRENCY);
                 xmlSerializer.startTag(null, TAG_COMMODITY_SPACE);
-                xmlSerializer.text(COMMODITY_ISO4217);
+                xmlSerializer.text(trnCommodity.getNamespace());
                 xmlSerializer.endTag(null, TAG_COMMODITY_SPACE);
                 xmlSerializer.startTag(null, TAG_COMMODITY_ID);
                 xmlSerializer.text(currencyCode);
