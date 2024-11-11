@@ -543,7 +543,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      *
      * @return List of {@link Account}s in the database
      */
-    public List<Account> getSimpleAccountList(String where, String[] whereArgs, String orderBy) {
+    public List<Account> getSimpleAccountList(@Nullable String where, @Nullable String[] whereArgs, @Nullable String orderBy) {
         LinkedList<Account> accounts = new LinkedList<>();
         Cursor c = fetchAccounts(where, whereArgs, orderBy);
         try {
@@ -1104,6 +1104,28 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         } finally {
             cursor.close();
         }
+    }
+
+    /**
+     * Returns the default transfer account record UID for the account with UID <code>accountUID</code>
+     *
+     * @param accountUID UID of the account record
+     * @return UID of default transfer account
+     */
+    @Nullable
+    public String getDefaultTransferAccountUID(String accountUID) {
+        Cursor cursor = mDb.query(AccountEntry.TABLE_NAME,
+                new String[]{AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID},
+                AccountEntry.COLUMN_UID + " = ?",
+                new String[]{accountUID}, null, null, null);
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getString(cursor.getColumnIndexOrThrow(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID));
+            }
+        } finally {
+            cursor.close();
+        }
+        return null;
     }
 
     /**

@@ -17,7 +17,6 @@ package org.gnucash.android.ui.budget;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -40,14 +39,14 @@ import androidx.fragment.app.Fragment;
 import org.gnucash.android.R;
 import org.gnucash.android.databinding.FragmentBudgetAmountEditorBinding;
 import org.gnucash.android.databinding.ItemBudgetAmountBinding;
-import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
+import org.gnucash.android.model.Account;
 import org.gnucash.android.model.BudgetAmount;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
+import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter;
 import org.gnucash.android.ui.common.UxArgument;
 import org.gnucash.android.ui.util.widget.CalculatorEditText;
-import org.gnucash.android.util.QualifiedAccountNameCursorAdapter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -59,8 +58,7 @@ import java.util.List;
  */
 public class BudgetAmountEditorFragment extends Fragment {
 
-    private Cursor mAccountCursor;
-    private QualifiedAccountNameCursorAdapter mAccountCursorAdapter;
+    private QualifiedAccountNameAdapter accountNameAdapter;
     private List<View> mBudgetAmountViews = new ArrayList<>();
     private AccountsDbAdapter mAccountsDbAdapter;
 
@@ -198,14 +196,7 @@ public class BudgetAmountEditorFragment extends Fragment {
      * Loads the accounts in the spinner
      */
     private void setupAccountSpinnerAdapter() {
-        String conditions = "(" + DatabaseSchema.AccountEntry.COLUMN_HIDDEN + " = 0 )";
-
-        if (mAccountCursor != null) {
-            mAccountCursor.close();
-        }
-        mAccountCursor = mAccountsDbAdapter.fetchAccountsOrderedByFavoriteAndFullName(conditions, null);
-
-        mAccountCursorAdapter = new QualifiedAccountNameCursorAdapter(getActivity(), mAccountCursor);
+        accountNameAdapter = new QualifiedAccountNameAdapter(requireContext(), mAccountsDbAdapter);
     }
 
     /**
@@ -221,7 +212,8 @@ public class BudgetAmountEditorFragment extends Fragment {
             if (amountValue == null)
                 continue;
             Money amount = new Money(amountValue, Commodity.DEFAULT_COMMODITY);
-            String accountUID = mAccountsDbAdapter.getUID(viewHolder.budgetAccountSpinner.getSelectedItemId());
+            int accountPosition = viewHolder.budgetAccountSpinner.getSelectedItemPosition();
+            String accountUID = accountNameAdapter.getUID(accountPosition);
             BudgetAmount budgetAmount = new BudgetAmount(amount, accountUID);
             budgetAmounts.add(budgetAmount);
         }
@@ -247,13 +239,13 @@ public class BudgetAmountEditorFragment extends Fragment {
             itemView.setTag(this);
 
             amountEditText.bindListeners(mBinding.calculatorKeyboard);
-            budgetAccountSpinner.setAdapter(mAccountCursorAdapter);
+            budgetAccountSpinner.setAdapter(accountNameAdapter);
 
             budgetAccountSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    String currencyCode = mAccountsDbAdapter.getCurrencyCode(mAccountsDbAdapter.getUID(id));
-                    Commodity commodity = Commodity.getInstance(currencyCode);
+                    Account account = accountNameAdapter.getAccount(position);
+                    Commodity commodity = account.getCommodity();
                     currencySymbolTextView.setText(commodity.getSymbol());
                 }
 
@@ -274,7 +266,7 @@ public class BudgetAmountEditorFragment extends Fragment {
 
         public void bindViews(BudgetAmount budgetAmount) {
             amountEditText.setValue(budgetAmount.getAmount().asBigDecimal());
-            budgetAccountSpinner.setSelection(mAccountCursorAdapter.getPosition(budgetAmount.getAccountUID()));
+            budgetAccountSpinner.setSelection(accountNameAdapter.getPosition(budgetAmount.getAccountUID()));
         }
     }
 }

@@ -49,11 +49,11 @@ import org.gnucash.android.model.Book;
 import org.gnucash.android.model.Money;
 import org.gnucash.android.receivers.TransactionAppWidgetProvider;
 import org.gnucash.android.ui.account.AccountsActivity;
+import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter;
 import org.gnucash.android.ui.common.FormActivity;
 import org.gnucash.android.ui.common.UxArgument;
 import org.gnucash.android.ui.settings.PreferenceActivity;
 import org.gnucash.android.ui.transaction.TransactionsActivity;
-import org.gnucash.android.util.QualifiedAccountNameCursorAdapter;
 
 import java.util.Locale;
 
@@ -66,10 +66,9 @@ import timber.log.Timber;
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 public class WidgetConfigurationActivity extends Activity {
-    private AccountsDbAdapter mAccountsDbAdapter;
     private int mAppWidgetId;
 
-    private SimpleCursorAdapter mAccountsCursorAdapter;
+    private QualifiedAccountNameAdapter accountNameAdapter;
 
     private static final int FLAGS_UPDATE = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
@@ -103,18 +102,13 @@ public class WidgetConfigurationActivity extends Activity {
         mBinding.inputBooksSpinner.setAdapter(booksCursorAdapter);
         mBinding.inputBooksSpinner.setSelection(position);
 
-        mAccountsDbAdapter = AccountsDbAdapter.getInstance();
-        Cursor cursor = mAccountsDbAdapter.fetchAllRecordsOrderedByFullName();
+        accountNameAdapter = new QualifiedAccountNameAdapter(this);
 
-        if (cursor.getCount() <= 0) {
+        if (accountNameAdapter.getCount() <= 0) {
             Toast.makeText(this, R.string.error_no_accounts, Toast.LENGTH_LONG).show();
             finish();
         }
-
-        mAccountsCursorAdapter = new QualifiedAccountNameCursorAdapter(this, cursor);
-        //without this line, the app crashes when a user tries to select an account
-        mAccountsCursorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mBinding.inputAccountsSpinner.setAdapter(mAccountsCursorAdapter);
+        mBinding.inputAccountsSpinner.setAdapter(accountNameAdapter);
 
         boolean passcodeEnabled = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
                 .getBoolean(UxArgument.ENABLED_PASSCODE, false);
@@ -130,13 +124,10 @@ public class WidgetConfigurationActivity extends Activity {
         mBinding.inputBooksSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Context context = view.getContext();
                 Book book = BooksDbAdapter.getInstance().getRecord(id);
-                SQLiteDatabase db = new DatabaseHelper(WidgetConfigurationActivity.this, book.getUID()).getWritableDatabase();
-                mAccountsDbAdapter = new AccountsDbAdapter(db);
-
-                Cursor cursor = mAccountsDbAdapter.fetchAllRecordsOrderedByFullName();
-                mAccountsCursorAdapter.swapCursor(cursor);
-                mAccountsCursorAdapter.notifyDataSetChanged();
+                SQLiteDatabase db = new DatabaseHelper(context, book.getUID()).getWritableDatabase();
+                accountNameAdapter.swapAdapter(new AccountsDbAdapter(db));
             }
 
             @Override
@@ -160,7 +151,7 @@ public class WidgetConfigurationActivity extends Activity {
             }
 
             String bookUID = BooksDbAdapter.getInstance().getUID(mBinding.inputBooksSpinner.getSelectedItemId());
-            String accountUID = mAccountsDbAdapter.getUID(mBinding.inputAccountsSpinner.getSelectedItemId());
+            String accountUID = accountNameAdapter.getUID(mBinding.inputAccountsSpinner.getSelectedItemPosition());
             boolean hideAccountBalance = mBinding.inputHideAccountBalance.isChecked();
 
             configureWidget(WidgetConfigurationActivity.this, mAppWidgetId, bookUID, accountUID, hideAccountBalance);

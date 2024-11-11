@@ -28,9 +28,9 @@ public final class UxArgument {
     public static final String SELECTED_TRANSACTION_UID = "selected_transaction_uid";
 
     /**
-     * Key for passing list of IDs selected transactions as an argument in a bundle or intent
+     * Key for passing list of UIDs selected transactions as an argument in a bundle or intent
      */
-    public static final String SELECTED_TRANSACTION_IDS = "selected_transactions";
+    public static final String SELECTED_TRANSACTION_UIDS = "selected_transactions";
 
     /**
      * Key for the origin account as argument when moving accounts

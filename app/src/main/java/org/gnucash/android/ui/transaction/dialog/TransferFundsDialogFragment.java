@@ -62,9 +62,18 @@ public class TransferFundsDialogFragment extends DialogFragment {
 
     public static TransferFundsDialogFragment getInstance(Money transactionAmount, String targetCurrencyCode,
                                                           OnTransferFundsListener transferFundsListener) {
+        return getInstance(
+            transactionAmount,
+            CommoditiesDbAdapter.getInstance().getCommodity(targetCurrencyCode),
+            transferFundsListener
+        );
+    }
+
+    public static TransferFundsDialogFragment getInstance(Money transactionAmount, Commodity targetCommodity,
+                                                          OnTransferFundsListener transferFundsListener) {
         TransferFundsDialogFragment fragment = new TransferFundsDialogFragment();
         fragment.mOriginAmount = transactionAmount;
-        fragment.mTargetCommodity = CommoditiesDbAdapter.getInstance().getCommodity(targetCurrencyCode);
+        fragment.mTargetCommodity = targetCommodity;
         fragment.mOnTransferFundsListener = transferFundsListener;
         return fragment;
     }

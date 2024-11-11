@@ -28,8 +28,8 @@ import androidx.fragment.app.ListFragment;
 import com.tech.freak.wizardpager.ui.PageFragmentCallbacks;
 
 import org.gnucash.android.R;
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter;
-import org.gnucash.android.util.CommoditiesCursorAdapter;
+import org.gnucash.android.model.Commodity;
+import org.gnucash.android.ui.adapter.CommoditiesAdapter;
 
 /**
  * Displays a list of all currencies in the database and allows selection of one
@@ -45,7 +45,7 @@ public class CurrencySelectFragment extends ListFragment {
     private CurrencySelectPage mPage;
     private PageFragmentCallbacks mCallbacks;
 
-    private CommoditiesDbAdapter mCommoditiesDbAdapter;
+    private CommoditiesAdapter commoditiesAdapter;
 
     String mPageKey;
 
@@ -70,12 +70,10 @@ public class CurrencySelectFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        CommoditiesCursorAdapter commoditiesCursorAdapter = new CommoditiesCursorAdapter(getActivity(), R.layout.list_item_commodity);
-        setListAdapter(commoditiesCursorAdapter);
+        commoditiesAdapter = new CommoditiesAdapter(requireContext(), R.layout.list_item_commodity);
+        setListAdapter(commoditiesAdapter);
 
         getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        mCommoditiesDbAdapter = CommoditiesDbAdapter.getInstance();
     }
 
     @Override
@@ -98,7 +96,8 @@ public class CurrencySelectFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
 
-        String currencyCode = mCommoditiesDbAdapter.getCurrencyCode(mCommoditiesDbAdapter.getUID(id));
+        Commodity commodity = commoditiesAdapter.getCommodity(position);
+        String currencyCode = commodity.getCurrencyCode();
         mPage.getData().putString(CurrencySelectPage.CURRENCY_CODE_DATA_KEY, currencyCode);
     }
 

@@ -22,6 +22,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.TextUtils;
 
 import androidx.annotation.StringRes;
 import androidx.fragment.app.DialogFragment;
@@ -54,20 +55,21 @@ public class TransactionsDeleteConfirmationDialogFragment extends DialogFragment
 
     private static final String EXTRA_TITLE_ID = "title_id";
 
-    public static TransactionsDeleteConfirmationDialogFragment newInstance(@StringRes int titleId, long id) {
+    public static TransactionsDeleteConfirmationDialogFragment newInstance(@StringRes int titleId, String uid) {
         TransactionsDeleteConfirmationDialogFragment frag = new TransactionsDeleteConfirmationDialogFragment();
         Bundle args = new Bundle();
         args.putInt(EXTRA_TITLE_ID, titleId);
-        args.putLong(UxArgument.SELECTED_TRANSACTION_IDS, id);
+        args.putString(UxArgument.SELECTED_TRANSACTION_UID, uid);
         frag.setArguments(args);
         return frag;
     }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        int title = getArguments().getInt(EXTRA_TITLE_ID);
-        final long rowId = getArguments().getLong(UxArgument.SELECTED_TRANSACTION_IDS);
-        int message = rowId == 0 ? R.string.msg_delete_all_transactions_confirmation : R.string.msg_delete_transaction_confirmation;
+        Bundle args = getArguments();
+        int title = args.getInt(EXTRA_TITLE_ID);
+        final String uid = args.getString(UxArgument.SELECTED_TRANSACTION_UID);
+        int message = TextUtils.isEmpty(uid) ? R.string.msg_delete_all_transactions_confirmation : R.string.msg_delete_transaction_confirmation;
         return new AlertDialog.Builder(getActivity())
             .setIcon(R.drawable.ic_warning_black)
             .setTitle(title)
@@ -77,7 +79,7 @@ public class TransactionsDeleteConfirmationDialogFragment extends DialogFragment
                         final FragmentManager fm = getParentFragmentManager();
                         final Activity activity = requireActivity();
                         final TransactionsDbAdapter transactionsDbAdapter = TransactionsDbAdapter.getInstance();
-                        if (rowId == 0) {
+                        if (TextUtils.isEmpty(uid)) {
                             //create backup before deleting everything
                             BackupManager.backupActiveBookAsync(activity, result -> {
                                 List<Transaction> openingBalances = new ArrayList<Transaction>();
@@ -95,7 +97,7 @@ public class TransactionsDeleteConfirmationDialogFragment extends DialogFragment
                                 return null;
                             });
                         } else {
-                            transactionsDbAdapter.deleteRecord(rowId);
+                            transactionsDbAdapter.deleteRecord(uid);
                             refresh(activity, fm);
                         }
                     }

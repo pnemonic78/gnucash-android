@@ -108,7 +108,7 @@ public class CommoditiesDbAdapter extends DatabaseAdapter<Commodity> {
     @Override
     public Cursor fetchAllRecords() {
         return mDb.query(mTableName, null, null, null, null, null,
-            CommodityEntry.COLUMN_FULLNAME + " ASC");
+            CommodityEntry.COLUMN_MNEMONIC + " ASC");
     }
 
     /**

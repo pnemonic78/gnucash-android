@@ -47,8 +47,6 @@ import androidx.core.content.ContextCompat;
 import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.ListFragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.Loader;
 
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
@@ -61,6 +59,7 @@ import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.model.Split;
 import org.gnucash.android.model.Transaction;
 import org.gnucash.android.ui.common.FormActivity;
+import org.gnucash.android.ui.common.Refreshable;
 import org.gnucash.android.ui.common.UxArgument;
 import org.gnucash.android.util.BackupManager;
 import org.joda.time.format.DateTimeFormat;
@@ -75,8 +74,7 @@ import timber.log.Timber;
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-public class ScheduledActionsListFragment extends ListFragment implements
-    LoaderManager.LoaderCallbacks<Cursor> {
+public class ScheduledActionsListFragment extends ListFragment implements Refreshable {
 
     private TransactionsDbAdapter mTransactionsDbAdapter;
     private SimpleCursorAdapter mCursorAdapter;
@@ -154,7 +152,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
         mode.finish();
         setDefaultStatusBarColor();
         getLoaderManager().destroyLoader(0);
-        refreshList();
+        refresh();
     }
 
     private void setDefaultStatusBarColor() {
@@ -182,17 +180,10 @@ public class ScheduledActionsListFragment extends ListFragment implements
         mTransactionsDbAdapter = TransactionsDbAdapter.getInstance();
         switch (mActionType) {
             case TRANSACTION:
-                mCursorAdapter = new ScheduledTransactionsCursorAdapter(
-                    context,
-                    R.layout.list_item_scheduled_trxn, null,
-                    new String[]{DatabaseSchema.TransactionEntry.COLUMN_DESCRIPTION},
-                    new int[]{R.id.primary_text});
+                mCursorAdapter = new ScheduledTransactionsCursorAdapter(context);
                 break;
             case BACKUP:
-                mCursorAdapter = new ScheduledExportCursorAdapter(
-                    context,
-                    R.layout.list_item_scheduled_trxn, null,
-                    new String[]{}, new int[]{});
+                mCursorAdapter = new ScheduledExportCursorAdapter(context);
                 break;
 
             default:
@@ -232,16 +223,32 @@ public class ScheduledActionsListFragment extends ListFragment implements
     /**
      * Reload the list of transactions and recompute account balances
      */
-    public void refreshList() {
-        getLoaderManager().restartLoader(0, null, this);
+    @Override
+    public void refresh() {
+        if (mActionType == ScheduledAction.ActionType.TRANSACTION) {
+            TransactionsDbAdapter adapter = TransactionsDbAdapter.getInstance();
+            Cursor cursor = adapter.fetchAllScheduledTransactions();
+            mCursorAdapter.swapCursor(cursor);
+        } else if (mActionType == ScheduledAction.ActionType.BACKUP) {
+            ScheduledActionDbAdapter adapter = ScheduledActionDbAdapter.getInstance();
+
+            Cursor cursor = adapter.fetchAllRecords(
+                DatabaseSchema.ScheduledActionEntry.COLUMN_TYPE + "=?",
+                new String[]{ScheduledAction.ActionType.BACKUP.name()}, null);
+            mCursorAdapter.swapCursor(cursor);
+        }
+    }
+
+    @Override
+    public void refresh(String uid) {
+        refresh();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        refreshList();
+        refresh();
     }
-
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -302,30 +309,6 @@ public class ScheduledActionsListFragment extends ListFragment implements
         createTransactionIntent.putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID);
         createTransactionIntent.putExtra(UxArgument.SCHEDULED_ACTION_UID, scheduledActionUid);
         startActivity(createTransactionIntent);
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int arg0, Bundle arg1) {
-        Timber.d("Creating transactions loader");
-        if (mActionType == ScheduledAction.ActionType.TRANSACTION)
-            return new ScheduledTransactionsCursorLoader(getActivity());
-        else if (mActionType == ScheduledAction.ActionType.BACKUP) {
-            return new ScheduledExportCursorLoader(getActivity());
-        }
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        Timber.d("Transactions loader finished. Swapping in cursor");
-        mCursorAdapter.swapCursor(cursor);
-        mCursorAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        Timber.d("Resetting transactions loader");
-        mCursorAdapter.swapCursor(null);
     }
 
     /**
@@ -393,7 +376,7 @@ public class ScheduledActionsListFragment extends ListFragment implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
-            refreshList();
+            refresh();
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
@@ -405,9 +388,15 @@ public class ScheduledActionsListFragment extends ListFragment implements
      */
     protected class ScheduledTransactionsCursorAdapter extends SimpleCursorAdapter {
 
-        public ScheduledTransactionsCursorAdapter(Context context, int layout, Cursor c,
-                                                  String[] from, int[] to) {
-            super(context, layout, c, from, to, 0);
+        public ScheduledTransactionsCursorAdapter(Context context) {
+            super(
+                context,
+                R.layout.list_item_scheduled_trxn,
+                null,
+                new String[]{DatabaseSchema.TransactionEntry.COLUMN_DESCRIPTION},
+                new int[]{R.id.primary_text},
+                0
+            );
         }
 
         @Override
@@ -514,9 +503,15 @@ public class ScheduledActionsListFragment extends ListFragment implements
      */
     protected class ScheduledExportCursorAdapter extends SimpleCursorAdapter {
 
-        public ScheduledExportCursorAdapter(Context context, int layout, Cursor c,
-                                            String[] from, int[] to) {
-            super(context, layout, c, from, to, 0);
+        public ScheduledExportCursorAdapter(Context context) {
+            super(
+                context,
+                R.layout.list_item_scheduled_trxn,
+                null,
+                new String[]{},
+                new int[]{},
+                0
+            );
         }
 
         @Override
@@ -610,53 +605,6 @@ public class ScheduledActionsListFragment extends ListFragment implements
             } else {
                 descriptionTextView.setText(scheduledAction.getRepeatString());
             }
-        }
-    }
-
-
-    /**
-     * {@link DatabaseCursorLoader} for loading recurring transactions asynchronously from the database
-     *
-     * @author Ngewi Fet <ngewif@gmail.com>
-     */
-    protected static class ScheduledTransactionsCursorLoader extends DatabaseCursorLoader {
-
-        public ScheduledTransactionsCursorLoader(Context context) {
-            super(context);
-        }
-
-        @Override
-        public Cursor loadInBackground() {
-            mDatabaseAdapter = TransactionsDbAdapter.getInstance();
-
-            Cursor c = ((TransactionsDbAdapter) mDatabaseAdapter).fetchAllScheduledTransactions();
-
-            registerContentObserver(c);
-            return c;
-        }
-    }
-
-    /**
-     * {@link DatabaseCursorLoader} for loading recurring transactions asynchronously from the database
-     *
-     * @author Ngewi Fet <ngewif@gmail.com>
-     */
-    protected static class ScheduledExportCursorLoader extends DatabaseCursorLoader {
-
-        public ScheduledExportCursorLoader(Context context) {
-            super(context);
-        }
-
-        @Override
-        public Cursor loadInBackground() {
-            mDatabaseAdapter = ScheduledActionDbAdapter.getInstance();
-
-            Cursor c = mDatabaseAdapter.fetchAllRecords(
-                DatabaseSchema.ScheduledActionEntry.COLUMN_TYPE + "=?",
-                new String[]{ScheduledAction.ActionType.BACKUP.name()}, null);
-
-            registerContentObserver(c);
-            return c;
         }
     }
 }

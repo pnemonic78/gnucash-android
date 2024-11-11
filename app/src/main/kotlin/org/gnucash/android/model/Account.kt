@@ -48,7 +48,7 @@ class Account : BaseModel {
     /**
      * Name of this account
      */
-    var name: String? = null
+    var name: String = ""
         private set
 
     /**
