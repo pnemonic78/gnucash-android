@@ -21,19 +21,19 @@
         android:key="@string/key_default_transaction_type"
         android:summary="@string/summary_default_transaction_type" />
 
-    <androidx.preference.SwitchPreferenceCompat
+    <androidx.preference.SwitchPreference
         android:summary="@string/summary_use_double_entry"
         android:key="@string/key_use_double_entry"
         android:defaultValue="true"
         android:title="@string/title_use_double_entry" />
 
-    <androidx.preference.SwitchPreferenceCompat
+    <androidx.preference.SwitchPreference
         android:summary="@string/summary_use_compact_list"
         android:key="@string/key_use_compact_list"
         android:dependency="@string/key_use_double_entry"
         android:title="@string/title_use_compact_list" />
 
-    <androidx.preference.SwitchPreferenceCompat
+    <androidx.preference.SwitchPreference
         android:summary="@string/summary_save_opening_balances"
         android:key="@string/key_save_opening_balances"
         android:defaultValue="false"

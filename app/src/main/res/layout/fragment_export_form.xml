@@ -205,7 +205,7 @@
                 android:textColor="@android:color/black"
                 android:clickable="true" />
 
-            <androidx.appcompat.widget.SwitchCompat
+            <Switch
                 android:id="@+id/switch_export_all"
                 android:text="@string/switch_export_transactions_from_all_time"
                 android:paddingStart="5dp"
@@ -213,7 +213,8 @@
                 android:layout_marginStart="5dp"
                 android:checked="false"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                tools:ignore="UseSwitchCompatOrMaterialXml" />
         </LinearLayout>
 
         <CheckBox
