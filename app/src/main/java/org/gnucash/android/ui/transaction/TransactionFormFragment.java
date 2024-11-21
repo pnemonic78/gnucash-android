@@ -19,6 +19,8 @@ package org.gnucash.android.ui.transaction;
 import static org.gnucash.android.ui.util.widget.ViewExtKt.setTextToEnd;
 
 import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -36,8 +38,10 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.DatePicker;
 import android.widget.FilterQueryProvider;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -47,8 +51,6 @@ import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
-import com.codetroopers.betterpickers.calendardatepicker.CalendarDatePickerDialogFragment;
-import com.codetroopers.betterpickers.radialtimepicker.RadialTimePickerDialogFragment;
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence;
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter;
 import com.codetroopers.betterpickers.recurrencepicker.RecurrencePickerDialogFragment;
@@ -80,6 +82,8 @@ import org.gnucash.android.ui.settings.PreferenceActivity;
 import org.gnucash.android.ui.transaction.dialog.TransferFundsDialogFragment;
 import org.gnucash.android.ui.util.RecurrenceParser;
 import org.gnucash.android.ui.util.RecurrenceViewClickListener;
+import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment;
+import org.gnucash.android.ui.util.dialog.TimePickerDialogFragment;
 import org.gnucash.android.ui.util.widget.CalculatorKeyboard;
 import org.gnucash.android.util.QualifiedAccountNameCursorAdapter;
 import org.joda.time.format.DateTimeFormat;
@@ -99,7 +103,7 @@ import timber.log.Timber;
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 public class TransactionFormFragment extends Fragment implements
-    CalendarDatePickerDialogFragment.OnDateSetListener, RadialTimePickerDialogFragment.OnTimeSetListener,
+    DatePickerDialog.OnDateSetListener, TimePickerDialog.OnTimeSetListener,
     RecurrencePickerDialogFragment.OnRecurrenceSetListener, OnTransferFundsListener {
 
     private static final int REQUEST_SPLIT_EDITOR = 0x11;
@@ -592,22 +596,15 @@ public class TransactionFormFragment extends Fragment implements
 
             @Override
             public void onClick(View v) {
-                long dateMillis = 0;
+                long dateMillis = System.currentTimeMillis();
                 try {
                     dateMillis = DATE_FORMATTER.parseMillis(mBinding.inputDate.getText().toString());
                 } catch (IllegalArgumentException e) {
                     Timber.e("Error converting input time to Date object");
                 }
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTimeInMillis(dateMillis);
 
-                int year = calendar.get(Calendar.YEAR);
-                int monthOfYear = calendar.get(Calendar.MONTH);
-                int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
-                CalendarDatePickerDialogFragment datePickerDialog = new CalendarDatePickerDialogFragment()
-                    .setOnDateSetListener(TransactionFormFragment.this)
-                    .setPreselectedDate(year, monthOfYear, dayOfMonth);
-                datePickerDialog.show(getFragmentManager(), "date_picker_fragment");
+                DatePickerDialogFragment.newInstance(TransactionFormFragment.this, dateMillis)
+                    .show(getParentFragmentManager(), "date_picker_fragment");
             }
         });
 
@@ -622,14 +619,8 @@ public class TransactionFormFragment extends Fragment implements
                     Timber.e("Error converting input time to Date object");
                 }
 
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTimeInMillis(timeMillis);
-
-                RadialTimePickerDialogFragment timePickerDialog = new RadialTimePickerDialogFragment()
-                    .setOnTimeSetListener(TransactionFormFragment.this)
-                    .setStartTime(calendar.get(Calendar.HOUR_OF_DAY),
-                        calendar.get(Calendar.MINUTE));
-                timePickerDialog.show(getFragmentManager(), "time_picker_dialog_fragment");
+                TimePickerDialogFragment.newInstance(TransactionFormFragment.this, timeMillis)
+                    .show(getParentFragmentManager(), "time_picker_dialog_fragment");
             }
         });
 
@@ -1040,20 +1031,18 @@ public class TransactionFormFragment extends Fragment implements
     }
 
     @Override
-    public void onDateSet(CalendarDatePickerDialogFragment calendarDatePickerDialog, int year, int monthOfYear, int dayOfMonth) {
-        Calendar cal = new GregorianCalendar(year, monthOfYear, dayOfMonth);
-        mBinding.inputDate.setText(DATE_FORMATTER.print(cal.getTimeInMillis()));
+    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
         mDate.set(Calendar.YEAR, year);
-        mDate.set(Calendar.MONTH, monthOfYear);
+        mDate.set(Calendar.MONTH, month);
         mDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        mBinding.inputDate.setText(DATE_FORMATTER.print(mDate.getTimeInMillis()));
     }
 
     @Override
-    public void onTimeSet(RadialTimePickerDialogFragment radialTimePickerDialog, int hourOfDay, int minute) {
-        Calendar cal = new GregorianCalendar(0, 0, 0, hourOfDay, minute);
-        mBinding.inputTime.setText(TIME_FORMATTER.print(cal.getTimeInMillis()));
+    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         mTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
         mTime.set(Calendar.MINUTE, minute);
+        mBinding.inputTime.setText(TIME_FORMATTER.print(mTime.getTimeInMillis()));
     }
 
     /**

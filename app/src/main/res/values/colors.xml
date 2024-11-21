@@ -43,4 +43,7 @@
     <color name="kbd_key_delete">#CFE0BC</color>
     <color name="kbd_key_digit">@android:color/white</color>
     <color name="kbd_key_op">#E5F5D5</color>
+
+    <!-- Recurrence -->
+    <color name="recurrence_bubble_text_normal">?android:textColorPrimary</color>
 </resources>

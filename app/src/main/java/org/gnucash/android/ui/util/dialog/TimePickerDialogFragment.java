@@ -18,28 +18,33 @@ package org.gnucash.android.ui.util.dialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.app.TimePickerDialog.OnTimeSetListener;
+import android.content.Context;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 
 /**
- * Fragment for displaying a time choose dialog
+ * Fragment for displaying a time picker dialog
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 public class TimePickerDialogFragment extends DialogFragment {
     /**
-     * Listener to notify when the time is set
+     * Listener to notify when the time is set.
      */
+    @Nullable
     private OnTimeSetListener mListener = null;
 
     /**
      * Current time to initialize the dialog to, or to notify the listener of.
      */
-    Calendar mCurrentTime = null;
+    @Nullable
+    private Calendar mTime = null;
 
     /**
      * Default constructor
@@ -60,8 +65,8 @@ public class TimePickerDialogFragment extends DialogFragment {
         TimePickerDialogFragment timePickerDialogFragment = new TimePickerDialogFragment();
         timePickerDialogFragment.mListener = listener;
         if (timeMillis > 0) {
-            timePickerDialogFragment.mCurrentTime = new GregorianCalendar();
-            timePickerDialogFragment.mCurrentTime.setTimeInMillis(timeMillis);
+            timePickerDialogFragment.mTime = Calendar.getInstance();
+            timePickerDialogFragment.mTime.setTimeInMillis(timeMillis);
         }
         return timePickerDialogFragment;
     }
@@ -69,18 +74,19 @@ public class TimePickerDialogFragment extends DialogFragment {
     /**
      * Creates and returns an Android {@link TimePickerDialog}
      */
+    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Calendar cal = mCurrentTime == null ? Calendar.getInstance() : mCurrentTime;
+        Calendar cal = mTime == null ? Calendar.getInstance() : mTime;
+        Context context = requireContext();
 
-        int hour = cal.get(Calendar.HOUR_OF_DAY);
-        int minute = cal.get(Calendar.MINUTE);
-
-        return new TimePickerDialog(getActivity(),
-                mListener,
-                hour,
-                minute,
-                true);
+        return new TimePickerDialog(
+            context,
+            mListener,
+            cal.get(Calendar.HOUR_OF_DAY),
+            cal.get(Calendar.MINUTE),
+            DateFormat.is24HourFormat(context)
+        );
     }
 
 }
