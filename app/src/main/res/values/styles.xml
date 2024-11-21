@@ -160,7 +160,6 @@
         <item name="android:textSize">24sp</item>
         <item name="android:focusable">false</item>
         <item name="android:background">@drawable/bg_key</item>
-        <item name="android:layout_margin">2dp</item>
     </style>
 
     <style name="CalculatorKeyboard.Key.Clear">
