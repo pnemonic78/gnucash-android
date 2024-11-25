@@ -203,7 +203,7 @@ public class ExportFormFragment extends Fragment implements
         if ((args == null) || args.isEmpty()) {
             return;
         }
-        String scheduledUID = args.getString(UxArgument.SCHEDULED_UID);
+        String scheduledUID = args.getString(UxArgument.SCHEDULED_ACTION_UID);
         if (TextUtils.isEmpty(scheduledUID)) {
             return;
         }
