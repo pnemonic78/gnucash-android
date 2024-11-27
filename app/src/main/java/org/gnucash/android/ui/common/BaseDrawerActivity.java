@@ -40,7 +40,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
-import com.uservoice.uservoicesdk.UserVoice;
 
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
@@ -311,11 +310,8 @@ public abstract class BaseDrawerActivity extends PasscodeLockActivity {
                 startActivity(new Intent(this, PreferenceActivity.class));
                 break;
 
-            case R.id.nav_item_help:
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                prefs.edit().putBoolean(UxArgument.SKIP_PASSCODE_SCREEN, true).apply();
-                UserVoice.launchUserVoice(this);
-                break;
+            //case R.id.nav_item_help:
+            //    break;
         }
         mDrawerLayout.closeDrawer(mNavigationView);
     }
