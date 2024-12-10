@@ -49,7 +49,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence;
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter;
@@ -498,9 +497,9 @@ public class ExportFormFragment extends MenuFragment implements
         mBinding.inputRecurrence.setOnClickListener(new RecurrenceViewClickListener(activity, mRecurrenceRule, this));
 
         //this part (setting the export format) must come after the recurrence view bindings above
-        String keyDefaultExportFormat = getString(R.string.key_default_export_format);
-        String defaultExportFormat = sharedPrefs.getString(keyDefaultExportFormat, ExportFormat.XML.value);
-        mExportParams.setExportFormat(ExportFormat.of(defaultExportFormat));
+        String defaultExportFormat = sharedPrefs.getString(getString(R.string.key_default_export_format), null);
+        ExportFormat exportFormat = ExportFormat.of(defaultExportFormat);
+        mExportParams.setExportFormat(exportFormat);
 
         RadioButton.OnCheckedChangeListener radioClickListener = new RadioButton.OnCheckedChangeListener() {
             @Override
@@ -520,21 +519,19 @@ public class ExportFormFragment extends MenuFragment implements
         mBinding.radioSeparatorColonFormat.setOnCheckedChangeListener(radioClickListener);
         mBinding.radioSeparatorSemicolonFormat.setOnCheckedChangeListener(radioClickListener);
 
-        ExportFormat defaultFormat = ExportFormat.of(defaultExportFormat.toUpperCase());
-
         if (GnuCashApplication.isDoubleEntryEnabled()) {
             mBinding.radioOfxFormat.setVisibility(View.GONE);
-            if (defaultFormat == ExportFormat.OFX) {
-                defaultFormat = ExportFormat.XML;
+            if (exportFormat == ExportFormat.OFX) {
+                exportFormat = ExportFormat.XML;
             }
         } else {
             mBinding.radioXmlFormat.setVisibility(View.GONE);
-            if (defaultFormat == ExportFormat.XML) {
-                defaultFormat = ExportFormat.OFX;
+            if (exportFormat == ExportFormat.XML) {
+                exportFormat = ExportFormat.OFX;
             }
         }
 
-        switch (defaultFormat) {
+        switch (exportFormat) {
             case QIF:
                 mBinding.radioQifFormat.performClick();
                 break;
@@ -585,11 +582,12 @@ public class ExportFormFragment extends MenuFragment implements
      * Open a chooser for user to pick a file to export to
      */
     private void selectExportFile() {
+        ExportFormat exportFormat = mExportParams.getExportFormat();
         String bookName = BooksDbAdapter.getInstance().getActiveBookDisplayName();
-        String filename = Exporter.buildExportFilename(mExportParams.getExportFormat(), bookName);
+        String filename = Exporter.buildExportFilename(exportFormat, bookName, mExportParams.isCompressed);
 
         Intent createIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
-            .setType("*/*")
+            .setType(exportFormat.mimeType)
             .addCategory(Intent.CATEGORY_OPENABLE)
             .putExtra(Intent.EXTRA_TITLE, filename);
         startActivityForResult(createIntent, REQUEST_EXPORT_FILE);

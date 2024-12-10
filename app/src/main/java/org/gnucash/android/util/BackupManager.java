@@ -151,18 +151,17 @@ public class BackupManager {
 
     /**
      * Returns the full path of a file to make database backup of the specified book.
-     * Backups are done in XML format and are Gzipped (with ".gnucash" extension).
+     * Backups are done in XML format and are Gzipped (with ".xac" extension).
      *
      * @param bookUID GUID of the book
      * @param params the export parameters.
      * @return the file for backups of the database.
      * @see #getBackupFolder(String)
      */
-    private static File getBackupFile(@NonNull String bookUID, @Nullable ExportParams params) {
+    private static File getBackupFile(@NonNull String bookUID, @NonNull ExportParams params) {
         Book book = BooksDbAdapter.getInstance().getRecord(bookUID);
-        ExportFormat format = (params != null) ? params.getExportFormat() : ExportFormat.XML;
-        String name = Exporter.buildExportFilename(format, book.getDisplayName()) + ".gz";
-        return new File(getBackupFolder(book.getUID()), name);
+        String name = Exporter.buildExportFilename(params.getExportFormat(), book.getDisplayName(), params.isCompressed);
+        return new File(getBackupFolder(bookUID), name);
     }
 
     /**
@@ -174,7 +173,7 @@ public class BackupManager {
      */
     private static File getBackupFolder(String bookUID) {
         File baseFolder = GnuCashApplication.getAppContext().getExternalFilesDir(null);
-        File folder = new File(baseFolder, bookUID + File.separator + "backups");
+        File folder = new File(new File(baseFolder, bookUID), "backups");
         if (!folder.exists())
             folder.mkdirs();
         return folder;

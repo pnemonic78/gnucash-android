@@ -278,7 +278,7 @@ public class ScheduledActionServiceTest extends GnuCashTest {
         assertThat(scheduledBackup.getLastRunTime()).isGreaterThan(previousLastRun);
         File[] backupFiles = backupFolder.listFiles();
         assertThat(backupFiles).hasSize(1);
-        assertThat(backupFiles[0]).exists().hasExtension("gnca");
+        assertThat(backupFiles[0]).exists().hasExtension("xac");
 
         // Check also across service runs
         previousLastRun = scheduledBackup.getLastRunTime();
@@ -287,7 +287,7 @@ public class ScheduledActionServiceTest extends GnuCashTest {
         assertThat(scheduledBackup.getLastRunTime()).isEqualTo(previousLastRun);
         backupFiles = backupFolder.listFiles();
         assertThat(backupFiles).hasSize(1);
-        assertThat(backupFiles[0]).exists().hasExtension("gnca");
+        assertThat(backupFiles[0]).exists().hasExtension("xac");
     }
 
     /**
