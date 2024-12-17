@@ -15,9 +15,6 @@
  */
 package org.gnucash.android.ui.common;
 
-import static org.gnucash.android.app.IntentExtKt.takePersistableUriPermission;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -42,6 +39,7 @@ import com.google.android.material.navigation.NavigationView;
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.export.ExportFormat;
 import org.gnucash.android.model.Book;
 import org.gnucash.android.ui.account.AccountsActivity;
 import org.gnucash.android.ui.passcode.PasscodeLockActivity;
@@ -265,11 +263,11 @@ public abstract class BaseDrawerActivity extends PasscodeLockActivity {
     protected void onDrawerMenuItemClicked(int itemId) {
         switch (itemId) {
             case R.id.nav_item_open: { //Open... files
-                String[] mimeTypes = {"text/*", "application/*"};
+                String[] mimeTypes = {ExportFormat.XML.mimeType, "text/*", "application/*"};
                 //use the storage access framework
                 Intent openDocument = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                     .addCategory(Intent.CATEGORY_OPENABLE)
-                    .setType("text/*|application/*")
+                    .setType("*/*")
                     .putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
                 startActivityForResult(openDocument, REQUEST_OPEN_DOCUMENT);
             }
@@ -317,26 +315,16 @@ public abstract class BaseDrawerActivity extends PasscodeLockActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == Activity.RESULT_CANCELED) {
-            super.onActivityResult(requestCode, resultCode, data);
-            return;
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case AccountsActivity.REQUEST_PICK_ACCOUNTS_FILE:
+                case BaseDrawerActivity.REQUEST_OPEN_DOCUMENT: //uses the Storage Access Framework
+                    AccountsActivity.importXmlFileFromIntent(this, data, null);
+                    return;
+            }
         }
 
-        switch (requestCode) {
-            case AccountsActivity.REQUEST_PICK_ACCOUNTS_FILE:
-                AccountsActivity.importXmlFileFromIntent(this, data, null);
-                break;
-            case BaseDrawerActivity.REQUEST_OPEN_DOCUMENT: //this uses the Storage Access Framework
-                final int takeFlags = data.getFlags()
-                        & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                getContentResolver().takePersistableUriPermission(data.getData(), takeFlags);
-                AccountsActivity.importXmlFileFromIntent(this, data, null);
-                takePersistableUriPermission(this, data);
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-                break;
-        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     public void onClickAppTitle(View view) {

@@ -17,6 +17,8 @@
 
 package org.gnucash.android.ui.account;
 
+import static org.gnucash.android.app.IntentExtKt.takePersistableUriPermission;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -184,9 +186,6 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final Intent intent = getIntent();
-        handleOpenFileIntent(intent);
-
         init();
 
         TabLayout tabLayout = mBinding.tabLayout;
@@ -246,6 +245,9 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
                 startActivity(addAccountIntent);
             }
         });
+
+        final Intent intent = getIntent();
+        handleOpenFileIntent(intent);
     }
 
     @Override
@@ -264,16 +266,19 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
      *
      * @param intent Intent containing the data to be imported
      */
-    private void handleOpenFileIntent(Intent intent) {
-        //when someone launches the app to view a (.gnucash or .gnca) file
-        final Uri data = intent.getData();
-        if (data != null) {
-            Activity activity = this;
-            BackupManager.backupActiveBookAsync(activity, result -> {
-                intent.setData(null);
-                new ImportAsyncTask(activity).execute(data);
-                removeFirstRunFlag(activity);
-                return null;
+    private void handleOpenFileIntent(final Intent intent) {
+        //when someone launches the app to view a (.gnucash or .gnca or .xac) file
+        final String action = intent.getAction();
+        if (Intent.ACTION_VIEW.equals(action)
+            || Intent.ACTION_OPEN_DOCUMENT.equals(action)
+            || Intent.ACTION_EDIT.equals(action)) {
+            final Activity activity = this;
+            importXmlFileFromIntent(activity, intent, new TaskDelegate() {
+                @Override
+                public void onTaskComplete() {
+                    intent.setData(null); // don't import again.
+                    removeFirstRunFlag(activity);
+                }
             });
         }
     }
@@ -494,11 +499,15 @@ public class AccountsActivity extends BaseDrawerActivity implements OnAccountCli
      * <p>This method is usually called in response to {@link AccountsActivity#startXmlFileChooser(Activity)}</p>
      *
      * @param context      Activity context
-     * @param data         Intent data containing the XML uri
+     * @param intent       Intent data containing the URI
      * @param onFinishTask Task to be executed when import is complete
      */
-    public static void importXmlFileFromIntent(Activity context, Intent data, TaskDelegate onFinishTask) {
-        new ImportAsyncTask(context, onFinishTask, true).execute(data.getData());
+    public static void importXmlFileFromIntent(Activity context, Intent intent, @Nullable TaskDelegate onFinishTask) {
+        Uri uri = intent.getData();
+        if (uri != null) {
+            takePersistableUriPermission(context, intent);
+            new ImportAsyncTask(context, true, onFinishTask).execute(uri);
+        }
     }
 
     /**

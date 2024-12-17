@@ -16,8 +16,6 @@
 
 package org.gnucash.android.ui.settings;
 
-import static org.gnucash.android.app.IntentExtKt.takePersistableUriPermission;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -188,12 +186,9 @@ public class BookManagerFragment extends ListFragment implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == REQUEST_OPEN_DOCUMENT) {
+            if (requestCode == REQUEST_OPEN_DOCUMENT && data != null) {
                 Activity context = requireActivity();
-                final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                context.getContentResolver().takePersistableUriPermission(data.getData(), takeFlags);
                 AccountsActivity.importXmlFileFromIntent(context, data, null);
-                takePersistableUriPermission(context, data);
                 return;
             }
         }

@@ -57,10 +57,10 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
     }
 
     public ImportAsyncTask(@NonNull Activity context, @Nullable TaskDelegate delegate) {
-        this(context, delegate, false);
+        this(context, false, delegate);
     }
 
-    public ImportAsyncTask(@NonNull Activity context, @Nullable TaskDelegate delegate, boolean backup) {
+    public ImportAsyncTask(@NonNull Activity context, boolean backup, @Nullable TaskDelegate delegate) {
         this.mContext = context;
         this.mDelegate = delegate;
         this.mBackup = backup;
