@@ -73,6 +73,7 @@ import org.gnucash.android.ui.util.AccountBalanceTask;
 import org.gnucash.android.ui.util.CursorRecyclerAdapter;
 import org.gnucash.android.util.BackupManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import timber.log.Timber;
@@ -136,6 +137,7 @@ public class AccountsListFragment extends MenuFragment implements
     private SearchView mSearchView;
 
     private FragmentAccountsListBinding mBinding;
+    private final List<AccountBalanceTask> accountBalanceTasks = new ArrayList<>();
 
     public static AccountsListFragment newInstance(DisplayMode displayMode) {
         AccountsListFragment fragment = new AccountsListFragment();
@@ -339,8 +341,13 @@ public class AccountsListFragment extends MenuFragment implements
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mAccountRecyclerAdapter != null)
+        if (mAccountRecyclerAdapter != null) {
             mAccountRecyclerAdapter.swapCursor(null);
+        }
+        for (AccountBalanceTask task : accountBalanceTasks) {
+            task.cancel(true);
+        }
+        accountBalanceTasks.clear();
     }
 
     /**
@@ -572,7 +579,9 @@ public class AccountsListFragment extends MenuFragment implements
                 // add a summary of transactions to the account view
 
                 // Make sure the balance task is truly multi-thread
-                new AccountBalanceTask(accountBalance, description.getCurrentTextColor()).execute(accountUID);
+                AccountBalanceTask task = new AccountBalanceTask(mAccountsDbAdapter, accountBalance, description.getCurrentTextColor());
+                accountBalanceTasks.add(task);
+                task.execute(accountUID);
 
                 String accountColor = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseSchema.AccountEntry.COLUMN_COLOR_CODE));
                 Integer colorValue = parseColor(accountColor);
