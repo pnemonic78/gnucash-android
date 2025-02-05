@@ -113,7 +113,7 @@
     <string name="summary_xml_ofx_header">Schakel deze optie in als u naar een applicatie anders dan GnuCash wil exporteren</string>
     <string name="title_whats_new">Nieuw sinds de vorige versie</string>
     <string name="whats_new">
-        - Added ability to export to any service which supports the Storage Access Framework \n
+        - Added ability to export to any service which supports the Storage Access Framework\n
         - Added option to set the location for regular automatic backups (See backup settings)\n
         - Added Bitcoin currency support\n
         - Added support for renaming books\n
@@ -131,7 +131,7 @@
     <string name="title_delete_all_accounts">Alle rekeningen verwijderen</string>
     <string name="header_account_settings">Rekeningen</string>
     <string name="toast_all_accounts_deleted">Alle rekeningen werden met succes verwijderd</string>
-    <string name="confirm_delete_all_accounts">Weet je zeker dat je alle rekeningen en transacties wil verwijderen? \nDeze
+    <string name="confirm_delete_all_accounts">Weet je zeker dat je alle rekeningen en transacties wil verwijderen?\nDeze
         verrichting kan niet ongedaan gemaakt worden!
     </string>
     <string name="summary_delete_all_transactions">Alle transacties in alle rekeningen zullen verwijderd worden!</string>
@@ -235,8 +235,8 @@
     <string name="toast_chart_percentage_mode_total">Het percentage van de geselecteerde waarde berekend op basis van het totale bedrag</string>
     <string name="toast_chart_percentage_mode_current_bar">Het percentage van de geselecteerde waarde berekend op basis van het bedrag van de huidige gestapelde-staaf</string>
     <string name="label_save_template">Opslaan als sjabloon</string>
-    <string name="label_delete_account_transactions_description">Deze rekening bevat boekingen. \nWhat wilt u doen met deze boekingen</string>
-    <string name="label_delete_account_subaccounts_description">Deze rekening bevat subrekeningen. \nWhat wilt u doen met deze subrekeningen</string>
+    <string name="label_delete_account_transactions_description">Deze rekening bevat boekingen.\nWhat wilt u doen met deze boekingen?</string>
+    <string name="label_delete_account_subaccounts_description">Deze rekening bevat subrekeningen.\nWhat wilt u doen met deze subrekeningen?</string>
     <string name="label_delete_transactions">Verrichtingen verwijderen</string>
     <string name="toast_disable_double_entry_to_save_transaction">Maak en geef een overdracht rekening op OF schakel dubbel-boekhouden uit in instellingen om deze boeking te bewaren</string>
     <string name="label_tap_to_create_schedule">Tik op om schema te maken</string>
@@ -303,7 +303,7 @@ No user-identifiable information will be collected as part of this process!
     <string name="wizard_btn_back">Terug</string>
     <string name="title_setup_gnucash">Setup GnuCash</string>
     <string name="wizard_title_welcome_to_gnucash">Welkom bij GnuCash</string>
-    <string name="msg_wizard_welcome_page">Voordat u er in duikt, \nlaten we eerst een paar dingen instellen\n\nOm door te gaan, druk op Volgende</string>
+    <string name="msg_wizard_welcome_page">Voordat u er in duikt,\nlaten we eerst een paar dingen instellen\n\nOm door te gaan, druk op Volgende</string>
     <string name="title_split_editor">Splitsing Bewerker</string>
     <string name="toast_error_check_split_amounts">Controleer alle splitsingen op geldige bedragen alvorens op te slaan!</string>
     <string name="label_error_invalid_expression">Ongeldige expressie!</string>

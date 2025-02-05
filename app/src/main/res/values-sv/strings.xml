@@ -113,7 +113,7 @@
     <string name="summary_xml_ofx_header">Aktivera detta alternativ när du exporterar till andra tredje parts program än GnuCash för skrivbord</string>
     <string name="title_whats_new">Vad är nytt</string>
     <string name="whats_new">
-         - Lade till förmåga att exportera till någon tjänst som stöder Storage Access Framework \n         - Lade till möjlighet att ställa in platsen för regelbundna automatiska säkerhetskopior (Se säkerhetskopieringsinställningar)\n         - Lade till Bitcoin valutasupport\n         - Lade till stöd för att byta namn på bokföringar\n         - Flera felkorrigeringar och förbättringar\n 	</string>
+         - Lade till förmåga att exportera till någon tjänst som stöder Storage Access Framework\n         - Lade till möjlighet att ställa in platsen för regelbundna automatiska säkerhetskopior (Se säkerhetskopieringsinställningar)\n         - Lade till Bitcoin valutasupport\n         - Lade till stöd för att byta namn på bokföringar\n         - Flera felkorrigeringar och förbättringar\n 	</string>
     <string name="label_dismiss">Avfärda</string>
     <string name="toast_transanction_amount_required">Ange ett belopp för att spara transaktionen</string>
     <string name="toast_error_importing_accounts">Ett fel uppstod vid import av GnuCash-konton</string>
@@ -124,7 +124,7 @@
     <string name="title_delete_all_accounts">Radera alla konton</string>
     <string name="header_account_settings">Konton</string>
     <string name="toast_all_accounts_deleted">Alla konton har raderats</string>
-    <string name="confirm_delete_all_accounts">Är du säker du vill radera alla konton och transaktioner? \n\nDenna åtgärd kan inte ångras!    </string>
+    <string name="confirm_delete_all_accounts">Är du säker du vill radera alla konton och transaktioner?\n\nDenna åtgärd kan inte ångras!    </string>
     <string name="summary_delete_all_transactions">Alla transaktioner i alla konton raderas!</string>
     <string name="title_delete_all_transactions">Radera alla transaktioner</string>
     <string name="toast_all_transactions_deleted">Alla transaktioner har raderats!</string>
@@ -226,8 +226,8 @@
     <string name="toast_chart_percentage_mode_total">Procentandelen av valda värdet beräknas från totala summan</string>
     <string name="toast_chart_percentage_mode_current_bar">Procentandelen av valda värdet beräknas från befintliga stapel summan</string>
     <string name="label_save_template">Spara som mall</string>
-    <string name="label_delete_account_transactions_description">Detta konto innehåller transaktioner. \nVad vill du göra med dessa transaktioner</string>
-    <string name="label_delete_account_subaccounts_description">Detta konto innehåller underkonton. \nVad vill du göra med dessa underkonton</string>
+    <string name="label_delete_account_transactions_description">Detta konto innehåller transaktioner.\nVad vill du göra med dessa transaktioner?</string>
+    <string name="label_delete_account_subaccounts_description">Detta konto innehåller underkonton.\nVad vill du göra med dessa underkonton?</string>
     <string name="label_delete_transactions">Radera transaktioner</string>
     <string name="toast_disable_double_entry_to_save_transaction">Skapa och ange ett överföringskonto eller avaktivera dubbel bokföring i inställningar för att spara transaktionen</string>
     <string name="label_tap_to_create_schedule">Tryck för att skapa schema</string>
@@ -292,7 +292,7 @@
     <string name="wizard_btn_back">Tillbaka</string>
     <string name="title_setup_gnucash">Ställ in GnuCash</string>
     <string name="wizard_title_welcome_to_gnucash">Välkommen till GnuCash</string>
-    <string name="msg_wizard_welcome_page">Innan du dyker i, \nLåt oss konfigurera några saker först\n\nFör att fortsätta, tryck Nästa</string>
+    <string name="msg_wizard_welcome_page">Innan du dyker i,\nLåt oss konfigurera några saker först\n\nFör att fortsätta, tryck Nästa</string>
     <string name="title_split_editor">Delarredigerare</string>
     <string name="toast_error_check_split_amounts">Kontrollera att alla delningar har giltig belopp innan du sparar!</string>
     <string name="label_error_invalid_expression">Ogiltigt uttryck!</string>

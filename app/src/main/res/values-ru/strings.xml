@@ -113,7 +113,7 @@
     <string name="summary_xml_ofx_header">Включите эту опцию, если экспортируете в программы отличные от GnuCash для ПК</string>
     <string name="title_whats_new">Новости</string>
     <string name="whats_new">
-        - Добавлена возможность экспорта с любым сервисом с поддержкой Storage Access Framework \n
+        - Добавлена возможность экспорта с любым сервисом с поддержкой Storage Access Framework\n
         - Добавлена опция выбора пути сохранения резервных копий (см. настройки)\n
         - Добавлена поддержка валюты Bitcoin\n
         - Добавлена поддержка переименования книги\n
@@ -129,7 +129,7 @@
     <string name="title_delete_all_accounts">Удалить все счета</string>
     <string name="header_account_settings">Счета</string>
     <string name="toast_all_accounts_deleted">Все счета удалены</string>
-    <string name="confirm_delete_all_accounts">Вы точно хотите удалить все счета и проводки? \nЭто нельзя отменить!</string>
+    <string name="confirm_delete_all_accounts">Вы точно хотите удалить все счета и проводки?\nЭто нельзя отменить!</string>
     <string name="summary_delete_all_transactions">Все проводки во всех счетах будут удалены!</string>
     <string name="title_delete_all_transactions">Удалить все проводки</string>
     <string name="toast_all_transactions_deleted">Все проводки удалены!</string>

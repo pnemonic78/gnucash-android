@@ -114,9 +114,9 @@
     <string name="summary_xml_ofx_header">Enable this option when exporting to third-party application other than GnuCash for desktop</string>
     <string name="title_whats_new">What\'s New</string>
     <string name="whats_new">
-        - Adds CSV export format \n
+        - Adds CSV export format\n
         - Improve compatibility with GnuCash desktop files\n
-        - Limit space usage by backups \n
+        - Limit space usage by backups\n
         - Multiple bug fixes and enhancements\n
 	</string>
     <string name="label_dismiss">Dismiss</string>
@@ -306,7 +306,7 @@
     <string name="wizard_btn_back">Back</string>
     <string name="title_setup_gnucash">Setup GnuCash</string>
     <string name="wizard_title_welcome_to_gnucash">Welcome to GnuCash</string>
-    <string name="msg_wizard_welcome_page">Before you dive in, \nlet\'s setup a few things first\n\nTo continue, press Next</string>
+    <string name="msg_wizard_welcome_page">Before you dive in,\nlet\'s setup a few things first\n\nTo continue, press Next</string>
     <string name="title_split_editor">Split Editor</string>
     <string name="toast_error_check_split_amounts">Check that all splits have valid amounts before saving!</string>
     <string name="label_error_invalid_expression">Invalid expression!</string>
