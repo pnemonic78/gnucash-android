@@ -23,6 +23,7 @@ import static org.gnucash.android.db.DatabaseSchema.TransactionEntry;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
@@ -45,6 +46,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -110,8 +112,9 @@ public class QifExporter extends Exporter {
                     "acct1_currency ASC, trans_uid ASC, trans_time ASC"
             );
 
+            // TODO write each commodity to separate file here, instead of splitting the file afterwards.
             File file = new File(getExportCacheFilePath());
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
 
             try {
                 String currentCurrencyCode = "";
@@ -122,13 +125,13 @@ public class QifExporter extends Exporter {
                     String accountUID = cursor.getString(cursor.getColumnIndexOrThrow("acct1_uid"));
                     String transactionUID = cursor.getString(cursor.getColumnIndexOrThrow("trans_uid"));
                     if (!transactionUID.equals(currentTransactionUID)) {
-                        if (!currentTransactionUID.equals("")) {
+                        if (!TextUtils.isEmpty(currentTransactionUID)) {
                             writer.append(QifHelper.ENTRY_TERMINATOR).append(newLine);
                             // end last transaction
                         }
                         if (!accountUID.equals(currentAccountUID)) {
                             // no need to end account
-                            //if (!currentAccountUID.equals("")) {
+                            //if (!TextUtils.isEmpty(currentAccountUID)) {
                             //    // end last account
                             //}
                             if (!currencyCode.equals(currentCurrencyCode)) {
@@ -185,53 +188,26 @@ public class QifExporter extends Exporter {
                             .append(cursor.getString(cursor.getColumnIndexOrThrow("acct2_full_name")))
                             .append(newLine);
                     String splitMemo = cursor.getString(cursor.getColumnIndexOrThrow("split_memo"));
-                    if (splitMemo != null && splitMemo.length() > 0) {
+                    if (splitMemo != null && !splitMemo.isEmpty()) {
                         writer.append(QifHelper.SPLIT_MEMO_PREFIX)
                                 .append(splitMemo)
                                 .append(newLine);
                     }
                     String splitType = cursor.getString(cursor.getColumnIndexOrThrow("split_type"));
-                    Double quantity_num = cursor.getDouble(cursor.getColumnIndexOrThrow("split_quantity_num"));
+                    double quantity_num = cursor.getDouble(cursor.getColumnIndexOrThrow("split_quantity_num"));
                     int quantity_denom = cursor.getInt(cursor.getColumnIndexOrThrow("split_quantity_denom"));
-                    int precision = 0;
-                    switch (quantity_denom) {
-                        case 0: // will sometimes happen for zero values
-                            break;
-                        case 1:
-                            precision = 0;
-                            break;
-                        case 10:
-                            precision = 1;
-                            break;
-                        case 100:
-                            precision = 2;
-                            break;
-                        case 1000:
-                            precision = 3;
-                            break;
-                        case 10000:
-                            precision = 4;
-                            break;
-                        case 100000:
-                            precision = 5;
-                            break;
-                        case 1000000:
-                            precision = 6;
-                            break;
-                        default:
-                            throw new ExporterException(mExportParams, "split quantity has illegal denominator: " + quantity_denom);
-                    }
-                    Double quantity = 0.0;
+                    int precision = (quantity_denom >= 1) ? (int) Math.log10(quantity_denom) : 0;
+                    System.out.println("~!@ quantity_denom="+quantity_denom +" precision=" +precision + " ~ " + Math.log10(quantity_denom));
+                    double quantity = 0.0;
                     if (quantity_denom != 0) {
                         quantity = quantity_num / quantity_denom;
                     }
-                    final Locale noLocale = null;
                     writer.append(QifHelper.SPLIT_AMOUNT_PREFIX)
                             .append(splitType.equals(TransactionType.DEBIT.value) ? "-" : "")
-                            .append(String.format(noLocale, "%." + precision + "f", quantity))
+                            .append(String.format(Locale.ROOT, "%." + precision + "f", quantity))
                             .append(newLine);
                 }
-                if (!currentTransactionUID.equals("")) {
+                if (!TextUtils.isEmpty(currentTransactionUID)) {
                     // end last transaction
                     writer.append(QifHelper.ENTRY_TERMINATOR).append(newLine);
                 }
@@ -278,7 +254,7 @@ public class QifExporter extends Exporter {
     private List<String> splitQIF(File file) throws IOException {
         // split only at the last dot
         String[] pathParts = file.getPath().split("(?=\\.[^\\.]+$)");
-        ArrayList<String> splitFiles = new ArrayList<>();
+        List<String> splitFiles = new ArrayList<>();
         String line;
         BufferedReader in = new BufferedReader(new FileReader(file));
         BufferedWriter out = null;
