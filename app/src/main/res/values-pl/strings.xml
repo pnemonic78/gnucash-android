@@ -114,7 +114,7 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="summary_xml_ofx_header">Włącz tę opcję gdy eksportujesz do aplikacji innej ni GnuCash dla desktopa</string>
     <string name="title_whats_new">Co nowego</string>
     <string name="whats_new">
-        - Added ability to export to any service which supports the Storage Access Framework \n
+        - Added ability to export to any service which supports the Storage Access Framework\n
         - Added option to set the location for regular automatic backups (See backup settings)\n
         - Added Bitcoin currency support\n
         - Added support for renaming books\n
@@ -233,8 +233,8 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="toast_chart_percentage_mode_total">Procentarz wybranej wartości wyliczony z całkowitej kwoty</string>
     <string name="toast_chart_percentage_mode_current_bar">Procentarz wybranej wartości wyliczony z aktualnej skumulowanej wartości słupka</string>
     <string name="label_save_template">Zapisz jako szablon</string>
-    <string name="label_delete_account_transactions_description">To konto zawiera transakcje.\nCo chciałbyś zrobić z tymi transakcjami</string>
-    <string name="label_delete_account_subaccounts_description">To konto zawiera sub-konta.\nCo chciałbyś zrobić z tymi sub-kontami</string>
+    <string name="label_delete_account_transactions_description">To konto zawiera transakcje.\nCo chciałbyś zrobić z tymi transakcjami?</string>
+    <string name="label_delete_account_subaccounts_description">To konto zawiera sub-konta.\nCo chciałbyś zrobić z tymi sub-kontami?</string>
     <string name="label_delete_transactions">Usuń transakcje</string>
     <string name="toast_disable_double_entry_to_save_transaction">Utwórz i określ konto transferowe LUB wyłącz podwójne wpisy w ustawieniach aby zachować transakcję</string>
     <string name="label_tap_to_create_schedule">Stuknij aby zaplanować</string>

@@ -113,7 +113,7 @@
     <string name="summary_xml_ofx_header">Diese Option aktivieren, wenn Sie die OFX-Dateien für ein anderes Programm als GnuCash auf dem Desktop exportieren</string>
     <string name="title_whats_new">Neuigkeiten in dieser Version</string>
     <string name="whats_new">
-        - Export zu einem beliebigen Dienst mit Storage Access Framework Unterstützung möglich \n
+        - Export zu einem beliebigen Dienst mit Storage Access Framework Unterstützung möglich\n
         - Option, um Ort für regelmäßige automatische Backups, hinzugefügt (Siehe Backup Einstellungen)\n
         - Bitcoin-Unterstützung hinzugefügt\n
         - Bücher umbenennen ermöglicht\n
@@ -128,9 +128,7 @@
     <string name="title_delete_all_accounts">Alle Konten löschen</string>
     <string name="header_account_settings">Konten</string>
     <string name="toast_all_accounts_deleted">Alle Konten wurden erfolgreich gelöscht</string>
-    <string name="confirm_delete_all_accounts">Wollen Sie wirklich ALLE Konten und Buchungen löschen?
-        \n\nDiese Operation kann nicht rückgängig gemacht werden!
-    </string>
+    <string name="confirm_delete_all_accounts">Wollen Sie wirklich ALLE Konten und Buchungen löschen?\n\nDiese Operation kann nicht rückgängig gemacht werden!</string>
     <string name="summary_delete_all_transactions">Alle Buchungen in allen Konten werden gelöscht</string>
     <string name="title_delete_all_transactions">Alle Buchungen löschen</string>
     <string name="toast_all_transactions_deleted">Alle Buchungen wurden erfolgreich gelöscht</string>
@@ -234,7 +232,7 @@
     <string name="toast_chart_percentage_mode_current_bar">Der Prozentsatz wird vom Gesamtwert des Balkens errechnet</string>
     <string name="label_save_template">Als Vorlage speichern</string>
     <string name="label_delete_account_transactions_description">Dieses Konto enthält Buchungen.\nWas wollen Sie mit diesen Buchungen tun?</string>
-    <string name="label_delete_account_subaccounts_description">Dieses Konto enthält Unterkonten. \nWas wollen Sie mit diesen Unterkonten tun?</string>
+    <string name="label_delete_account_subaccounts_description">Dieses Konto enthält Unterkonten.\nWas wollen Sie mit diesen Unterkonten tun?</string>
     <string name="label_delete_transactions">Buchungen löschen</string>
     <string name="toast_disable_double_entry_to_save_transaction">Erstellen und wählen Sie ein Transferkonto aus oder deaktivieren Sie Doppelte Buchführung in den Einstellungen um diese Buchung zu speichern</string>
     <string name="label_tap_to_create_schedule">Wiederholung erstellen</string>
@@ -300,7 +298,7 @@ No user-identifiable information will be collected as part of this process!</str
     <string name="wizard_btn_back">Zurück</string>
     <string name="title_setup_gnucash">GnuCash einrichten</string>
     <string name="wizard_title_welcome_to_gnucash">Willkommen bei GnuCash</string>
-    <string name="msg_wizard_welcome_page">Bevor Sie anfangen, \nlassen Sie uns ein paar Dinge einrichten\n\nZum fortfahren drücken Sie auf Weiter</string>
+    <string name="msg_wizard_welcome_page">Bevor Sie anfangen,\nlassen Sie uns ein paar Dinge einrichten\n\nZum fortfahren drücken Sie auf Weiter</string>
     <string name="title_split_editor">Split Buchung</string>
     <string name="toast_error_check_split_amounts">Prüfen Sie vor dem Speichern, ob alle Buchungsteile gültige Beträge enthalten!</string>
     <string name="label_error_invalid_expression">Ungültiger Ausdruck!</string>

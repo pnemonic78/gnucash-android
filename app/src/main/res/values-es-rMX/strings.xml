@@ -113,7 +113,7 @@
     <string name="summary_xml_ofx_header">Active esta opción para exportar a otras aplicaciones distintas a GnuCash para escritorio</string>
     <string name="title_whats_new">Novedades</string>
     <string name="whats_new">
--Se ha añadido capacidad para exportar a cualquier servicio que soporta el marco de acceso de almacenamiento \n - Añadida la opción para establecer la ubicación de copias de seguridad automáticas (ver configuración de copia de seguridad) \n - añadido el soporte para moneda Bitcoin\n - agregado de soporte para renombrar libros\n - múltiples correcciones y mejoras\n</string>
+-Se ha añadido capacidad para exportar a cualquier servicio que soporta el marco de acceso de almacenamiento\n - Añadida la opción para establecer la ubicación de copias de seguridad automáticas (ver configuración de copia de seguridad)\n - añadido el soporte para moneda Bitcoin\n - agregado de soporte para renombrar libros\n - múltiples correcciones y mejoras\n</string>
     <string name="label_dismiss">Cerrar</string>
     <string name="toast_transanction_amount_required">Introduzca un importe para guardar la transacción</string>
     <string name="toast_error_importing_accounts">Ocurrió un error al importar las cuentas de GnuCash</string>
@@ -125,7 +125,7 @@
     <string name="title_delete_all_accounts">Borrar todas las cuentas</string>
     <string name="header_account_settings">Cuentas</string>
     <string name="toast_all_accounts_deleted">Todas las cuentas han sido borradas con éxito</string>
-    <string name="confirm_delete_all_accounts">¿Borrar todas la cuentas y transacciones? \nEsta operación no se puede deshacer.
+    <string name="confirm_delete_all_accounts">¿Borrar todas la cuentas y transacciones?\nEsta operación no se puede deshacer.
     </string>
     <string name="summary_delete_all_transactions">Todas las transacciones en todas las cuentas serán borradas</string>
     <string name="title_delete_all_transactions">Borrar todas las transacciones</string>
@@ -229,8 +229,8 @@
     <string name="toast_chart_percentage_mode_total">El porcentaje del valor seleccionado calculado sobre la cantidad total</string>
     <string name="toast_chart_percentage_mode_current_bar">El porcentaje del valor seleccionado calculado sobre la cantidad de la barra apilada actual</string>
     <string name="label_save_template">Guardar como plantilla</string>
-    <string name="label_delete_account_transactions_description">Esta cuenta contiene transacciones. \n¿Quée quiere hacer con estas transacciones?</string>
-    <string name="label_delete_account_subaccounts_description">Esta cuenta contiene sub-cuentas. \n¿Quée quiere hacer con estas sub-cuentas?</string>
+    <string name="label_delete_account_transactions_description">Esta cuenta contiene transacciones.\n¿Quée quiere hacer con estas transacciones?</string>
+    <string name="label_delete_account_subaccounts_description">Esta cuenta contiene sub-cuentas.\n¿Quée quiere hacer con estas sub-cuentas?</string>
     <string name="label_delete_transactions">Borrar transacciones</string>
     <string name="toast_disable_double_entry_to_save_transaction">Cree y especifique una cuenta de transferencia o desactive la doble entrada en ajustes para guardar la transacción</string>
     <string name="label_tap_to_create_schedule">Toque para crear la programación</string>

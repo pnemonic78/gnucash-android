@@ -113,9 +113,9 @@
     <string name="summary_xml_ofx_header">Active esta opção quando fizer exportações para outras aplicações que não seja o GnuCash para Desktop</string>
     <string name="title_whats_new">O que há de novo</string>
     <string name="whats_new">
--Adicionada a capacidade de exportar para qualquer serviço que suporta a estrutura de acesso de armazenamento \n
-- adicionada opção para definir o local de backups automáticos regulares (ver configurações de backup) \n
-- adicionado suporte a Bitcoins \n
+-Adicionada a capacidade de exportar para qualquer serviço que suporta a estrutura de acesso de armazenamento\n
+- adicionada opção para definir o local de backups automáticos regulares (ver configurações de backup)\n
+- adicionado suporte a Bitcoins\n
 - adicionada a capacidade de renomear livros\n
 - diversas correções de bugs e aperfeiçoamentos\n</string>
     <string name="label_dismiss">Descartar</string>
@@ -181,7 +181,7 @@
     <string name="title_all_accounts">Todas</string>
     <string name="summary_create_default_accounts">Cria uma estrutura de contas GnuCash padrão</string>
     <string name="title_create_default_accounts">Cria contas padrão</string>
-    <string name="msg_confirm_create_default_accounts_setting">Um novo livro será aberto com as contas padrão \n\n Suas contas e transações atuais não serão modificadas!</string>
+    <string name="msg_confirm_create_default_accounts_setting">Um novo livro será aberto com as contas padrão\n\n Suas contas e transações atuais não serão modificadas!</string>
     <string name="title_scheduled_transactions">Transações agendadas</string>
     <string name="title_select_export_destination">Escolha o destino da exportação</string>
     <string name="hint_split_memo">Memo</string>
@@ -231,8 +231,8 @@
     <string name="toast_chart_percentage_mode_total">O percentual do valor selecionado em relação ao valor total</string>
     <string name="toast_chart_percentage_mode_current_bar">O percentual do valor selecionado em relação ao valor da barra empilhada atual</string>
     <string name="label_save_template">Guardar como modelo</string>
-    <string name="label_delete_account_transactions_description">Esta conta tem transações. \nO que pretende fazer com estas transações</string>
-    <string name="label_delete_account_subaccounts_description">Esta conta tem subcontas. \nO que pretende fazer com estas subcontas</string>
+    <string name="label_delete_account_transactions_description">Esta conta tem transações.\nO que pretende fazer com estas transações?</string>
+    <string name="label_delete_account_subaccounts_description">Esta conta tem subcontas.\nO que pretende fazer com estas subcontas?</string>
     <string name="label_delete_transactions">Apagar transações</string>
     <string name="toast_disable_double_entry_to_save_transaction">Crie e especifique uma conta para a transferência OU desabilite a dupla entrada das Opcções para gravar a transação</string>
     <string name="label_tap_to_create_schedule">Toque para criar um agendamento</string>
@@ -298,7 +298,7 @@ Neste processo não serão recolhidas informações do utilizador!</string>
     <string name="wizard_btn_back">Voltar</string>
     <string name="title_setup_gnucash">Configurar GnuCash</string>
     <string name="wizard_title_welcome_to_gnucash">Bem-vindo ao GnuCash</string>
-    <string name="msg_wizard_welcome_page">Antes de iniciar, \nvamos fazer algumas configurações primeiro\n\nPara continuar, pressione Avançar</string>
+    <string name="msg_wizard_welcome_page">Antes de iniciar,\nvamos fazer algumas configurações primeiro\n\nPara continuar, pressione Avançar</string>
     <string name="title_split_editor">Editor de contrapartidas</string>
     <string name="toast_error_check_split_amounts">Confirme que todas as contrapartidas têm montantes válidos antes de gravar!</string>
     <string name="label_error_invalid_expression">Expressão inválida!</string>
