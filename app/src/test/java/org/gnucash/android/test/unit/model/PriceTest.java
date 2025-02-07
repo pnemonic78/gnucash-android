@@ -35,16 +35,18 @@ public class PriceTest extends GnuCashTest {
         Commodity commodity1 = Commodity.USD;
         Commodity commodity2 = Commodity.EUR;
 
-        String exchangeRateString = "0.123456";
+        String exchangeRateString = "0.123";
         BigDecimal exchangeRate = new BigDecimal(exchangeRateString);
         Price price = new Price(commodity1, commodity2, exchangeRate);
-        assertThat(price.toString()).isEqualTo(exchangeRateString);
+        // EUR uses 2 fractional digits.
+        assertThat(price.toString()).isEqualTo("0.12");
 
         // ensure we don't get more decimal places than needed (0.123000)
-        exchangeRateString = "0.123";
+        exchangeRateString = "0.123456";
         exchangeRate = new BigDecimal(exchangeRateString);
         price = new Price(commodity1, commodity2, exchangeRate);
-        assertThat(price.toString()).isEqualTo(exchangeRateString);
+        // EUR uses 2 fractional digits.
+        assertThat(price.toString()).isEqualTo("0.12");
     }
 
     @Test
@@ -56,7 +58,8 @@ public class PriceTest extends GnuCashTest {
         String exchangeRateString = "1.234";
         BigDecimal exchangeRate = new BigDecimal(exchangeRateString);
         Price price = new Price(commodity1, commodity2, exchangeRate);
-        assertThat(price.toString()).isEqualTo("1,234");
+        // USD uses 2 fractional digits.
+        assertThat(price.toString()).isEqualTo("1,23");
     }
 
     /**
