@@ -312,16 +312,8 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
      * @return List of {@link Transaction}s for account with UID <code>accountUID</code>
      */
     public List<Transaction> getAllTransactionsForAccount(String accountUID) {
-        Cursor c = fetchAllTransactionsForAccount(accountUID);
-        ArrayList<Transaction> transactionsList = new ArrayList<>();
-        try {
-            while (c.moveToNext()) {
-                transactionsList.add(buildModelInstance(c));
-            }
-        } finally {
-            c.close();
-        }
-        return transactionsList;
+        Cursor cursor = fetchAllTransactionsForAccount(accountUID);
+        return getRecords(cursor);
     }
 
     /**
@@ -507,13 +499,8 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
      * @return List of all scheduled transactions
      */
     public List<Transaction> getScheduledTransactionsForAccount(String accountUID) {
-        try (Cursor cursor = fetchScheduledTransactionsForAccount(accountUID)) {
-            List<Transaction> scheduledTransactions = new ArrayList<>();
-            while (cursor.moveToNext()) {
-                scheduledTransactions.add(buildModelInstance(cursor));
-            }
-            return scheduledTransactions;
-        }
+        Cursor cursor = fetchScheduledTransactionsForAccount(accountUID);
+        return getRecords(cursor);
     }
 
     /**

@@ -276,15 +276,7 @@ public class SplitsDbAdapter extends DatabaseAdapter<Split> {
      */
     public List<Split> getSplitsForTransaction(String transactionUID) {
         Cursor cursor = fetchSplitsForTransaction(transactionUID);
-        List<Split> splitList = new ArrayList<Split>();
-        try {
-            while (cursor.moveToNext()) {
-                splitList.add(buildModelInstance(cursor));
-            }
-        } finally {
-            cursor.close();
-        }
-        return splitList;
+        return getRecords(cursor);
     }
 
     /**
@@ -308,14 +300,7 @@ public class SplitsDbAdapter extends DatabaseAdapter<Split> {
      */
     public List<Split> getSplitsForTransactionInAccount(String transactionUID, String accountUID) {
         Cursor cursor = fetchSplitsForTransactionAndAccount(transactionUID, accountUID);
-        List<Split> splitList = new ArrayList<Split>();
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                splitList.add(buildModelInstance(cursor));
-            }
-            cursor.close();
-        }
-        return splitList;
+        return getRecords(cursor);
     }
 
     /**

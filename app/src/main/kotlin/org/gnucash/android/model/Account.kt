@@ -285,6 +285,11 @@ class Account : BaseModel {
 
     companion object {
         /**
+         * Separator used for account name hierarchies between parent and child accounts
+         */
+        const val NAME_SEPARATOR = ":"
+
+        /**
          * The MIME type for accounts in GnucashMobile
          * This is used when sending intents from third-party applications
          */

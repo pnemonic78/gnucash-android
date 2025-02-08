@@ -1019,8 +1019,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                     stack.push(parentAccount);
                     continue;
                 }
-                mapFullName.put(acc.getUID(), parentAccountFullName +
-                        AccountsDbAdapter.ACCOUNT_NAME_SEPARATOR + acc.getName());
+                mapFullName.put(acc.getUID(), parentAccountFullName + Account.NAME_SEPARATOR + acc.getName());
                 stack.pop();
             }
         }

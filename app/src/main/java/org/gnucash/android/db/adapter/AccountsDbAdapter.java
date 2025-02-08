@@ -65,10 +65,6 @@ import timber.log.Timber;
  * @author Oleksandr Tyshkovets <olexandr.tyshkovets@gmail.com>
  */
 public class AccountsDbAdapter extends DatabaseAdapter<Account> {
-    /**
-     * Separator used for account name hierarchies between parent and child accounts
-     */
-    public static final String ACCOUNT_NAME_SEPARATOR = ":";
 
     /**
      * ROOT account full name.
@@ -324,7 +320,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
                     if (parentAccountFullName == null || parentAccountFullName.isEmpty()) {
                         acct.setFullName(acct.getName());
                     } else {
-                        acct.setFullName(parentAccountFullName + ACCOUNT_NAME_SEPARATOR + acct.getName());
+                        acct.setFullName(parentAccountFullName + Account.NAME_SEPARATOR + acct.getName());
                     }
                     // update DB
                     contentValues.clear();
@@ -338,8 +334,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
                 } else {
                     // indirect descendant
                     acct.setFullName(
-                            mapAccounts.get(acct.getParentUID()).getFullName() +
-                                    ACCOUNT_NAME_SEPARATOR + acct.getName()
+                            mapAccounts.get(acct.getParentUID()).getFullName() + Account.NAME_SEPARATOR + acct.getName()
                     );
                     // update DB
                     contentValues.clear();
@@ -560,7 +555,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      *
      * @return List of {@link Account}s in the database
      */
-    public List<Account> getSimpleAccountList(String where, String[] whereArgs, String orderBy) {
+    public List<Account> getSimpleAccountList(@Nullable String where, @Nullable String[] whereArgs, @Nullable String orderBy) {
         LinkedList<Account> accounts = new LinkedList<>();
         Cursor c = fetchAccounts(where, whereArgs, orderBy);
         try {
@@ -580,7 +575,6 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * @return List of {@link Account}s with unexported transactions
      */
     public List<Account> getExportableAccounts(Timestamp lastExportTimeStamp) {
-        LinkedList<Account> accountsList = new LinkedList<>();
         Cursor cursor = mDb.query(
                 TransactionEntry.TABLE_NAME + " , " + SplitEntry.TABLE_NAME +
                         " ON " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = " +
@@ -595,14 +589,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
                 null,
                 null
         );
-        try {
-            while (cursor.moveToNext()) {
-                accountsList.add(buildModelInstance(cursor));
-            }
-        } finally {
-            cursor.close();
-        }
-        return accountsList;
+        return getRecords(cursor);
     }
 
     /**
@@ -651,10 +638,10 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * @return String unique ID of the account at bottom of hierarchy
      */
     public String createAccountHierarchy(String fullName, AccountType accountType) {
-        if ("".equals(fullName)) {
+        if (TextUtils.isEmpty(fullName)) {
             throw new IllegalArgumentException("fullName cannot be empty");
         }
-        String[] tokens = fullName.trim().split(ACCOUNT_NAME_SEPARATOR);
+        String[] tokens = fullName.trim().split(Account.NAME_SEPARATOR);
         String uid = getOrCreateGnuCashRootAccountUID();
         String parentName = "";
         ArrayList<Account> accountsList = new ArrayList<>();
@@ -671,7 +658,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
                 accountsList.add(account);
                 uid = account.getUID();
             }
-            parentName += ACCOUNT_NAME_SEPARATOR;
+            parentName += Account.NAME_SEPARATOR;
         }
         if (accountsList.size() > 0) {
             bulkAddRecords(accountsList, UpdateMethod.insert);
@@ -1130,7 +1117,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
 
         String parentAccountName = getFullyQualifiedAccountName(parentAccountUID);
 
-        return parentAccountName + ACCOUNT_NAME_SEPARATOR + accountName;
+        return parentAccountName + Account.NAME_SEPARATOR + accountName;
     }
 
     /**
@@ -1149,7 +1136,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
 
         String parentAccountName = getFullyQualifiedAccountName(parentAccountUID);
 
-        return parentAccountName + ACCOUNT_NAME_SEPARATOR + accountName;
+        return parentAccountName + Account.NAME_SEPARATOR + accountName;
     }
 
     /**
@@ -1268,7 +1255,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         String parentEquity = context.getString(R.string.account_name_equity).trim();
         //German locale has no parent Equity account
         if (parentEquity.length() > 0) {
-            return parentEquity + ACCOUNT_NAME_SEPARATOR
+            return parentEquity + Account.NAME_SEPARATOR
                     + context.getString(R.string.account_name_opening_balances);
         } else
             return context.getString(R.string.account_name_opening_balances);
