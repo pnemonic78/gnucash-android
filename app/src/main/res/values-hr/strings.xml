@@ -21,7 +21,6 @@
     <string name="description_view_account_icon">Prikaži detalje konta</string>
     <string name="label_no_accounts">Nema konta</string>
     <string name="label_account_name">Ime konta</string>
-    <string name="btn_cancel">Odustani</string>
     <string name="btn_save">Spremi</string>
     <string name="btn_test">Ispitaj</string>
     <string name="label_passcode">Unesi lozinku</string>
@@ -39,7 +38,6 @@
     <string name="title_transactions">Transakcije</string>
     <string name="menu_delete">Izbriši</string>
     <string name="alert_dialog_ok_delete">Izbriši</string>
-    <string name="alert_dialog_cancel">Odustani</string>
     <string name="toast_account_deleted">Konto je izbrisan</string>
     <string name="title_confirm_delete">Potvrdi brisanje</string>
     <string name="title_edit_transaction">Uredi transakciju</string>
