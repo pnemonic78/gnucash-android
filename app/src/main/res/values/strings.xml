@@ -16,7 +16,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" tools:locale="en">
     <string name="title_create_account">Create Account</string>
     <string name="title_edit_account">Edit Account</string>
-    <string name="title_edit_budget">Edit Budget</string>
     <string name="description_add_transaction_icon">Add a new transaction to an account</string>
     <string name="description_view_account_icon">View account details</string>
     <string name="label_no_accounts">No accounts to display</string>
@@ -110,23 +109,18 @@
     <string name="title_xml_ofx_header">Use XML OFX header</string>
     <string name="summary_xml_ofx_header">Enable this option when exporting to third-party application other than GnuCash for desktop</string>
     <string name="title_whats_new">What\'s New</string>
-    <string name="whats_new">
-	</string>
+    <string name="whats_new"></string>
     <string name="label_dismiss">Dismiss</string>
-    <string name="toast_transanction_amount_required">Enter an amount to save the transaction</string>
+    <string name="toast_transaction_amount_required">Enter an amount to save the transaction</string>
     <string name="toast_error_importing_accounts">An error occurred while importing the GnuCash accounts</string>
     <string name="toast_success_importing_accounts">GnuCash Accounts successfully imported</string>
     <string name="summary_import_accounts">Import account structure from GnuCash XML</string>
     <string name="title_import_accounts">Import GnuCash XML</string>
-    <string name="summary_delete_all_accounts">Delete all accounts in the database. All transactions will be deleted as
-        well.
-    </string>
+    <string name="summary_delete_all_accounts">Delete all accounts in the database. All transactions will be deleted as well.</string>
     <string name="title_delete_all_accounts">Delete all accounts</string>
     <string name="header_account_settings">Accounts</string>
     <string name="toast_all_accounts_deleted">All accounts have been successfully deleted</string>
-    <string name="confirm_delete_all_accounts">Are you sure you want to delete all accounts and transactions?\n\nThis
-        operation cannot be undone!
-    </string>
+    <string name="confirm_delete_all_accounts">Are you sure you want to delete all accounts and transactions?\n\nThis operation cannot be undone!</string>
     <string name="summary_delete_all_transactions">All transactions in all accounts will be deleted!</string>
     <string name="title_delete_all_transactions">Delete all transactions</string>
     <string name="toast_all_transactions_deleted">All transactions successfully deleted!</string>
@@ -202,8 +196,7 @@
     <string name="label_sell">Sell</string>
     <string name="account_name_opening_balances">Opening Balances</string>
     <string name="account_name_equity">Equity</string>
-    <string name="summary_save_opening_balances">Enable to save the current account balance (before deleting transactions) as new opening balance after deleting transactions
-    </string>
+    <string name="summary_save_opening_balances">Enable to save the current account balance (before deleting transactions) as new opening balance after deleting transactions</string>
     <string name="title_save_opening_balances">Save account opening balances</string>
     <string name="export_warning_ofx">OFX does not support double-entry transactions</string>
     <string name="export_warning_qif">Generates separate QIF files per currency</string>
@@ -241,8 +234,6 @@
     <string name="title_dropbox_sync_preference">Enable DropBox</string>
     <string name="title_owncloud_sync_preference">Enable ownCloud </string>
     <string name="title_backup_preference_category">Backup</string>
-    <string name="title_delete_transaction_backup">When delete transaction?</string>
-    <string name="summary_delete_transaction_backup">Backup active book when delete a transaction?</string>
     <string name="summary_dropbox_sync">Enable exporting to DropBox</string>
     <string name="summary_owncloud_sync">Enable exporting to ownCloud</string>
     <string name="title_backup_prefs">Backup Preferences</string>
@@ -465,6 +456,9 @@
         <item>Tax</item>
         <item>Placeholder</item>
     </string-array>
+    <string name="title_edit_budget">Edit Budget</string>
+    <string name="title_delete_transaction_backup">When delete transaction?</string>
+    <string name="summary_delete_transaction_backup">Backup active book when delete a transaction?</string>
     <string name="action_transaction">transaction to</string>
     <string name="action_backup">backup to</string>
 </resources>

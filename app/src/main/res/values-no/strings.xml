@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Alle eksporterte transaksjoner slettes når eksport er fullført</string>
     <string name="title_settings">Innstillinger</string>
     <string-array name="export_destinations">
-        <item>Save As&#8230;</item>
+        <item>Save As…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Send to&#8230;</item>
+        <item>Send to…</item>
     </string-array>
     <string name="btn_move">Flytt</string>
     <string name="title_move_transactions">Flytt %1$d transaksjon(er)</string>
@@ -118,7 +118,7 @@
         - Multiple bug fixes and improvements\n
 	</string>
     <string name="label_dismiss">Avvis</string>
-    <string name="toast_transanction_amount_required">Angi et beløp for å lagre transaksjonen</string>
+    <string name="toast_transaction_amount_required">Angi et beløp for å lagre transaksjonen</string>
     <string name="toast_error_importing_accounts">Det oppstod en feil under import av GnuCash kontoene</string>
     <string name="toast_success_importing_accounts">GnuCash kontoer importert</string>
     <string name="summary_import_accounts">Importere kontostrukturen eksportert fra GnuCash desktop</string>
@@ -234,7 +234,7 @@
     <string name="label_delete_transactions">Slett transaksjoner</string>
     <string name="toast_disable_double_entry_to_save_transaction">Opprette og angi en konto for overføring eller deaktivere dobbel bokføring for å lagre transaksjonen</string>
     <string name="label_tap_to_create_schedule">Trykk for å opprette plan</string>
-    <string name="title_restore_backup">Gjenopprette sikkerhetskopi&#8230;</string>
+    <string name="title_restore_backup">Gjenopprette sikkerhetskopi…</string>
     <string name="header_backup_and_export_settings">Backup &amp; eksport</string>
     <string name="title_dropbox_sync_preference">Aktiver DropBox</string>
     <string name="title_owncloud_sync_preference">Aktiver ownCloud </string>
@@ -251,9 +251,9 @@
     <string name="toast_install_file_manager">Installer en filbehandler for å velge filer</string>
     <string name="title_select_backup_to_restore">Velg sikkerhetskopien som skal gjenopprettes</string>
     <string name="nav_menu_favorites">Favoritter</string>
-    <string name="nav_menu_open">Åpne&#8230;</string>
+    <string name="nav_menu_open">Åpne…</string>
     <string name="nav_menu_reports">Rapporter</string>
-    <string name="nav_menu_export">Eksport&#8230;</string>
+    <string name="nav_menu_export">Eksport…</string>
     <string name="nav_menu_settings">Innstillinger</string>
     <string name="username">Brukernavn</string>
     <string name="password">Passord</string>
@@ -289,7 +289,7 @@
     <string name="wizard_option_create_default_accounts">Opprette standardkontoer</string>
     <string name="wizard_option_import_my_accounts">Import kontoene mine</string>
     <string name="wizard_option_let_me_handle_it">La meg håndtere det</string>
-    <string name="wizard_option_currency_other">Andre&#8230;</string>
+    <string name="wizard_option_currency_other">Andre…</string>
     <string name="wizard_option_auto_send_crash_reports">Send feilrapporter automatisk</string>
     <string name="wizard_option_disable_crash_reports">Deaktivere programstopprapporter</string>
     <string name="wizard_btn_back">Tilbake</string>
@@ -330,7 +330,7 @@
     <string name="summary_google_plus">Dele ideer, diskutere endringer eller rapportere problemer</string>
     <string name="summary_translate_gnucash">Oversette eller korrekturles på CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">Ingen kompatible apper til å motta de eksporterte transaksjonene!</string>
-    <string name="menu_move_transaction">Flytt&#8230;</string>
+    <string name="menu_move_transaction">Flytt…</string>
     <string name="menu_duplicate_transaction">Dupliser</string>
     <string name="title_cash_flow_report">Kontantstrøm</string>
     <string name="title_budgets">Budsjetter</string>
@@ -345,13 +345,13 @@
         <item>Siste 6 måneder</item>
         <item>Siste 12 måneder</item>
         <item>Tidsrom</item>
-        <item>Tilpasset tidsrom&#8230;</item>
+        <item>Tilpasset tidsrom…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -371,7 +371,7 @@
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Manage Books</string>
-    <string name="menu_manage_books">Manage Books&#8230;</string>
+    <string name="menu_manage_books">Manage Books…</string>
     <string name="select_chart_to_view_details">Merk en del av diagrammet for detaljer</string>
     <string name="title_confirm_delete_book">Bekreft sletting</string>
     <string name="msg_all_book_data_will_be_deleted">Alle kontoer og transaksjoner i denne boken vil bli slettet!</string>

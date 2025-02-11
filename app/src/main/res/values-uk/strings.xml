@@ -118,7 +118,7 @@
         - Кілька виправлень та покращень\n
 	</string>
     <string name="label_dismiss">Відмовитися</string>
-    <string name="toast_transanction_amount_required">Введіть суму, щоб зберегти транзакцію</string>
+    <string name="toast_transaction_amount_required">Введіть суму, щоб зберегти транзакцію</string>
     <string name="toast_error_importing_accounts">Сталася помилка при імпорті рахунків із GnuCash</string>
     <string name="toast_success_importing_accounts">Рахунки із GnuCash успішно імпортовані</string>
     <string name="summary_import_accounts"> Імпорт структури рахунків із GnuCash для ПК</string>
@@ -236,7 +236,7 @@
     <string name="label_delete_transactions">Видалити транзакції</string>
     <string name="toast_disable_double_entry_to_save_transaction">Створіть і вкажіть трансферний рахунок або вимкніть подвійний запис в налаштуваннях.</string>
     <string name="label_tap_to_create_schedule">Торкніться, щоб створити розклад</string>
-    <string name="title_restore_backup">Відновити з резервної копії&#8230;</string>
+    <string name="title_restore_backup">Відновити з резервної копії…</string>
     <string name="header_backup_and_export_settings">Резервне копіювання й експорт</string>
     <string name="title_dropbox_sync_preference">Під’єднати Dropbox</string>
     <string name="title_owncloud_sync_preference">Під’єднати до ownCloud </string>
@@ -253,9 +253,9 @@
     <string name="toast_install_file_manager">Встановіть програму для перегляду файлової системи</string>
     <string name="title_select_backup_to_restore">Оберіть резервну копію для відновлення</string>
     <string name="nav_menu_favorites">Закладки</string>
-    <string name="nav_menu_open">Відкрити&#8230;</string>
+    <string name="nav_menu_open">Відкрити…</string>
     <string name="nav_menu_reports">Звіти</string>
-    <string name="nav_menu_export">Експорт&#8230;</string>
+    <string name="nav_menu_export">Експорт…</string>
     <string name="nav_menu_settings">Налаштування</string>
     <string name="username">Ім’я користувача</string>
     <string name="password">Пароль</string>
@@ -291,7 +291,7 @@
     <string name="wizard_option_create_default_accounts">Створити типові рахунки</string>
     <string name="wizard_option_import_my_accounts">Імпортувати рахунки</string>
     <string name="wizard_option_let_me_handle_it">Я вирішу пізніше</string>
-    <string name="wizard_option_currency_other">Інше&#8230;</string>
+    <string name="wizard_option_currency_other">Інше…</string>
     <string name="wizard_option_auto_send_crash_reports">Автоматично звітувати про помилки</string>
     <string name="wizard_option_disable_crash_reports">Не звітувати про помилки</string>
     <string name="wizard_btn_back">Назад</string>
@@ -332,7 +332,7 @@
     <string name="summary_google_plus">Поділитися ідеями, обговорити зміни або повідомити про проблеми</string>
     <string name="summary_translate_gnucash">Перекласти або вичитати на CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">Нема сумісних застосунків для експортування!</string>
-    <string name="menu_move_transaction">Перемістити&#8230;</string>
+    <string name="menu_move_transaction">Перемістити…</string>
     <string name="menu_duplicate_transaction">Дублювати</string>
     <string name="title_cash_flow_report">Грошовий потік</string>
     <string name="title_budgets">Бюджети</string>
@@ -347,13 +347,13 @@
         <item>Останнє півріччя</item>
         <item>Останній рік</item>
         <item>Весь час</item>
-        <item>Інший інтервал&#8230;</item>
+        <item>Інший інтервал…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>

@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Alle geëxporteerde boekingen zullen verwijderd worden na de export</string>
     <string name="title_settings">Instellingen</string>
     <string-array name="export_destinations">
-        <item>Save As&#8230;</item>
+        <item>Save As…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Send to&#8230;</item>
+        <item>Send to…</item>
     </string-array>
     <string name="btn_move">Verplaatsen</string>
     <string name="title_move_transactions">%1$d boeking(en) verplaatsen</string>
@@ -118,7 +118,7 @@
         - Multiple bug fixes and improvements\n
 	</string>
     <string name="label_dismiss">Wijs af</string>
-    <string name="toast_transanction_amount_required">Vul een bedrag in om de transactie op te slaan.</string>
+    <string name="toast_transaction_amount_required">Vul een bedrag in om de transactie op te slaan.</string>
     <string name="toast_error_importing_accounts">Fout bij het importeren van de GnuCash rekeningen</string>
     <string name="toast_success_importing_accounts">GnuCash rekeningen met succes geïmporteerd</string>
     <string name="summary_import_accounts">Rekeningstructuur uit desktop-GnuCash importeren</string>
@@ -238,7 +238,7 @@
     <string name="label_delete_transactions">Verrichtingen verwijderen</string>
     <string name="toast_disable_double_entry_to_save_transaction">Maak en geef een overdracht rekening op OF schakel dubbel-boekhouden uit in instellingen om deze boeking te bewaren</string>
     <string name="label_tap_to_create_schedule">Tik op om schema te maken</string>
-    <string name="title_restore_backup">Back-up terugzetten&#8230;</string>
+    <string name="title_restore_backup">Back-up terugzetten…</string>
     <string name="header_backup_and_export_settings">Back-up &amp; export</string>
     <string name="title_dropbox_sync_preference">Enable DropBox</string>
     <string name="title_owncloud_sync_preference">Enable ownCloud </string>
@@ -336,7 +336,7 @@ No user-identifiable information will be collected as part of this process!
     <string name="summary_google_plus">Ideeën uitwisselen, bespreken van wijzigingen of problemen melden</string>
     <string name="summary_translate_gnucash">Vertalen of nalezen op CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">No compatible apps to receive the exported transactions!</string>
-    <string name="menu_move_transaction">Move&#8230;</string>
+    <string name="menu_move_transaction">Move…</string>
     <string name="menu_duplicate_transaction">Duplicate</string>
     <string name="title_cash_flow_report">Cash Flow</string>
     <string name="title_budgets">Budgets</string>
@@ -351,13 +351,13 @@ No user-identifiable information will be collected as part of this process!
         <item>Afgelopen 6 maanden</item>
         <item>Afgelopen 12 maanden</item>
         <item>Alle boekingen</item>
-        <item>Aangepast bereik&#8230;</item>
+        <item>Aangepast bereik…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -377,7 +377,7 @@ No user-identifiable information will be collected as part of this process!
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Manage Books</string>
-    <string name="menu_manage_books">Manage Books&#8230;</string>
+    <string name="menu_manage_books">Manage Books…</string>
     <string name="select_chart_to_view_details">Select any part of the chart to view details</string>
     <string name="title_confirm_delete_book">Confirm delete Book</string>
     <string name="msg_all_book_data_will_be_deleted">All accounts and transactions in this book will be deleted!</string>

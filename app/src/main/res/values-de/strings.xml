@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Alle exportierten Buchungen werden nach dem Export gelöscht.</string>
     <string name="title_settings">Einstellungen</string>
     <string-array name="export_destinations">
-        <item>Speichern unter&#8230;</item>
+        <item>Speichern unter…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Senden an&#8230;</item>
+        <item>Senden an…</item>
     </string-array>
     <string name="btn_move">Verschieben</string>
     <string name="title_move_transactions">%1$d Buchung(en) verschieben</string>
@@ -117,7 +117,7 @@
         - Bücher umbenennen ermöglicht\n
         - Mehrere Bugfixes and Verbesserungen\n</string>
     <string name="label_dismiss">Schließen</string>
-    <string name="toast_transanction_amount_required">Geben Sie einen Betrag ein, um die Buchung speichern zu können</string>
+    <string name="toast_transaction_amount_required">Geben Sie einen Betrag ein, um die Buchung speichern zu können</string>
     <string name="toast_error_importing_accounts">Beim Importieren der GnuCash-Konten ist ein Fehler aufgetreten!</string>
     <string name="toast_success_importing_accounts">GnuCash-Konten wurden erfolgreich importiert</string>
     <string name="summary_import_accounts">Importiere Kontenstruktur, welche von der Desktop-Version von GnuCash exportiert wurde</string>
@@ -236,7 +236,7 @@
     <string name="label_delete_transactions">Buchungen löschen</string>
     <string name="toast_disable_double_entry_to_save_transaction">Erstellen und wählen Sie ein Transferkonto aus oder deaktivieren Sie Doppelte Buchführung in den Einstellungen um diese Buchung zu speichern</string>
     <string name="label_tap_to_create_schedule">Wiederholung erstellen</string>
-    <string name="title_restore_backup">Sicherung wiederherstellen&#8230;</string>
+    <string name="title_restore_backup">Sicherung wiederherstellen…</string>
     <string name="header_backup_and_export_settings">Backup &amp; Exporte</string>
     <string name="title_dropbox_sync_preference">DropBox aktivieren</string>
     <string name="title_owncloud_sync_preference">OwnCloud aktivieren </string>
@@ -253,9 +253,9 @@
     <string name="toast_install_file_manager">Installieren Sie einen Dateimanager um Dateien auszuwählen</string>
     <string name="title_select_backup_to_restore">Wähle eine Sicherungskopie</string>
     <string name="nav_menu_favorites">Favoriten</string>
-    <string name="nav_menu_open">Öffnen&#8230;</string>
+    <string name="nav_menu_open">Öffnen…</string>
     <string name="nav_menu_reports">Berichte</string>
-    <string name="nav_menu_export">Exportieren&#8230;</string>
+    <string name="nav_menu_export">Exportieren…</string>
     <string name="nav_menu_settings">Einstellungen</string>
     <string name="username">Benutzername</string>
     <string name="password">Passwort</string>
@@ -333,7 +333,7 @@ No user-identifiable information will be collected as part of this process!</str
     <string name="summary_google_plus">Teile deine Ideen und Verbesserungsvorschläge mit oder berichte über Probleme mit GnuCash</string>
     <string name="summary_translate_gnucash">Übersetze oder korrigiere Übersetzungen auf CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">Es gibt keine kompatible App, welche die exportierten Buchungen empfangen kann!</string>
-    <string name="menu_move_transaction">Bewegen&#8230;</string>
+    <string name="menu_move_transaction">Bewegen…</string>
     <string name="menu_duplicate_transaction">Duplizieren</string>
     <string name="title_cash_flow_report">Geldfluss</string>
     <string name="title_budgets">Budgets</string>
@@ -348,13 +348,13 @@ No user-identifiable information will be collected as part of this process!</str
         <item>Letzte 6 Monate</item>
         <item>Letzte 12 Monate</item>
         <item>Unbegrenzt</item>
-        <item>Benutzerdefiniert&#8230;</item>
+        <item>Benutzerdefiniert…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -374,7 +374,7 @@ No user-identifiable information will be collected as part of this process!</str
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Bücher verwalten</string>
-    <string name="menu_manage_books">Bücher verwalten&#8230;</string>
+    <string name="menu_manage_books">Bücher verwalten…</string>
     <string name="select_chart_to_view_details">Wählen Sie irgendeinen Teil des Diagramms, um Details anzuzeigen</string>
     <string name="title_confirm_delete_book">Löschen des Buchs bestätigen</string>
     <string name="msg_all_book_data_will_be_deleted">Alle Konten und Buchungen in diesem Buch werden gelöscht!</string>

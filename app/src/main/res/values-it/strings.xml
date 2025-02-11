@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Tutte le transazioni esportate verranno eliminate al termine dell\'esportazione</string>
     <string name="title_settings">Impostazioni</string>
     <string-array name="export_destinations">
-        <item>Salva con nome&#8230;</item>
+        <item>Salva con nome…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Invia a&#8230;</item>
+        <item>Invia a…</item>
     </string-array>
     <string name="btn_move">Sposta</string>
     <string name="title_move_transactions">Sposta %1$d transazioni</string>
@@ -118,7 +118,7 @@
         - Molte risoluzioni di bug e molti miglioramenti\n
 	</string>
     <string name="label_dismiss">Chiudi</string>
-    <string name="toast_transanction_amount_required">Inserire un importo per salvare la transazione</string>
+    <string name="toast_transaction_amount_required">Inserire un importo per salvare la transazione</string>
     <string name="toast_error_importing_accounts">Si è verificato un errore nell\'importare i conti di GnuCash</string>
     <string name="toast_success_importing_accounts">I conti di GnuCash sono stati importati correttamente</string>
     <string name="summary_import_accounts">Importa una struttura dei conti esportata da GnuCash per desktop</string>
@@ -236,7 +236,7 @@
     <string name="label_delete_transactions">Elimina transazioni</string>
     <string name="toast_disable_double_entry_to_save_transaction">Crea e specifica un conto per il trasferimento o disattiva la partita doppia nelle impostazioni per salvare la transazione</string>
     <string name="label_tap_to_create_schedule">Tocca per creare una pianificazione</string>
-    <string name="title_restore_backup">Ripristina backup&#8230;</string>
+    <string name="title_restore_backup">Ripristina backup…</string>
     <string name="header_backup_and_export_settings">Backup e esportazione</string>
     <string name="title_dropbox_sync_preference">Abilita DropBox</string>
     <string name="title_owncloud_sync_preference">Abilita ownCloud </string>
@@ -253,9 +253,9 @@
     <string name="toast_install_file_manager">Installa un file manager per selezionare i file</string>
     <string name="title_select_backup_to_restore">Seleziona il backup da ripristinare</string>
     <string name="nav_menu_favorites">Preferiti</string>
-    <string name="nav_menu_open">Apri&#8230;</string>
+    <string name="nav_menu_open">Apri…</string>
     <string name="nav_menu_reports">Resoconti</string>
-    <string name="nav_menu_export">Esporta&#8230;</string>
+    <string name="nav_menu_export">Esporta…</string>
     <string name="nav_menu_settings">Impostazioni</string>
     <string name="username">Nome utente</string>
     <string name="password">Password</string>
@@ -291,7 +291,7 @@
     <string name="wizard_option_create_default_accounts">Crea conti predefiniti</string>
     <string name="wizard_option_import_my_accounts">Importa i miei conti</string>
     <string name="wizard_option_let_me_handle_it">Lascia fare a me</string>
-    <string name="wizard_option_currency_other">Altro&#8230;</string>
+    <string name="wizard_option_currency_other">Altro…</string>
     <string name="wizard_option_auto_send_crash_reports">Invia automaticamente le segnalazioni di arresto anomalo</string>
     <string name="wizard_option_disable_crash_reports">Disattiva le segnalazioni dei crash</string>
     <string name="wizard_btn_back">Indietro</string>
@@ -332,7 +332,7 @@
     <string name="summary_google_plus">Condivi idee, discuti dei cambiamenti o segnala dei problemi</string>
     <string name="summary_translate_gnucash">Traduci o revisiona su Crowdin</string>
     <string name="toast_no_compatible_apps_to_receive_export">Nessuna app compatibile con la ricezione delle transazioni esportate!</string>
-    <string name="menu_move_transaction">Sposta&#8230;</string>
+    <string name="menu_move_transaction">Sposta…</string>
     <string name="menu_duplicate_transaction">Duplica</string>
     <string name="title_cash_flow_report">Flusso di liquidi</string>
     <string name="title_budgets">Bilanci</string>
@@ -347,13 +347,13 @@
         <item>Ultimi 6 mesi</item>
         <item>Ultimi 12 mesi</item>
         <item>Da sempre</item>
-        <item>Intervallo personalizzato&#8230;</item>
+        <item>Intervallo personalizzato…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text"> </string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -373,7 +373,7 @@
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Gestione libri</string>
-    <string name="menu_manage_books">Gestione libri&#8230;</string>
+    <string name="menu_manage_books">Gestione libri…</string>
     <string name="select_chart_to_view_details">Seleziona qualsiasi parte del grafico per vederne i dettagli</string>
     <string name="title_confirm_delete_book">Conferma eliminazione libro</string>
     <string name="msg_all_book_data_will_be_deleted">Tutti i conti e le transazioni in questo libro verranno eliminate!</string>

@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Wszystkie eksportowane transakcje będą usunięte po zakończeniu eksportu</string>
     <string name="title_settings">Ustawienia</string>
     <string-array name="export_destinations">
-        <item>Save As&#8230;</item>
+        <item>Save As…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Send to&#8230;</item>
+        <item>Send to…</item>
     </string-array>
     <string name="btn_move">Przenieś</string>
     <string name="title_move_transactions">Przenieś %1$d transakcji</string>
@@ -119,7 +119,7 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
         - Multiple bug fixes and improvements\n
 	</string>
     <string name="label_dismiss">Spocznij</string>
-    <string name="toast_transanction_amount_required">Wprowadź kwotę by zapisać transakcję</string>
+    <string name="toast_transaction_amount_required">Wprowadź kwotę by zapisać transakcję</string>
     <string name="toast_error_importing_accounts">Wystąpił błąd podczas importowania kont GnuCash</string>
     <string name="toast_success_importing_accounts">Import kont GnuCash zakończony pomyślnie</string>
     <string name="summary_import_accounts">Importuj strukturę kont wyeksportowaną z GnuCash dla desktop</string>
@@ -236,7 +236,7 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="label_delete_transactions">Usuń transakcje</string>
     <string name="toast_disable_double_entry_to_save_transaction">Utwórz i określ konto transferowe LUB wyłącz podwójne wpisy w ustawieniach aby zachować transakcję</string>
     <string name="label_tap_to_create_schedule">Stuknij aby zaplanować</string>
-    <string name="title_restore_backup">Przywróc kopię zapasową&#8230;</string>
+    <string name="title_restore_backup">Przywróc kopię zapasową…</string>
     <string name="header_backup_and_export_settings">Kopia zapasowa i eksport</string>
     <string name="title_dropbox_sync_preference">Enable DropBox</string>
     <string name="title_owncloud_sync_preference">Enable ownCloud </string>
@@ -253,9 +253,9 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="toast_install_file_manager">Zainstaluj managera plików aby wybrać pliki</string>
     <string name="title_select_backup_to_restore">Wybierz kopię zapaswą aby ją przywrócić</string>
     <string name="nav_menu_favorites">Ulubione</string>
-    <string name="nav_menu_open">Otwórz&#8230;</string>
+    <string name="nav_menu_open">Otwórz…</string>
     <string name="nav_menu_reports">Raporty</string>
-    <string name="nav_menu_export">Eksport&#8230;</string>
+    <string name="nav_menu_export">Eksport…</string>
     <string name="nav_menu_settings">Ustawienia</string>
     <string name="username">User Name</string>
     <string name="password">Password</string>
@@ -292,7 +292,7 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="wizard_option_create_default_accounts">Utwórz domyślne konto</string>
     <string name="wizard_option_import_my_accounts">Zaimportuj moje konta</string>
     <string name="wizard_option_let_me_handle_it">Pozwól mi się tym zająć</string>
-    <string name="wizard_option_currency_other">Inna&#8230;</string>
+    <string name="wizard_option_currency_other">Inna…</string>
     <string name="wizard_option_auto_send_crash_reports">Automatycznie wysyłaj raporty o błędach</string>
     <string name="wizard_option_disable_crash_reports">Wyłącz raportowanie błędów</string>
     <string name="wizard_btn_back">Wstecz</string>
@@ -333,7 +333,7 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="summary_google_plus">Udostępnij pomysły, przedyskutuj zmiany lub zgłoś problem</string>
     <string name="summary_translate_gnucash">Tłumacz lub sprawdzaj na Crowdin</string>
     <string name="toast_no_compatible_apps_to_receive_export">Brak kompatybilnych aplikacji do otrzymania eksportowanych transakcji!</string>
-    <string name="menu_move_transaction">Move&#8230;</string>
+    <string name="menu_move_transaction">Move…</string>
     <string name="menu_duplicate_transaction">Duplikuj</string>
     <string name="title_cash_flow_report">Cash Flow</string>
     <string name="title_budgets">Budgets</string>
@@ -348,13 +348,13 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
         <item>Ostatnich 6 miesięcy</item>
         <item>Ostatnich 12 miesięcy</item>
         <item>Od początku</item>
-        <item>Własny zakres&#8230;</item>
+        <item>Własny zakres…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -374,7 +374,7 @@ Konto docelowe używa innej waluty niż konto wyjściowe</string>
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Manage Books</string>
-    <string name="menu_manage_books">Manage Books&#8230;</string>
+    <string name="menu_manage_books">Manage Books…</string>
     <string name="select_chart_to_view_details">Select any part of the chart to view details</string>
     <string name="title_confirm_delete_book">Confirm delete Book</string>
     <string name="msg_all_book_data_will_be_deleted">All accounts and transactions in this book will be deleted!</string>

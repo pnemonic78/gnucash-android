@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">エクスポート完了時に、エクスポートしたすべての取引が削除されます</string>
     <string name="title_settings">設定</string>
     <string-array name="export_destinations">
-        <item>名前を付けて保存&#8230;</item>
+        <item>名前を付けて保存…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>&#8230;に送信</item>
+        <item>…に送信</item>
     </string-array>
     <string name="btn_move">移動</string>
     <string name="title_move_transactions">%1$d件の取引を移動</string>
@@ -117,7 +117,7 @@
 - 帳簿の名前を変更するサポートの追加 \n
 - 複数のバグの修正と改善 \n</string>
     <string name="label_dismiss">消去</string>
-    <string name="toast_transanction_amount_required">取引を保存するには金額の入力が必要です</string>
+    <string name="toast_transaction_amount_required">取引を保存するには金額の入力が必要です</string>
     <string name="toast_error_importing_accounts">GnuCashの勘定科目をインポート中にエラーが発生しました。</string>
     <string name="toast_success_importing_accounts">GnuCashの費目のインポートが成功しました。</string>
     <string name="summary_import_accounts">デスクトップ版のGnuCashからエクスポートされた勘定科目の構成をインポートする</string>
@@ -232,7 +232,7 @@
     <string name="label_delete_transactions">取引を削除</string>
     <string name="toast_disable_double_entry_to_save_transaction">振込先を作成および指定するか、設定で複式簿記を無効にして、取引を保存します</string>
     <string name="label_tap_to_create_schedule">タップすると予定を作成します</string>
-    <string name="title_restore_backup">バックアップの復元&#8230;</string>
+    <string name="title_restore_backup">バックアップの復元…</string>
     <string name="header_backup_and_export_settings">バックアップとエクスポート</string>
     <string name="title_dropbox_sync_preference">DropBox を有効にする</string>
     <string name="title_owncloud_sync_preference">ownCloud を有効にする</string>
@@ -249,9 +249,9 @@
     <string name="toast_install_file_manager">ファイルを選択するために、ファイル マネージャーをインストールします</string>
     <string name="title_select_backup_to_restore">復元するバックアップを選択</string>
     <string name="nav_menu_favorites">お気に入り</string>
-    <string name="nav_menu_open">開く&#8230;</string>
+    <string name="nav_menu_open">開く…</string>
     <string name="nav_menu_reports">レポート</string>
-    <string name="nav_menu_export">エクスポート&#8230;</string>
+    <string name="nav_menu_export">エクスポート…</string>
     <string name="nav_menu_settings">設定</string>
     <string name="username">ユーザー名</string>
     <string name="password">パスワード</string>
@@ -287,7 +287,7 @@
     <string name="wizard_option_create_default_accounts">デフォルトの勘定科目を作成</string>
     <string name="wizard_option_import_my_accounts">マイ勘定科目をインポート</string>
     <string name="wizard_option_let_me_handle_it">自分でやります</string>
-    <string name="wizard_option_currency_other">その他&#8230;</string>
+    <string name="wizard_option_currency_other">その他…</string>
     <string name="wizard_option_auto_send_crash_reports">クラッシュ レポートを自動的に送信する</string>
     <string name="wizard_option_disable_crash_reports">クラッシュ レポートを無効にする</string>
     <string name="wizard_btn_back">戻る</string>
@@ -328,7 +328,7 @@
     <string name="summary_google_plus">アイデアを共有、変更を議論、または問題を報告</string>
     <string name="summary_translate_gnucash">CrowdIn で翻訳または検証します</string>
     <string name="toast_no_compatible_apps_to_receive_export">エクスポートされた取引を受け取る、互換性のあるアプリがありません!</string>
-    <string name="menu_move_transaction">移動&#8230;</string>
+    <string name="menu_move_transaction">移動…</string>
     <string name="menu_duplicate_transaction">複製</string>
     <string name="title_cash_flow_report">キャッシュフロー</string>
     <string name="title_budgets">予算</string>
@@ -343,13 +343,13 @@
         <item>過去 6 ヶ月</item>
         <item>過去 12 ヶ月</item>
         <item>全期間</item>
-        <item>カスタムの範囲&#8230;</item>
+        <item>カスタムの範囲…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​1</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -369,7 +369,7 @@
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">帳簿の管理</string>
-    <string name="menu_manage_books">帳簿の管理&#8230;</string>
+    <string name="menu_manage_books">帳簿の管理…</string>
     <string name="select_chart_to_view_details">グラフの詳細を表示する部分を選択してください</string>
     <string name="title_confirm_delete_book">帳簿の削除の確認</string>
     <string name="msg_all_book_data_will_be_deleted">この帳簿のすべての勘定科目と取引が削除されます!</string>

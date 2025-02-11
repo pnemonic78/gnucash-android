@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Semua transaksi yang diekspor akan dihapus saat proses ekspor selesai</string>
     <string name="title_settings">Pengaturan</string>
     <string-array name="export_destinations">
-        <item>Simpan sbg&#8230;</item>
+        <item>Simpan sbg…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Kirim ke&#8230;</item>
+        <item>Kirim ke…</item>
     </string-array>
     <string name="btn_move">Pindahkan</string>
     <string name="title_move_transactions">Memindah transaksi %1$d</string>
@@ -113,7 +113,7 @@
     <string name="whats_new">
 </string>
     <string name="label_dismiss">Abaikan</string>
-    <string name="toast_transanction_amount_required">Tuliskan jumlah untuk menyimpan transaksi</string>
+    <string name="toast_transaction_amount_required">Tuliskan jumlah untuk menyimpan transaksi</string>
     <string name="toast_error_importing_accounts">Terjadi error saat mengimpor akun GnuCash</string>
     <string name="toast_success_importing_accounts">Akun GnuCash berhasil diimpor</string>
     <string name="summary_import_accounts">Mengimpor struktur akun yang telah diekspor dari GnuCash desktop</string>
@@ -230,7 +230,7 @@
     <string name="label_delete_transactions">Hapus transaksi</string>
     <string name="toast_disable_double_entry_to_save_transaction">Membuat dan menetapkan sebuah akun transfer ATAU nonaktifkan double-entry pada pengaturan untuk menyimpan transaksi</string>
     <string name="label_tap_to_create_schedule">Ketuk untuk membuat jadwal</string>
-    <string name="title_restore_backup">Mengembalikan Cadangan&#8230;</string>
+    <string name="title_restore_backup">Mengembalikan Cadangan…</string>
     <string name="header_backup_and_export_settings">Cadangan &amp; ekspor</string>
     <string name="title_dropbox_sync_preference">Aktifkan DropBox</string>
     <string name="title_owncloud_sync_preference">Aktifkan ownCloud </string>
@@ -247,9 +247,9 @@
     <string name="toast_install_file_manager">Install sebuah file manager untuk memilih file</string>
     <string name="title_select_backup_to_restore">Pilih backup untuk di-restore</string>
     <string name="nav_menu_favorites">Favorit</string>
-    <string name="nav_menu_open">Buka&#8230;</string>
+    <string name="nav_menu_open">Buka…</string>
     <string name="nav_menu_reports">Laporan</string>
-    <string name="nav_menu_export">Ekspor&#8230;</string>
+    <string name="nav_menu_export">Ekspor…</string>
     <string name="nav_menu_settings">Pengaturan</string>
     <string name="username">Nama Pengguna</string>
     <string name="password">Kata Sandi</string>
@@ -285,7 +285,7 @@
     <string name="wizard_option_create_default_accounts">Buat akun default</string>
     <string name="wizard_option_import_my_accounts">Impor akun-akun saya</string>
     <string name="wizard_option_let_me_handle_it">Biar saya yang tangani</string>
-    <string name="wizard_option_currency_other">Lainnya&#8230;</string>
+    <string name="wizard_option_currency_other">Lainnya…</string>
     <string name="wizard_option_auto_send_crash_reports">Kirim laporan kerusakan secara otomatis</string>
     <string name="wizard_option_disable_crash_reports">Nonaktifkan laporan kerusakan</string>
     <string name="wizard_btn_back">Kembali</string>
@@ -326,7 +326,7 @@
     <string name="summary_google_plus">Berbagi ide-ide, mendiskusikan perubahan atau melaporkan masalah</string>
     <string name="summary_translate_gnucash">Menerjemahkan atau bukti dibaca pada CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">Tidak ada aplikasi yang kompatibel untuk menerima transaksi diekspor!</string>
-    <string name="menu_move_transaction">Bergerak&#8230;</string>
+    <string name="menu_move_transaction">Bergerak…</string>
     <string name="menu_duplicate_transaction">Duplikat</string>
     <string name="title_cash_flow_report">Arus Tunai</string>
     <string name="title_budgets">Anggaran</string>
@@ -341,13 +341,13 @@
         <item>6 bulan terakhir</item>
         <item>12 bulan terakhir</item>
         <item>Sepanjang waktu</item>
-        <item>Rentang ubahsuai&#8230;</item>
+        <item>Rentang ubahsuai…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -367,7 +367,7 @@
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Mengelola buku</string>
-    <string name="menu_manage_books">Mengelola buku&#8230;</string>
+    <string name="menu_manage_books">Mengelola buku…</string>
     <string name="select_chart_to_view_details">Memilih bagian dari tabel untuk melihat rincian</string>
     <string name="title_confirm_delete_book">Konfirmasi penghapusan</string>
     <string name="msg_all_book_data_will_be_deleted">Semua account dan transaksi dalam buku ini akan dihapus!</string>

@@ -117,7 +117,7 @@
         -  账簿改名\n
         - 其他改进和bug修复和\n</string>
     <string name="label_dismiss">知道了</string>
-    <string name="toast_transanction_amount_required">输入金额才能保存交易</string>
+    <string name="toast_transaction_amount_required">输入金额才能保存交易</string>
     <string name="toast_error_importing_accounts">导入 GnuCash 科目时发生错误。</string>
     <string name="toast_success_importing_accounts">GnuCash 科目资料导入完成。</string>
     <string name="summary_import_accounts">导入从GnuCash桌面版导出的科目设置</string>
@@ -234,7 +234,7 @@
     <string name="label_delete_transactions">删除交易</string>
     <string name="toast_disable_double_entry_to_save_transaction">请选择一个转账科目，否则在“设置”中关闭双行模式（复式簿记）</string>
     <string name="label_tap_to_create_schedule">点击然后创建计划任务</string>
-    <string name="title_restore_backup">从备份恢复&#8230;</string>
+    <string name="title_restore_backup">从备份恢复…</string>
     <string name="header_backup_and_export_settings">备份和导出</string>
     <string name="title_dropbox_sync_preference">启用 DropBox</string>
     <string name="title_owncloud_sync_preference">启用 ownCloud </string>
@@ -289,7 +289,7 @@
     <string name="wizard_option_create_default_accounts">创建默认科目</string>
     <string name="wizard_option_import_my_accounts">导入科目</string>
     <string name="wizard_option_let_me_handle_it">随后处理</string>
-    <string name="wizard_option_currency_other">其他&#8230;</string>
+    <string name="wizard_option_currency_other">其他…</string>
     <string name="wizard_option_auto_send_crash_reports">自动发送崩溃报告</string>
     <string name="wizard_option_disable_crash_reports">禁用自动发送</string>
     <string name="wizard_btn_back">上一步</string>
@@ -345,13 +345,13 @@
         <item>最近6个月</item>
         <item>最近12个月</item>
         <item>全部时间</item>
-        <item>自定义&#8230;</item>
+        <item>自定义…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>

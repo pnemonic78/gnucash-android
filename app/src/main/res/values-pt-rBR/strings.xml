@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Todas as transações exportadas serão apagadas quando a exportação estiver completa</string>
     <string name="title_settings">Configurações</string>
     <string-array name="export_destinations">
-        <item>Salvar como&#8230;</item>
+        <item>Salvar como…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Enviar para&#8230;</item>
+        <item>Enviar para…</item>
     </string-array>
     <string name="btn_move">Mover</string>
     <string name="title_move_transactions">Mover %1$d transação(ões)</string>
@@ -117,7 +117,7 @@
 - adicionada a capacidade de renomear livros\n
 - diversas correções de bugs e aperfeiçoamentos\n</string>
     <string name="label_dismiss">Descartar</string>
-    <string name="toast_transanction_amount_required">Introduza um valor para gravar a transação</string>
+    <string name="toast_transaction_amount_required">Introduza um valor para gravar a transação</string>
     <string name="toast_error_importing_accounts">Ocorreu um erro ao importar as contas do GnuCash</string>
     <string name="toast_success_importing_accounts">Contas do GnuCash importadas com sucesso</string>
     <string name="summary_import_accounts">Importar a estrutura de contas do GnuCash para Desktop</string>
@@ -251,9 +251,9 @@
     <string name="toast_install_file_manager">Instalar um gerenciador de arquivos para selecionar arquivos</string>
     <string name="title_select_backup_to_restore">Escolha um backup para restaurar</string>
     <string name="nav_menu_favorites">Favoritos</string>
-    <string name="nav_menu_open">Abrir&#8230;</string>
+    <string name="nav_menu_open">Abrir…</string>
     <string name="nav_menu_reports">Relatórios</string>
-    <string name="nav_menu_export">Exportar&#8230;</string>
+    <string name="nav_menu_export">Exportar…</string>
     <string name="nav_menu_settings">Definições</string>
     <string name="username">Nome do usuário</string>
     <string name="password">Senha</string>
@@ -290,7 +290,7 @@ Neste processo não serão recolhidas informações do utilizador!</string>
     <string name="wizard_option_create_default_accounts">Criar contas padrão</string>
     <string name="wizard_option_import_my_accounts">Importar as minhas contas</string>
     <string name="wizard_option_let_me_handle_it">Deixe-me tratar disso</string>
-    <string name="wizard_option_currency_other">Outros&#8230;</string>
+    <string name="wizard_option_currency_other">Outros…</string>
     <string name="wizard_option_auto_send_crash_reports">Envia relatórios de erros automaticamente</string>
     <string name="wizard_option_disable_crash_reports">Desactivar relatórios de erros</string>
     <string name="wizard_btn_back">Voltar</string>
@@ -331,7 +331,7 @@ Neste processo não serão recolhidas informações do utilizador!</string>
     <string name="summary_google_plus">Compartilhe ideias, discuta alterações ou reporte problemas</string>
     <string name="summary_translate_gnucash">Traduza ou corrija as traduções no Crowdln</string>
     <string name="toast_no_compatible_apps_to_receive_export">Não existem apps compatíveis para receber as transações exportadas!</string>
-    <string name="menu_move_transaction">Mover&#8230;</string>
+    <string name="menu_move_transaction">Mover…</string>
     <string name="menu_duplicate_transaction">Duplicar</string>
     <string name="title_cash_flow_report">Fluxo de caixa</string>
     <string name="title_budgets">Orçamentos</string>
@@ -346,13 +346,13 @@ Neste processo não serão recolhidas informações do utilizador!</string>
         <item>Últimos 6 meses</item>
         <item>Últimos 12 meses</item>
         <item>Desde o início</item>
-        <item>Intervalo personalizado&#8230;</item>
+        <item>Intervalo personalizado…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -372,7 +372,7 @@ Neste processo não serão recolhidas informações do utilizador!</string>
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Gerenciar livros</string>
-    <string name="menu_manage_books">Administar livros&#8230;</string>
+    <string name="menu_manage_books">Administar livros…</string>
     <string name="select_chart_to_view_details">Selecione qualquer parte do gráfico para ver os detalhes</string>
     <string name="title_confirm_delete_book">Confirmar exclusão de Livro</string>
     <string name="msg_all_book_data_will_be_deleted">Todas as contas e transações neste livro serão excluídas!</string>

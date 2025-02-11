@@ -53,10 +53,10 @@
     <string name="hint_delete_after_export">Sve izvezene transakcije će biti izbrisane nakon završetka izvoza</string>
     <string name="title_settings">Postavke</string>
     <string-array name="export_destinations">
-        <item>Spremi pod &#8230;</item>
+        <item>Spremi pod …</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Pošalji na &#8230;</item>
+        <item>Pošalji na …</item>
     </string-array>
     <string name="btn_move">Premjesti</string>
     <string name="title_move_transactions">Premjesti %1$d transakcije(a)</string>
@@ -93,10 +93,6 @@
     <string name="title_account_preferences">Postavke za konta</string>
     <string name="title_default_transaction_type">Standardna vrsta transakcije</string>
     <string name="summary_default_transaction_type">Standardno korištena vrsta transakcije, POTRAŽUJE ili DUGUJE</string>
-    <string-array name="transaction_types">
-        <item>POTRAŽUJE</item>
-        <item>DUGUJE</item>
-    </string-array>
     <string name="msg_delete_all_transactions_confirmation">Zaista želiš izbrisati SVE transakcije?</string>
     <string name="msg_delete_transaction_confirmation">Zaista želiš izbrisati ovu transakciju?</string>
     <string name="title_export_preference_category">Izvoz</string>
@@ -118,7 +114,7 @@
         - Ograničavanje slobodnog mjesta za sigurnosne kopije \n
         - Razni ispravci grešaka i poboljšanja\n</string>
     <string name="label_dismiss">Odbaci</string>
-    <string name="toast_transanction_amount_required">Za spremanje transakcije, unesi iznos</string>
+    <string name="toast_transaction_amount_required">Za spremanje transakcije, unesi iznos</string>
     <string name="toast_error_importing_accounts">Došlo je do greške prilikom uvoza GnuCash konta</string>
     <string name="toast_success_importing_accounts">GnuCash konti su uspješno uvezeni</string>
     <string name="summary_import_accounts">Uvezi kontni plan iz GnuCash XML-a</string>
@@ -242,7 +238,7 @@
     <string name="label_delete_transactions">Izbriši transakcije</string>
     <string name="toast_disable_double_entry_to_save_transaction">Za spremanje transakcije, stvori i odredi konto za prijenos ILI deaktiviraj dvojno knjigovodstvo u postavkama</string>
     <string name="label_tap_to_create_schedule">Stvori termine</string>
-    <string name="title_restore_backup">Učitaj sigurnosnu kopiju &#8230;</string>
+    <string name="title_restore_backup">Učitaj sigurnosnu kopiju …</string>
     <string name="header_backup_and_export_settings">Stvori sigurnosnu kopiju i izvezi</string>
     <string name="title_dropbox_sync_preference">Aktiviraj DropBox</string>
     <string name="title_owncloud_sync_preference">Aktiviraj ownCloud </string>
@@ -259,14 +255,13 @@
     <string name="toast_install_file_manager">Instaliraj upravitelja datotekama za odabir datoteka</string>
     <string name="title_select_backup_to_restore">Odaberi sigurnosnu kopiju, koju želiš ponovo učitati</string>
     <string name="nav_menu_favorites">Favoriti</string>
-    <string name="nav_menu_open">Otvori &#8230;</string>
+    <string name="nav_menu_open">Otvori …</string>
     <string name="nav_menu_reports">Izvještaji</string>
-    <string name="nav_menu_export">Izvezi &#8230;</string>
+    <string name="nav_menu_export">Izvezi …</string>
     <string name="nav_menu_settings">Postavke</string>
     <string name="username">Korisničko ime</string>
     <string name="password">Lozinka</string>
     <string name="owncloud_pref">owncloud</string>
-    <string name="owncloud_server">https://</string>
     <string name="owncloud_server_invalid">OC server nije nađen</string>
     <string name="owncloud_user_invalid">OC korisničko ime/lozinka ne valja</string>
     <string name="owncloud_dir_invalid">Nevaljani slovni znakovi: \\ &lt; &gt; : \&quot; | * ? </string>
@@ -322,7 +317,7 @@
     <string name="wizard_option_create_default_accounts">Stvori standardna konta</string>
     <string name="wizard_option_import_my_accounts">Uvezi moja konta</string>
     <string name="wizard_option_let_me_handle_it">Dozvoli da ja to obavim</string>
-    <string name="wizard_option_currency_other">Ostalo &#8230;</string>
+    <string name="wizard_option_currency_other">Ostalo …</string>
     <string name="wizard_option_auto_send_crash_reports">Automatski pošalji izvještaj o urušavanju programa</string>
     <string name="wizard_option_disable_crash_reports">Deaktiviraj izvještavanje o urušavanju programa</string>
     <string name="wizard_btn_back">Natrag</string>
@@ -363,7 +358,7 @@
     <string name="summary_google_plus">Izmijeni ideje, diskutiraj o promjenama ili prijavi greške</string>
     <string name="summary_translate_gnucash">Prevodi ili ispravljaj prijevode na CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">Nema kompatibilne aplikacije za prihvaćanje izvezenih transakcija!</string>
-    <string name="menu_move_transaction">Premjesti &#8230;</string>
+    <string name="menu_move_transaction">Premjesti …</string>
     <string name="menu_duplicate_transaction">Dupliciraj</string>
     <string name="title_cash_flow_report">Novčani tijek</string>
     <string name="title_budgets">Proračuni</string>
@@ -378,7 +373,7 @@
         <item>Zadnjih 6 mjeseci</item>
         <item>Zadnjih 12 mjeseci</item>
         <item>Svo vrijeme</item>
-        <item>Proizvoljno razdoblje &#8230;</item>
+        <item>Proizvoljno razdoblje …</item>
     </string-array>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
@@ -403,7 +398,7 @@
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Upravljaj knjigama</string>
-    <string name="menu_manage_books">Upravljaj knjigama &#8230;</string>
+    <string name="menu_manage_books">Upravljaj knjigama …</string>
     <string name="select_chart_to_view_details">Za prikaz detalja, odaberi bilo koji dio dijagrama</string>
     <string name="title_confirm_delete_book">Potvrdi brisanje knjige</string>
     <string name="msg_all_book_data_will_be_deleted">Svi konti i sve transakcije ove knjige će biti izbrisane!</string>
@@ -437,7 +432,6 @@
     <string name="switch_export_transactions_from_all_time">Svo vrijeme</string>
     <string name="label_recommend_app">Preporuči na Play Store stranici</string>
     <string name="repeat_until_date">do %1$s</string>
-    <string name="repeat_on_weekday">na %1$s</string>
     <string name="repeat_x_times">%1$d puta</string>
     <string name="menu_show_compact_view">Kompaktni prikaz</string>
     <string name="book_default_name">Knjiga %1$d</string>
@@ -452,8 +446,6 @@
     <string name="btn_restore">Učitaj sigurnosnu kopiju</string>
     <string name="title_no_backups_found">Nema sigurnosnih kopija</string>
     <string name="msg_no_backups_to_restore_from">Ne postoje sigurnosne kopije, koje bi se mogle učitati.</string>
-    <!-- This is the filename for default backups. So use only simple characters and no spaces. Do not change the extension -->
-    <string name="label_backup_filename">gnucash_android_backup.gnca</string>
     <string name="label_select_destination_after_export">Odaberi odredište nakon što izvoz završi.</string>
     <string name="label_dropbox_export_destination">Izvezi u Dropbox mapu pod „/Apps/GnuCash Android/„</string>
     <string name="title_section_preferences">Postavke</string>

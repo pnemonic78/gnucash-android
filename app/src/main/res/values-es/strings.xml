@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Todas las transacciones exportadas serán borradas cuando la exportación haya terminado</string>
     <string name="title_settings">Ajustes</string>
     <string-array name="export_destinations">
-        <item>Guardar como&#8230;</item>
+        <item>Guardar como…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Enviar a&#8230;</item>
+        <item>Enviar a…</item>
     </string-array>
     <string name="btn_move">Mover</string>
     <string name="title_move_transactions">Mover %1$d transacción(es)</string>
@@ -113,7 +113,7 @@
     <string name="whats_new">
 -Se ha añadido capacidad para exportar a cualquier servicio que soporta el marco de acceso de almacenamiento \n - Añadida la opción para establecer la ubicación de copias de seguridad automáticas (ver configuración de copia de seguridad) \n - añadido el soporte para moneda Bitcoin\n - agregado de soporte para renombrar libros\n - múltiples correcciones y mejoras\n</string>
     <string name="label_dismiss">Cerrar</string>
-    <string name="toast_transanction_amount_required">Introduzca un importe para guardar la transacción</string>
+    <string name="toast_transaction_amount_required">Introduzca un importe para guardar la transacción</string>
     <string name="toast_error_importing_accounts">Ocurrió un error al importar las cuentas de GnuCash</string>
     <string name="toast_success_importing_accounts">Cuentas de GnuCash importadas con éxito</string>
     <string name="summary_import_accounts">Importas estructura de cuentas exportada desde GnuCash para escritorio</string>
@@ -232,7 +232,7 @@
     <string name="label_delete_transactions">Borrar transacciones</string>
     <string name="toast_disable_double_entry_to_save_transaction">Cree y especifique una cuenta de transferencia o desactive la doble entrada en ajustes para guardar la transacción</string>
     <string name="label_tap_to_create_schedule">Toque para crear la programación</string>
-    <string name="title_restore_backup">Restaurar copia de seguridad&#8230;</string>
+    <string name="title_restore_backup">Restaurar copia de seguridad…</string>
     <string name="header_backup_and_export_settings">Copia de seguridad y exportación</string>
     <string name="title_dropbox_sync_preference">Habilitar DropBox</string>
     <string name="title_owncloud_sync_preference">Habilitar ownCloud</string>
@@ -249,9 +249,9 @@
     <string name="toast_install_file_manager">Instale un gestor de archivos para seleccionar archivos</string>
     <string name="title_select_backup_to_restore">Seleccione la copia de seguridad a restaurar</string>
     <string name="nav_menu_favorites">Favoritos</string>
-    <string name="nav_menu_open">Abrir&#8230;</string>
+    <string name="nav_menu_open">Abrir…</string>
     <string name="nav_menu_reports">Informes</string>
-    <string name="nav_menu_export">Exportar&#8230;</string>
+    <string name="nav_menu_export">Exportar…</string>
     <string name="nav_menu_settings">Ajustes</string>
     <string name="username">Nombre de usuario</string>
     <string name="password">Contraseña</string>
@@ -288,7 +288,7 @@ Este proceso solo recoge información que no permite identificar al usuario</str
     <string name="wizard_option_create_default_accounts">Crear cuentas por defecto</string>
     <string name="wizard_option_import_my_accounts">Importar mis cuentas</string>
     <string name="wizard_option_let_me_handle_it">Yo me encargo</string>
-    <string name="wizard_option_currency_other">Otras&#8230;</string>
+    <string name="wizard_option_currency_other">Otras…</string>
     <string name="wizard_option_auto_send_crash_reports">Enviar automáticamente informes de cuelgues</string>
     <string name="wizard_option_disable_crash_reports">Desactivar informes de cuelgues</string>
     <string name="wizard_btn_back">Volver</string>
@@ -329,7 +329,7 @@ Este proceso solo recoge información que no permite identificar al usuario</str
     <string name="summary_google_plus">Compartir ideas, discutir cambios o reportar problemas</string>
     <string name="summary_translate_gnucash">Traducir o revisar en CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">¡No hay aplicaciones compatibles para recibir las transacciones exportadas!</string>
-    <string name="menu_move_transaction">Mover&#8230;</string>
+    <string name="menu_move_transaction">Mover…</string>
     <string name="menu_duplicate_transaction">Duplicar</string>
     <string name="title_cash_flow_report">Flujo de efectivo</string>
     <string name="title_budgets">Presupuestos</string>
@@ -344,13 +344,13 @@ Este proceso solo recoge información que no permite identificar al usuario</str
         <item>Últimos 6 meses</item>
         <item>Últimos 12 meses</item>
         <item>Todo el tiempo</item>
-        <item>Rango personalizado&#8230;</item>
+        <item>Rango personalizado…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">ABC</string>
     <string name="digit_three">3</string>
@@ -370,7 +370,7 @@ Este proceso solo recoge información que no permite identificar al usuario</str
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Administrar libros</string>
-    <string name="menu_manage_books">Administrar libros&#8230;</string>
+    <string name="menu_manage_books">Administrar libros…</string>
     <string name="select_chart_to_view_details">Seleccione cualquier parte del gráfico para ver los detalles</string>
     <string name="title_confirm_delete_book">Confirmar borrar libro</string>
     <string name="msg_all_book_data_will_be_deleted">¡Se eliminarán todas las cuentas y transacciones en este libro!</string>

@@ -54,10 +54,10 @@
     <string name="hint_delete_after_export">Все экспортированные проводки будут удалены по завершении.</string>
     <string name="title_settings">Настройки</string>
     <string-array name="export_destinations">
-        <item>Сохранить как&#8230;</item>
+        <item>Сохранить как…</item>
         <item>Dropbox</item>
         <item>ownCloud</item>
-        <item>Отправить&#8230;</item>
+        <item>Отправить…</item>
     </string-array>
     <string name="btn_move">Перенести</string>
     <string name="title_move_transactions">Перенести %1$d проводку (и)</string>
@@ -118,7 +118,7 @@
         - Множество мелких правок и улучшений\n
 	</string>
     <string name="label_dismiss">Отмена</string>
-    <string name="toast_transanction_amount_required">Введите сумму, чтобы сохранить проводку</string>
+    <string name="toast_transaction_amount_required">Введите сумму, чтобы сохранить проводку</string>
     <string name="toast_error_importing_accounts">Ошибка импорта счетов из GnuCash</string>
     <string name="toast_success_importing_accounts">Счета из GnuCash успешно импортированы</string>
     <string name="summary_import_accounts">Импорт структуры счетов из GnuCash для ПК</string>
@@ -237,7 +237,7 @@
     <string name="label_delete_transactions">Удалить проводки</string>
     <string name="toast_disable_double_entry_to_save_transaction">Создайте и укажите трансфертный счёт или отключите двойную запись в настройках</string>
     <string name="label_tap_to_create_schedule">Создать расписание</string>
-    <string name="title_restore_backup">Восстановить из резервной копии&#8230;</string>
+    <string name="title_restore_backup">Восстановить из резервной копии…</string>
     <string name="header_backup_and_export_settings">Резервное копирование &amp; экспорт</string>
     <string name="title_dropbox_sync_preference">Включить DropBox</string>
     <string name="title_owncloud_sync_preference">Включить ownCloud </string>
@@ -292,7 +292,7 @@
     <string name="wizard_option_create_default_accounts">Создать счета по умолчанию</string>
     <string name="wizard_option_import_my_accounts">Импортировать мои счета</string>
     <string name="wizard_option_let_me_handle_it">Сам сделаю</string>
-    <string name="wizard_option_currency_other">Другая&#8230;</string>
+    <string name="wizard_option_currency_other">Другая…</string>
     <string name="wizard_option_auto_send_crash_reports">Автоматически посылать отчёты о падениях</string>
     <string name="wizard_option_disable_crash_reports">Отключить отчёты о падениях</string>
     <string name="wizard_btn_back">Назад</string>
@@ -333,7 +333,7 @@
     <string name="summary_google_plus">Поделиться идеями, обсудить изменения или сообщить о проблемах</string>
     <string name="summary_translate_gnucash">Перевести или вычитать на CrowdIn</string>
     <string name="toast_no_compatible_apps_to_receive_export">Не совместимых приложений, чтобы получить экспортированные транзакции!</string>
-    <string name="menu_move_transaction">Перемещение&#8230;</string>
+    <string name="menu_move_transaction">Перемещение…</string>
     <string name="menu_duplicate_transaction">Повтор</string>
     <string name="title_cash_flow_report">Денежный поток</string>
     <string name="title_budgets">Бюджеты</string>
@@ -348,13 +348,13 @@
         <item>Последнее полугодие</item>
         <item>Последний год</item>
         <item>За всё время</item>
-        <item>Другой интервал&#8230;</item>
+        <item>Другой интервал…</item>
     </string-array>
     <string name="report_time_range_picker_title">"Pick time range"</string>
     <!-- Passcode lock -->
     <string name="digit_one">1</string>
     <!-- In the English locale, digit 1 has no text on it. This is simply empty space. If your locale has text on digit 1, then translate-->
-    <string name="digit_one_text">​</string>
+    <string name="digit_one_text" />
     <string name="digit_two">2</string>
     <string name="digit_two_text">АБВГ</string>
     <string name="digit_three">3</string>
@@ -374,7 +374,7 @@
     <string name="digit_zero">0</string>
     <string name="digit_zero_text">+</string>
     <string name="title_manage_books">Управление книгами</string>
-    <string name="menu_manage_books">Управление книгами&#8230;</string>
+    <string name="menu_manage_books">Управление книгами…</string>
     <string name="select_chart_to_view_details">Выберите любую часть диаграммы для просмотра деталей</string>
     <string name="title_confirm_delete_book">Подтвердить удаление книги</string>
     <string name="msg_all_book_data_will_be_deleted">Все аккаунты и транзакции в книге будут удалены!</string>
