@@ -47,22 +47,22 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
 
     public ScheduledActionDbAdapter(SQLiteDatabase db, RecurrenceDbAdapter recurrenceDbAdapter) {
         super(db, ScheduledActionEntry.TABLE_NAME, new String[]{
-                ScheduledActionEntry.COLUMN_ACTION_UID,
-                ScheduledActionEntry.COLUMN_TYPE,
-                ScheduledActionEntry.COLUMN_START_TIME,
-                ScheduledActionEntry.COLUMN_END_TIME,
-                ScheduledActionEntry.COLUMN_LAST_RUN,
-                ScheduledActionEntry.COLUMN_ENABLED,
-                ScheduledActionEntry.COLUMN_CREATED_AT,
-                ScheduledActionEntry.COLUMN_TAG,
-                ScheduledActionEntry.COLUMN_TOTAL_FREQUENCY,
-                ScheduledActionEntry.COLUMN_RECURRENCE_UID,
-                ScheduledActionEntry.COLUMN_AUTO_CREATE,
-                ScheduledActionEntry.COLUMN_AUTO_NOTIFY,
-                ScheduledActionEntry.COLUMN_ADVANCE_CREATION,
-                ScheduledActionEntry.COLUMN_ADVANCE_NOTIFY,
-                ScheduledActionEntry.COLUMN_TEMPLATE_ACCT_UID,
-                ScheduledActionEntry.COLUMN_EXECUTION_COUNT
+            ScheduledActionEntry.COLUMN_ACTION_UID,
+            ScheduledActionEntry.COLUMN_TYPE,
+            ScheduledActionEntry.COLUMN_START_TIME,
+            ScheduledActionEntry.COLUMN_END_TIME,
+            ScheduledActionEntry.COLUMN_LAST_RUN,
+            ScheduledActionEntry.COLUMN_ENABLED,
+            ScheduledActionEntry.COLUMN_CREATED_AT,
+            ScheduledActionEntry.COLUMN_TAG,
+            ScheduledActionEntry.COLUMN_TOTAL_FREQUENCY,
+            ScheduledActionEntry.COLUMN_RECURRENCE_UID,
+            ScheduledActionEntry.COLUMN_AUTO_CREATE,
+            ScheduledActionEntry.COLUMN_AUTO_NOTIFY,
+            ScheduledActionEntry.COLUMN_ADVANCE_CREATION,
+            ScheduledActionEntry.COLUMN_ADVANCE_NOTIFY,
+            ScheduledActionEntry.COLUMN_TEMPLATE_ACCT_UID,
+            ScheduledActionEntry.COLUMN_EXECUTION_COUNT
         });
         mRecurrenceDbAdapter = recurrenceDbAdapter;
     }
@@ -209,8 +209,8 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
      */
     public List<ScheduledAction> getScheduledActionsWithUID(@NonNull String actionUID) {
         Cursor cursor = mDb.query(ScheduledActionEntry.TABLE_NAME, null,
-                ScheduledActionEntry.COLUMN_ACTION_UID + "= ?",
-                new String[]{actionUID}, null, null, null);
+            ScheduledActionEntry.COLUMN_ACTION_UID + "= ?",
+            new String[]{actionUID}, null, null, null);
 
         List<ScheduledAction> scheduledActions = new ArrayList<>();
         try {
@@ -230,7 +230,7 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
      */
     public List<ScheduledAction> getAllEnabledScheduledActions() {
         Cursor cursor = mDb.query(mTableName,
-                null, ScheduledActionEntry.COLUMN_ENABLED + "=1", null, null, null, null);
+            null, ScheduledActionEntry.COLUMN_ENABLED + "=1", null, null, null, null);
         List<ScheduledAction> scheduledActions = new ArrayList<>();
         while (cursor.moveToNext()) {
             scheduledActions.add(buildModelInstance(cursor));

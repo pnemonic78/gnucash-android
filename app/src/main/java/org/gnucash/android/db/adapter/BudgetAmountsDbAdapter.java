@@ -43,11 +43,11 @@ public class BudgetAmountsDbAdapter extends DatabaseAdapter<BudgetAmount> {
      */
     public BudgetAmountsDbAdapter(SQLiteDatabase db) {
         super(db, BudgetAmountEntry.TABLE_NAME, new String[]{
-                BudgetAmountEntry.COLUMN_BUDGET_UID,
-                BudgetAmountEntry.COLUMN_ACCOUNT_UID,
-                BudgetAmountEntry.COLUMN_AMOUNT_NUM,
-                BudgetAmountEntry.COLUMN_AMOUNT_DENOM,
-                BudgetAmountEntry.COLUMN_PERIOD_NUM
+            BudgetAmountEntry.COLUMN_BUDGET_UID,
+            BudgetAmountEntry.COLUMN_ACCOUNT_UID,
+            BudgetAmountEntry.COLUMN_AMOUNT_NUM,
+            BudgetAmountEntry.COLUMN_AMOUNT_DENOM,
+            BudgetAmountEntry.COLUMN_PERIOD_NUM
         });
     }
 
@@ -92,7 +92,7 @@ public class BudgetAmountsDbAdapter extends DatabaseAdapter<BudgetAmount> {
      */
     public List<BudgetAmount> getBudgetAmountsForBudget(String budgetUID) {
         Cursor cursor = fetchAllRecords(BudgetAmountEntry.COLUMN_BUDGET_UID + "=?",
-                new String[]{budgetUID}, null);
+            new String[]{budgetUID}, null);
 
         List<BudgetAmount> budgetAmounts = new ArrayList<>();
         while (cursor.moveToNext()) {
@@ -110,7 +110,7 @@ public class BudgetAmountsDbAdapter extends DatabaseAdapter<BudgetAmount> {
      */
     public int deleteBudgetAmountsForBudget(String budgetUID) {
         return mDb.delete(mTableName, BudgetAmountEntry.COLUMN_BUDGET_UID + "=?",
-                new String[]{budgetUID});
+            new String[]{budgetUID});
     }
 
     /**

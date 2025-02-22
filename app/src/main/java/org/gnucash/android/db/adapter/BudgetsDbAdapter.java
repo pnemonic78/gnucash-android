@@ -51,10 +51,10 @@ public class BudgetsDbAdapter extends DatabaseAdapter<Budget> {
     public BudgetsDbAdapter(SQLiteDatabase db, BudgetAmountsDbAdapter budgetAmountsDbAdapter,
                             RecurrenceDbAdapter recurrenceDbAdapter) {
         super(db, BudgetEntry.TABLE_NAME, new String[]{
-                BudgetEntry.COLUMN_NAME,
-                BudgetEntry.COLUMN_DESCRIPTION,
-                BudgetEntry.COLUMN_RECURRENCE_UID,
-                BudgetEntry.COLUMN_NUM_PERIODS
+            BudgetEntry.COLUMN_NAME,
+            BudgetEntry.COLUMN_DESCRIPTION,
+            BudgetEntry.COLUMN_RECURRENCE_UID,
+            BudgetEntry.COLUMN_NUM_PERIODS
         });
         mRecurrenceDbAdapter = recurrenceDbAdapter;
         mBudgetAmountsDbAdapter = budgetAmountsDbAdapter;
@@ -150,8 +150,8 @@ public class BudgetsDbAdapter extends DatabaseAdapter<Budget> {
     public Cursor fetchBudgetsForAccount(String accountUID) {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(BudgetEntry.TABLE_NAME + "," + BudgetAmountEntry.TABLE_NAME
-                + " ON " + BudgetEntry.TABLE_NAME + "." + BudgetEntry.COLUMN_UID + " = "
-                + BudgetAmountEntry.TABLE_NAME + "." + BudgetAmountEntry.COLUMN_BUDGET_UID);
+            + " ON " + BudgetEntry.TABLE_NAME + "." + BudgetEntry.COLUMN_UID + " = "
+            + BudgetAmountEntry.TABLE_NAME + "." + BudgetAmountEntry.COLUMN_BUDGET_UID);
 
         queryBuilder.setDistinct(true);
         String[] projectionIn = new String[]{BudgetEntry.TABLE_NAME + ".*"};
