@@ -52,7 +52,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
 import android.view.View;
 
-import androidx.fragment.app.Fragment;
 import androidx.test.espresso.Espresso;
 import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.rule.ActivityTestRule;
@@ -239,7 +238,7 @@ public class AccountsActivityTest {
 
         assertThat(newestAccount.getName()).isEqualTo(NEW_ACCOUNT_NAME);
         assertThat(newestAccount.getCommodity().getCurrencyCode()).isEqualTo(Commodity.DEFAULT_COMMODITY.getCurrencyCode());
-        assertThat(newestAccount.isPlaceholderAccount()).isTrue();
+        assertThat(newestAccount.isPlaceholder()).isTrue();
     }
 
     @Test

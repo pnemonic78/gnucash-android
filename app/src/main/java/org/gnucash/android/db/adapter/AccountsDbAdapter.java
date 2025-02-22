@@ -214,7 +214,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         }
         stmt.bindLong(6, account.isFavorite() ? 1 : 0);
         stmt.bindString(7, account.getFullName());
-        stmt.bindLong(8, account.isPlaceholderAccount() ? 1 : 0);
+        stmt.bindLong(8, account.isPlaceholder() ? 1 : 0);
         stmt.bindString(9, TimestampHelper.getUtcStringFromTimestamp(account.getCreatedTimestamp()));
         stmt.bindLong(10, account.isHidden() ? 1 : 0);
         stmt.bindString(11, account.getCommodity().getUID());
@@ -1023,7 +1023,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             cursor.close();
         }
         // No ROOT exits, create a new one
-        Account rootAccount = new Account("ROOT Account");
+        Account rootAccount = new Account("ROOT Account", Commodity.DEFAULT_COMMODITY);
         rootAccount.setAccountType(AccountType.ROOT);
         rootAccount.setFullName(ROOT_ACCOUNT_FULL_NAME);
         rootAccount.setHidden(true);
@@ -1033,10 +1033,10 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         contentValues.put(AccountEntry.COLUMN_NAME, rootAccount.getName());
         contentValues.put(AccountEntry.COLUMN_FULL_NAME, rootAccount.getFullName());
         contentValues.put(AccountEntry.COLUMN_TYPE, rootAccount.getAccountType().name());
-        contentValues.put(AccountEntry.COLUMN_HIDDEN, rootAccount.isHidden() ? 1 : 0);
-        String defaultCurrencyCode = GnuCashApplication.getDefaultCurrencyCode();
-        contentValues.put(AccountEntry.COLUMN_CURRENCY, defaultCurrencyCode);
-        contentValues.put(AccountEntry.COLUMN_COMMODITY_UID, getCommodityUID(defaultCurrencyCode));
+        contentValues.put(AccountEntry.COLUMN_HIDDEN, rootAccount.isHidden());
+        contentValues.put(AccountEntry.COLUMN_CURRENCY, rootAccount.getCommodity().getCurrencyCode());
+        contentValues.put(AccountEntry.COLUMN_COMMODITY_UID, rootAccount.getCommodity().getUID());
+        contentValues.put(AccountEntry.COLUMN_PLACEHOLDER, rootAccount.isPlaceholder());
         Timber.i("Creating ROOT account");
         mDb.insert(AccountEntry.TABLE_NAME, null, contentValues);
         return rootAccount.getUID();

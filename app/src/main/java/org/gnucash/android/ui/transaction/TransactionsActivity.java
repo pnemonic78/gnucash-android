@@ -116,7 +116,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
             String accountUID = mAccountsDbAdapter.getUID(id);
             account = mAccountsDbAdapter.getSimpleRecord(accountUID);
             getIntent().putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID); //update the intent in case the account gets rotated
-            if (account.isPlaceholderAccount()) {
+            if (account.isPlaceholder()) {
                 if (mBinding.tabLayout.getTabCount() > 1) {
                     mPagerAdapter.notifyDataSetChanged();
                     mBinding.tabLayout.removeTabAt(1);
@@ -165,7 +165,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
         @NonNull
         @Override
         public Fragment getItem(int position) {
-            if (account.isPlaceholderAccount()) {
+            if (account.isPlaceholder()) {
                 Fragment transactionsListFragment = prepareSubAccountsListFragment();
                 mFragmentPageReferenceMap.put(position, (Refreshable) transactionsListFragment);
                 return transactionsListFragment;
@@ -195,7 +195,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
 
         @Override
         public CharSequence getPageTitle(int position) {
-            if (account.isPlaceholderAccount())
+            if (account.isPlaceholder())
                 return getString(R.string.section_header_subaccounts);
 
             switch (position) {
@@ -210,7 +210,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
 
         @Override
         public int getCount() {
-            if (account.isPlaceholderAccount())
+            if (account.isPlaceholder())
                 return 1;
             else
                 return DEFAULT_NUM_PAGES;
@@ -291,7 +291,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
         account = mAccountsDbAdapter.getSimpleRecord(accountUID);
 
         mBinding.tabLayout.addTab(mBinding.tabLayout.newTab().setText(R.string.section_header_subaccounts));
-        if (!account.isPlaceholderAccount()) {
+        if (!account.isPlaceholder()) {
             mBinding.tabLayout.addTab(mBinding.tabLayout.newTab().setText(R.string.section_header_transactions));
         }
 
