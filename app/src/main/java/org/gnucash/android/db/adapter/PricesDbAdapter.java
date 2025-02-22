@@ -52,23 +52,18 @@ public class PricesDbAdapter extends DatabaseAdapter<Price> {
 
     @Override
     protected @NonNull SQLiteStatement bind(@NonNull SQLiteStatement stmt, @NonNull final Price price) {
-        stmt.clearBindings();
-        stmt.bindString(1, price.getCommodityUID());
-        stmt.bindString(2, price.getCurrencyUID());
-        stmt.bindString(3, TimestampHelper.getUtcStringFromTimestamp(price.getDate()));
+        bindBaseModel(stmt, price);
+        stmt.bindString(2, price.getCommodityUID());
+        stmt.bindString(3, price.getCurrencyUID());
+        stmt.bindString(4, TimestampHelper.getUtcStringFromTimestamp(price.getDate()));
         if (price.getSource() != null) {
-            stmt.bindString(4, price.getSource());
-        } else {
-            stmt.bindNull(4);
+            stmt.bindString(5, price.getSource());
         }
         if (price.getType() != null) {
-            stmt.bindString(5, price.getType());
-        } else {
-            stmt.bindNull(5);
+            stmt.bindString(6, price.getType());
         }
-        stmt.bindLong(6, price.getValueNum());
-        stmt.bindLong(7, price.getValueDenom());
-        stmt.bindString(8, price.getUID());
+        stmt.bindLong(7, price.getValueNum());
+        stmt.bindLong(8, price.getValueDenom());
 
         return stmt;
     }

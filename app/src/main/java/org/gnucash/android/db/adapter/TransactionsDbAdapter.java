@@ -194,22 +194,18 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
 
     @Override
     protected @NonNull SQLiteStatement bind(@NonNull SQLiteStatement stmt, @NonNull Transaction transaction) {
-        stmt.clearBindings();
-        stmt.bindString(1, transaction.getDescription());
-        stmt.bindString(2, transaction.getNote());
-        stmt.bindLong(3, transaction.getTimeMillis());
-        stmt.bindLong(4, transaction.isExported() ? 1 : 0);
-        stmt.bindString(5, transaction.getCurrencyCode());
-        stmt.bindString(6, transaction.getCommodity().getUID());
-        stmt.bindString(7, TimestampHelper.getUtcStringFromTimestamp(transaction.getCreatedTimestamp()));
-
-        if (transaction.getScheduledActionUID() == null) {
-            stmt.bindNull(8);
-        } else {
-            stmt.bindString(8, transaction.getScheduledActionUID());
+        bindBaseModel(stmt, transaction);
+        stmt.bindString(2, transaction.getDescription());
+        stmt.bindString(3, transaction.getNote());
+        stmt.bindLong(4, transaction.getTimeMillis());
+        stmt.bindLong(5, transaction.isExported() ? 1 : 0);
+        stmt.bindString(6, transaction.getCurrencyCode());
+        stmt.bindString(7, transaction.getCommodity().getUID());
+        stmt.bindString(8, TimestampHelper.getUtcStringFromTimestamp(transaction.getCreatedTimestamp()));
+        if (transaction.getScheduledActionUID() != null) {
+            stmt.bindString(9, transaction.getScheduledActionUID());
         }
-        stmt.bindLong(9, transaction.isTemplate() ? 1 : 0);
-        stmt.bindString(10, transaction.getUID());
+        stmt.bindLong(10, transaction.isTemplate() ? 1 : 0);
 
         return stmt;
     }

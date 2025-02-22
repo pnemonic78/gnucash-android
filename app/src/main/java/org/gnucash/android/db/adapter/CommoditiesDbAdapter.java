@@ -75,32 +75,23 @@ public class CommoditiesDbAdapter extends DatabaseAdapter<Commodity> {
 
     @Override
     protected @NonNull SQLiteStatement bind(@NonNull SQLiteStatement stmt, @NonNull final Commodity commodity) {
-        stmt.clearBindings();
-        stmt.bindString(1, commodity.getFullname());
-        stmt.bindString(2, commodity.getNamespace());
-        stmt.bindString(3, commodity.getMnemonic());
+        bindBaseModel(stmt, commodity);
+        stmt.bindString(2, commodity.getFullname());
+        stmt.bindString(3, commodity.getNamespace());
+        stmt.bindString(4, commodity.getMnemonic());
         if (commodity.getLocalSymbol() != null) {
-            stmt.bindString(4, commodity.getLocalSymbol());
-        } else {
-            stmt.bindNull(4);
+            stmt.bindString(5, commodity.getLocalSymbol());
         }
         if (commodity.getCusip() != null) {
-            stmt.bindString(5, commodity.getCusip());
-        } else {
-            stmt.bindNull(5);
+            stmt.bindString(6, commodity.getCusip());
         }
-        stmt.bindLong(6, commodity.getSmallestFraction());
+        stmt.bindLong(7, commodity.getSmallestFraction());
         if (commodity.getQuoteSource() != null) {
-            stmt.bindString(7, commodity.getQuoteSource());
-        } else {
-            stmt.bindNull(7);
+            stmt.bindString(8, commodity.getQuoteSource());
         }
         if (commodity.getQuoteTimeZoneId() != null) {
-            stmt.bindString(8, commodity.getQuoteTimeZoneId());
-        } else {
-            stmt.bindNull(8);
+            stmt.bindString(9, commodity.getQuoteTimeZoneId());
         }
-        stmt.bindString(9, commodity.getUID());
 
         return stmt;
     }

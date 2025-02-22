@@ -132,27 +132,26 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
 
     @Override
     protected @NonNull SQLiteStatement bind(@NonNull SQLiteStatement stmt, @NonNull final ScheduledAction schedxAction) {
-        stmt.clearBindings();
-        stmt.bindString(1, schedxAction.getActionUID());
-        stmt.bindString(2, schedxAction.getActionType().name());
-        stmt.bindLong(3, schedxAction.getStartTime());
-        stmt.bindLong(4, schedxAction.getEndTime());
-        stmt.bindLong(5, schedxAction.getLastRunTime());
-        stmt.bindLong(6, schedxAction.isEnabled() ? 1 : 0);
-        stmt.bindString(7, TimestampHelper.getUtcStringFromTimestamp(schedxAction.getCreatedTimestamp()));
-        if (schedxAction.getTag() == null)
-            stmt.bindNull(8);
-        else
-            stmt.bindString(8, schedxAction.getTag());
-        stmt.bindLong(9, schedxAction.getTotalPlannedExecutionCount());
-        stmt.bindString(10, schedxAction.getRecurrence().getUID());
-        stmt.bindLong(11, schedxAction.shouldAutoCreate() ? 1 : 0);
-        stmt.bindLong(12, schedxAction.shouldAutoNotify() ? 1 : 0);
-        stmt.bindLong(13, schedxAction.getAdvanceCreateDays());
-        stmt.bindLong(14, schedxAction.getAdvanceNotifyDays());
-        stmt.bindString(15, schedxAction.getTemplateAccountUID());
-        stmt.bindLong(16, schedxAction.getExecutionCount());
-        stmt.bindString(17, schedxAction.getUID());
+        bindBaseModel(stmt, schedxAction);
+        stmt.bindString(2, schedxAction.getActionUID());
+        stmt.bindString(3, schedxAction.getActionType().name());
+        stmt.bindLong(4, schedxAction.getStartTime());
+        stmt.bindLong(5, schedxAction.getEndTime());
+        stmt.bindLong(6, schedxAction.getLastRunTime());
+        stmt.bindLong(7, schedxAction.isEnabled() ? 1 : 0);
+        stmt.bindString(8, TimestampHelper.getUtcStringFromTimestamp(schedxAction.getCreatedTimestamp()));
+        if (schedxAction.getTag() != null) {
+            stmt.bindString(9, schedxAction.getTag());
+        }
+        stmt.bindLong(10, schedxAction.getTotalPlannedExecutionCount());
+        stmt.bindString(11, schedxAction.getRecurrence().getUID());
+        stmt.bindLong(12, schedxAction.shouldAutoCreate() ? 1 : 0);
+        stmt.bindLong(13, schedxAction.shouldAutoNotify() ? 1 : 0);
+        stmt.bindLong(14, schedxAction.getAdvanceCreateDays());
+        stmt.bindLong(15, schedxAction.getAdvanceNotifyDays());
+        stmt.bindString(16, schedxAction.getTemplateAccountUID());
+        stmt.bindLong(17, schedxAction.getExecutionCount());
+
         return stmt;
     }
 

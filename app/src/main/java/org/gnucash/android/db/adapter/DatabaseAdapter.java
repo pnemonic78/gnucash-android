@@ -350,12 +350,12 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
                 stmt = mReplaceStatement;
                 if (stmt == null) {
                     mReplaceStatement = stmt
-                        = mDb.compileStatement("REPLACE INTO " + mTableName + " ( "
-                        + TextUtils.join(" , ", mColumns) + " , "
-                        + CommonColumns.COLUMN_UID
-                        + " ) VALUES ( "
-                        + (new String(new char[mColumns.length]).replace("\0", "? , "))
-                        + "?)");
+                        = mDb.compileStatement("REPLACE INTO " + mTableName + " ("
+                        + CommonColumns.COLUMN_UID + ", "
+                        + TextUtils.join(", ", mColumns)
+                        + ") VALUES (?"
+                        + (new String(new char[mColumns.length]).replace("\0", ",?"))
+                        + ")");
                 }
             }
         }
@@ -370,9 +370,8 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
                 if (stmt == null) {
                     mUpdateStatement = stmt
                         = mDb.compileStatement("UPDATE " + mTableName + " SET "
-                        + TextUtils.join(" = ? , ", mColumns) + " = ? WHERE "
-                        + CommonColumns.COLUMN_UID
-                        + " = ?");
+                        + TextUtils.join("=?, ", mColumns) + "=? WHERE "
+                        + CommonColumns.COLUMN_UID + "=?");
                 }
             }
         }
@@ -386,12 +385,12 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
                 stmt = mInsertStatement;
                 if (stmt == null) {
                     mInsertStatement = stmt
-                        = mDb.compileStatement("INSERT INTO " + mTableName + " ( "
-                        + TextUtils.join(" , ", mColumns) + " , "
-                        + CommonColumns.COLUMN_UID
-                        + " ) VALUES ( "
-                        + (new String(new char[mColumns.length]).replace("\0", "? , "))
-                        + "?)");
+                        = mDb.compileStatement("INSERT INTO " + mTableName + " ("
+                        + CommonColumns.COLUMN_UID + ", "
+                        + TextUtils.join(", ", mColumns)
+                        + ") VALUES (?"
+                        + (new String(new char[mColumns.length]).replace("\0", ",?"))
+                        + ")");
                 }
             }
         }
@@ -406,6 +405,11 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
      * @return SQL statement ready for execution
      */
     protected abstract @NonNull SQLiteStatement bind(@NonNull SQLiteStatement stmt, @NonNull final Model model);
+
+    protected void bindBaseModel(@NonNull SQLiteStatement stmt, @NonNull final Model model) {
+        stmt.clearBindings();
+        stmt.bindString(1, model.getUID());
+    }
 
     /**
      * Returns a model instance populated with data from the record with GUID {@code uid}
@@ -580,10 +584,10 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
             DatabaseSchema.CommonColumns.COLUMN_UID + " = ?",
             new String[]{uid},
             null, null, null);
-        long result = -1;
+        final long result;
         try {
             if (cursor.moveToFirst()) {
-                result = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseSchema.CommonColumns._ID));
+                result = cursor.getLong(0);
             } else {
                 throw new IllegalArgumentException(mTableName + " with GUID " + uid + " does not exist in the db");
             }
@@ -606,10 +610,10 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
             DatabaseSchema.CommonColumns._ID + " = " + id,
             null, null, null, null);
 
-        String uid = null;
+        final String uid;
         try {
             if (cursor.moveToFirst()) {
-                uid = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseSchema.CommonColumns.COLUMN_UID));
+                uid = cursor.getString(0);
             } else {
                 throw new IllegalArgumentException(mTableName + " Record ID " + id + " does not exist in the db");
             }
@@ -721,7 +725,7 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
      * @return Number of records affected
      */
     public int updateRecord(@NonNull String uid, @NonNull String columnKey, String newValue) {
-        return updateRecords(CommonColumns.COLUMN_UID + "= ?", new String[]{uid}, columnKey, newValue);
+        return updateRecords(CommonColumns.COLUMN_UID + "=?", new String[]{uid}, columnKey, newValue);
     }
 
     /**

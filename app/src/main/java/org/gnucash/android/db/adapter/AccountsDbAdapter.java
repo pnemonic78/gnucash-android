@@ -202,34 +202,26 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             account.setFullName(getFullyQualifiedAccountName(account));
         }
 
-        stmt.clearBindings();
-        stmt.bindString(1, account.getName());
-        stmt.bindString(2, account.getDescription());
-        stmt.bindString(3, account.getAccountType().name());
-        stmt.bindString(4, account.getCommodity().getCurrencyCode());
+        bindBaseModel(stmt, account);
+        stmt.bindString(2, account.getName());
+        stmt.bindString(3, account.getDescription());
+        stmt.bindString(4, account.getAccountType().name());
+        stmt.bindString(5, account.getCommodity().getCurrencyCode());
         if (account.getColor() != Account.DEFAULT_COLOR) {
-            stmt.bindString(5, account.getColorHexString());
-        } else {
-            stmt.bindNull(5);
+            stmt.bindString(6, account.getColorHexString());
         }
-        stmt.bindLong(6, account.isFavorite() ? 1 : 0);
-        stmt.bindString(7, account.getFullName());
-        stmt.bindLong(8, account.isPlaceholder() ? 1 : 0);
-        stmt.bindString(9, TimestampHelper.getUtcStringFromTimestamp(account.getCreatedTimestamp()));
-        stmt.bindLong(10, account.isHidden() ? 1 : 0);
-        stmt.bindString(11, account.getCommodity().getUID());
-
+        stmt.bindLong(7, account.isFavorite() ? 1 : 0);
+        stmt.bindString(8, account.getFullName());
+        stmt.bindLong(9, account.isPlaceholder() ? 1 : 0);
+        stmt.bindString(10, TimestampHelper.getUtcStringFromTimestamp(account.getCreatedTimestamp()));
+        stmt.bindLong(11, account.isHidden() ? 1 : 0);
+        stmt.bindString(12, account.getCommodity().getUID());
         if (parentAccountUID != null) {
-            stmt.bindString(12, parentAccountUID);
-        } else {
-            stmt.bindNull(12);
+            stmt.bindString(13, parentAccountUID);
         }
         if (account.getDefaultTransferAccountUID() != null) {
-            stmt.bindString(13, account.getDefaultTransferAccountUID());
-        } else {
-            stmt.bindNull(13);
+            stmt.bindString(14, account.getDefaultTransferAccountUID());
         }
-        stmt.bindString(14, account.getUID());
 
         return stmt;
     }
