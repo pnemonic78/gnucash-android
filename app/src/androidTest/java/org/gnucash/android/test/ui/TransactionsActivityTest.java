@@ -368,11 +368,12 @@ public class TransactionsActivityTest {
      */
     //TODO: move this to the unit tests
     public void testAutoBalanceTransactions() {
+        Context context = GnuCashApplication.getAppContext();
         setDoubleEntryEnabled(false);
         mTransactionsDbAdapter.deleteAllRecords();
 
         assertThat(mTransactionsDbAdapter.getRecordsCount()).isEqualTo(0);
-        String imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(Commodity.getInstance(CURRENCY_CODE));
+        String imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(context, Commodity.getInstance(CURRENCY_CODE));
         assertThat(imbalanceAcctUID).isNull();
 
         validateTransactionListDisplayed();
@@ -389,7 +390,7 @@ public class TransactionsActivityTest {
         assertThat(mTransactionsDbAdapter.getRecordsCount()).isEqualTo(1);
         Transaction transaction = mTransactionsDbAdapter.getAllTransactions().get(0);
         assertThat(transaction.getSplits()).hasSize(2);
-        imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(Commodity.getInstance(CURRENCY_CODE));
+        imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(context, Commodity.getInstance(CURRENCY_CODE));
         assertThat(imbalanceAcctUID).isNotNull();
         assertThat(imbalanceAcctUID).isNotEmpty();
         assertThat(mAccountsDbAdapter.isHiddenAccount(imbalanceAcctUID)).isTrue(); //imbalance account should be hidden in single entry mode
@@ -405,11 +406,12 @@ public class TransactionsActivityTest {
      */
     @Test
     public void testSplitEditor() {
+        Context context = GnuCashApplication.getAppContext();
         setDefaultTransactionType(TransactionType.DEBIT);
         mTransactionsDbAdapter.deleteAllRecords();
 
         //when we start there should be no imbalance account in the system
-        String imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(Commodity.getInstance(CURRENCY_CODE));
+        String imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(context, Commodity.getInstance(CURRENCY_CODE));
         assertThat(imbalanceAcctUID).isNull();
 
         validateTransactionListDisplayed();
@@ -437,7 +439,7 @@ public class TransactionsActivityTest {
         Transaction transaction = transactions.get(0);
 
         assertThat(transaction.getSplits()).hasSize(3); //auto-balanced
-        imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(Commodity.getInstance(CURRENCY_CODE));
+        imbalanceAcctUID = mAccountsDbAdapter.getImbalanceAccountUID(context, Commodity.getInstance(CURRENCY_CODE));
         assertThat(imbalanceAcctUID).isNotNull();
         assertThat(imbalanceAcctUID).isNotEmpty();
         assertThat(mAccountsDbAdapter.isHiddenAccount(imbalanceAcctUID)).isFalse();

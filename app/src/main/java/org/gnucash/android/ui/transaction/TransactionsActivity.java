@@ -358,7 +358,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
     private void setTitleIndicatorColor() {
         @ColorInt int color = account.getColor();
         if (color == DEFAULT_COLOR) {
-            color = mAccountsDbAdapter.getActiveAccountColor(account.getUID());
+            color = mAccountsDbAdapter.getActiveAccountColor(this, account.getUID());
         }
 
         mBinding.tabLayout.setBackgroundColor(color);

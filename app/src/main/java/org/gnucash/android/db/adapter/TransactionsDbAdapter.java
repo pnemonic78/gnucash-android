@@ -24,6 +24,7 @@ import static org.gnucash.android.db.DatabaseSchema.SplitEntry;
 import static org.gnucash.android.db.DatabaseSchema.TransactionEntry;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -124,8 +125,9 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
             beginTransaction();
             Split imbalanceSplit = transaction.createAutoBalanceSplit();
             if (imbalanceSplit != null) {
+                Context context = GnuCashApplication.getAppContext();
                 String imbalanceAccountUID = new AccountsDbAdapter(mDb, this)
-                    .getOrCreateImbalanceAccountUID(transaction.getCommodity());
+                    .getOrCreateImbalanceAccountUID(context, transaction.getCommodity());
                 imbalanceSplit.setAccountUID(imbalanceAccountUID);
             }
             super.addRecord(transaction, updateMethod);
@@ -316,16 +318,8 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
      * @return List of {@link Transaction}s for account with UID <code>accountUID</code>
      */
     public List<Transaction> getAllTransactionsForAccount(String accountUID) {
-        Cursor c = fetchAllTransactionsForAccount(accountUID);
-        ArrayList<Transaction> transactionsList = new ArrayList<>();
-        try {
-            while (c.moveToNext()) {
-                transactionsList.add(buildModelInstance(c));
-            }
-        } finally {
-            c.close();
-        }
-        return transactionsList;
+        Cursor cursor = fetchAllTransactionsForAccount(accountUID);
+        return getRecords(cursor);
     }
 
     /**
@@ -511,13 +505,8 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
      * @return List of all scheduled transactions
      */
     public List<Transaction> getScheduledTransactionsForAccount(String accountUID) {
-        try (Cursor cursor = fetchScheduledTransactionsForAccount(accountUID)) {
-            List<Transaction> scheduledTransactions = new ArrayList<>();
-            while (cursor.moveToNext()) {
-                scheduledTransactions.add(buildModelInstance(cursor));
-            }
-            return scheduledTransactions;
-        }
+        Cursor cursor = fetchScheduledTransactionsForAccount(accountUID);
+        return getRecords(cursor);
     }
 
     /**

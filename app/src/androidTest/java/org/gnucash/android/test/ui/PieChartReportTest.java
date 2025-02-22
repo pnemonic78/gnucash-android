@@ -122,7 +122,7 @@ public class PieChartReportTest {
     public static void prepareTestCase() throws Exception {
         Context context = GnuCashApplication.getAppContext();
         oldActiveBookUID = GnuCashApplication.getActiveBookUID();
-        testBookUID = GncXmlImporter.parse(context.getResources().openRawResource(R.raw.default_accounts));
+        testBookUID = GncXmlImporter.parse(context, context.getResources().openRawResource(R.raw.default_accounts));
 
         BookUtils.loadBook(context, testBookUID);
         mTransactionsDbAdapter = TransactionsDbAdapter.getInstance();
