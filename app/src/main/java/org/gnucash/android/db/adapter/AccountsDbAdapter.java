@@ -1427,4 +1427,29 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     public long getTransactionCount(@NonNull String uid) {
         return transactionsDbAdapter.getTransactionsCountForAccount(uid);
     }
+
+    /**
+     * Returns the {@link org.gnucash.android.model.AccountType} of the account with unique ID <code>uid</code>
+     *
+     * @param accountUID Unique ID of the account
+     * @return {@link org.gnucash.android.model.AccountType} of the account.
+     * @throws java.lang.IllegalArgumentException if accountUID does not exist in DB,
+     */
+    public AccountType getAccountType(@NonNull String accountUID) {
+        Cursor c = mDb.query(AccountEntry.TABLE_NAME,
+            new String[]{AccountEntry.COLUMN_TYPE},
+            AccountEntry.COLUMN_UID + "=?",
+            new String[]{accountUID}, null, null, null);
+        final String type;
+        try {
+            if (c.moveToFirst()) {
+                type = c.getString(0);
+            } else {
+                throw new IllegalArgumentException("account " + accountUID + " does not exist in DB");
+            }
+        } finally {
+            c.close();
+        }
+        return AccountType.valueOf(type);
+    }
 }
