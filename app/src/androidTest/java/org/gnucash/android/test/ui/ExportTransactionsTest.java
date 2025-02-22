@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 import android.Manifest;
+import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -83,9 +84,10 @@ public class ExportTransactionsTest {
     public void setUp() throws Exception {
         AccountsActivityTest.preventFirstRunDialogs(getInstrumentation().getTargetContext());
         mAcccountsActivity = rule.getActivity();
+        Context context = rule.getActivity();
 
         String activeBookUID = GnuCashApplication.getActiveBookUID();
-        mDbHelper = new DatabaseHelper(rule.getActivity(), activeBookUID);
+        mDbHelper = new DatabaseHelper(context, activeBookUID);
         try {
             mDb = mDbHelper.getWritableDatabase();
         } catch (SQLException e) {
@@ -112,7 +114,7 @@ public class ExportTransactionsTest {
         split.setMemo("Hawaii is the best!");
         transaction.addSplit(split);
         transaction.addSplit(split.createPair(
-                mAccountsDbAdapter.getOrCreateImbalanceAccountUID(Commodity.DEFAULT_COMMODITY)));
+                mAccountsDbAdapter.getOrCreateImbalanceAccountUID(context, Commodity.DEFAULT_COMMODITY)));
         account.addTransaction(transaction);
 
         mAccountsDbAdapter.addRecord(account, DatabaseAdapter.UpdateMethod.insert);

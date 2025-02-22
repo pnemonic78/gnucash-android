@@ -509,17 +509,6 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
     }
 
     /**
-     * Retrieves record with id <code>rowId</code> from database table
-     *
-     * @param rowId ID of record to be retrieved
-     * @return {@link Cursor} to record retrieved
-     */
-    public Cursor fetchRecord(long rowId) {
-        return mDb.query(mTableName, null, DatabaseSchema.CommonColumns._ID + "=" + rowId,
-            null, null, null, null);
-    }
-
-    /**
      * Retrieves record with GUID {@code uid} from database table
      *
      * @param uid GUID of record to be retrieved
@@ -622,31 +611,6 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
         }
         return uid;
     }
-
-    /**
-     * Returns the currency code (according to the ISO 4217 standard) of the account
-     * with unique Identifier <code>accountUID</code>
-     *
-     * @param accountUID Unique Identifier of the account
-     * @return Currency code of the account. "" if accountUID
-     * does not exist in DB
-     */
-    public String getAccountCurrencyCode(@NonNull String accountUID) {
-        Cursor cursor = mDb.query(DatabaseSchema.AccountEntry.TABLE_NAME,
-            new String[]{DatabaseSchema.AccountEntry.COLUMN_CURRENCY},
-            DatabaseSchema.AccountEntry.COLUMN_UID + "= ?",
-            new String[]{accountUID}, null, null, null);
-        try {
-            if (cursor.moveToFirst()) {
-                return cursor.getString(0);
-            } else {
-                throw new IllegalArgumentException("Account " + accountUID + " does not exist");
-            }
-        } finally {
-            cursor.close();
-        }
-    }
-
 
     /**
      * Returns the commodity GUID for the given ISO 4217 currency code

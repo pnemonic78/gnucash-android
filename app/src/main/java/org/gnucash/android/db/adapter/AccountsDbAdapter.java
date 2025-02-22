@@ -48,6 +48,7 @@ import org.gnucash.android.model.Transaction;
 import org.gnucash.android.model.TransactionType;
 import org.gnucash.android.util.TimestampHelper;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -91,11 +92,9 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
 
     /**
      * Overloaded constructor. Creates an adapter for an already open database
-     *
-     * @param db SQliteDatabase instance
      */
-    public AccountsDbAdapter(@NonNull SQLiteDatabase db, @NonNull TransactionsDbAdapter transactionsDbAdapter) {
-        super(db, AccountEntry.TABLE_NAME, new String[]{
+    public AccountsDbAdapter(@NonNull TransactionsDbAdapter transactionsDbAdapter) {
+        super(transactionsDbAdapter.mDb, AccountEntry.TABLE_NAME, new String[]{
             AccountEntry.COLUMN_NAME,
             AccountEntry.COLUMN_DESCRIPTION,
             AccountEntry.COLUMN_TYPE,
@@ -111,19 +110,19 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID
         });
         this.transactionsDbAdapter = transactionsDbAdapter;
-        commoditiesDbAdapter = transactionsDbAdapter.commoditiesDbAdapter;
+        this.commoditiesDbAdapter = transactionsDbAdapter.commoditiesDbAdapter;
     }
 
     /**
      * Convenience overloaded constructor.
      * This is used when an AccountsDbAdapter object is needed quickly. Otherwise, the other
-     * constructor {@link #AccountsDbAdapter(SQLiteDatabase, TransactionsDbAdapter)}
+     * constructor {@link #AccountsDbAdapter(TransactionsDbAdapter)}
      * should be used whenever possible
      *
      * @param db Database to create an adapter for
      */
     public AccountsDbAdapter(@NonNull SQLiteDatabase db) {
-        this(db, new TransactionsDbAdapter(db));
+        this(new TransactionsDbAdapter(db));
     }
 
     /**
@@ -133,6 +132,13 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      */
     public static AccountsDbAdapter getInstance() {
         return GnuCashApplication.getAccountsDbAdapter();
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        commoditiesDbAdapter.close();
+        transactionsDbAdapter.close();
     }
 
     /**
@@ -855,7 +861,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
 
     private Money computeBalance(String accountUID, long startTimestamp, long endTimestamp, boolean includeSubAccounts) {
         Timber.d("Computing account balance for account ID %s", accountUID);
-        String currencyCode = transactionsDbAdapter.getAccountCurrencyCode(accountUID);
+        String currencyCode = getAccountCurrencyCode(accountUID);
         boolean hasDebitNormalBalance = getAccountType(accountUID).hasDebitNormalBalance();
 
         List<String> accountsList = includeSubAccounts ? getDescendantAccountUIDs(accountUID, null, null) : new ArrayList<>();
@@ -1050,13 +1056,36 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     }
 
     /**
+     * Returns the currency code (according to the ISO 4217 standard) of the account
+     * with unique Identifier <code>accountUID</code>
+     *
+     * @param accountUID Unique Identifier of the account
+     * @return Currency code of the account.
+     */
+    public String getAccountCurrencyCode(@NonNull String accountUID) {
+        Cursor cursor = mDb.query(DatabaseSchema.AccountEntry.TABLE_NAME,
+            new String[]{DatabaseSchema.AccountEntry.COLUMN_CURRENCY},
+            DatabaseSchema.AccountEntry.COLUMN_UID + "= ?",
+            new String[]{accountUID}, null, null, null);
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            } else {
+                throw new IllegalArgumentException("Account " + accountUID + " does not exist");
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    /**
      * Returns currency code of account with database ID <code>id</code>
      *
-     * @param uid GUID of the account
+     * @param accountUID GUID of the account
      * @return Currency code of the account
      */
-    public String getCurrencyCode(String uid) {
-        return getAccountCurrencyCode(uid);
+    public String getCurrencyCode(String accountUID) {
+        return getAccountCurrencyCode(accountUID);
     }
 
     /**
@@ -1265,7 +1294,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * but propagate a parent account's title color to children who don't have own color
      * </p>
      *
-     * @param context the context
+     * @param context    the context
      * @param accountUID GUID of the account
      * @return Android resource ID representing the color which can be directly set to a view
      */
@@ -1281,7 +1310,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * but propagate a parent account's title color to children who don't have own color
      * </p>
      *
-     * @param context the context
+     * @param context    the context
      * @param accountUID GUID of the account
      * @return Android resource ID representing the color which can be directly set to a view
      */

@@ -77,10 +77,7 @@ public class BookDbHelper extends SQLiteOpenHelper {
         Book book = new Book();
         DatabaseHelper helper = new DatabaseHelper(context, book.getUID());
         SQLiteDatabase mainDb = helper.getWritableDatabase(); //actually create the db
-        AccountsDbAdapter accountsDbAdapter = new AccountsDbAdapter(
-            mainDb,
-            new TransactionsDbAdapter(mainDb)
-        );
+        AccountsDbAdapter accountsDbAdapter = new AccountsDbAdapter(mainDb);
 
         String rootAccountUID = accountsDbAdapter.getOrCreateGnuCashRootAccountUID();
         try {
