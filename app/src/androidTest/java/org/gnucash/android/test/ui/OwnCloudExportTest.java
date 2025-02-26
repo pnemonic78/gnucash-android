@@ -40,6 +40,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import androidx.preference.PreferenceManager;
 import androidx.test.espresso.Espresso;
 import androidx.test.espresso.contrib.DrawerActions;
 import androidx.test.rule.ActivityTestRule;
@@ -50,6 +51,8 @@ import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter;
 import org.gnucash.android.db.adapter.DatabaseAdapter;
+import org.gnucash.android.db.adapter.TransactionsDbAdapter;
+import org.gnucash.android.importer.GncXmlImporter;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
@@ -57,8 +60,11 @@ import org.gnucash.android.model.Split;
 import org.gnucash.android.model.Transaction;
 import org.gnucash.android.test.ui.util.DisableAnimationsRule;
 import org.gnucash.android.ui.account.AccountsActivity;
+import org.gnucash.android.ui.settings.PreferenceActivity;
+import org.gnucash.android.util.BookUtils;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -94,6 +100,15 @@ public class OwnCloudExportTest extends GnuAndroidTest {
 
     @ClassRule
     public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
+
+    @BeforeClass
+    public static void prepareTestCase() throws Exception {
+        Context context = GnuCashApplication.getAppContext();
+        String testBookUID = GncXmlImporter.parse(context.getResources().openRawResource(R.raw.default_accounts));
+        BookUtils.activateBook(context, testBookUID);;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean(context.getString(R.string.key_first_run), false).apply();
+    }
 
     @Before
     public void setUp() throws Exception {
