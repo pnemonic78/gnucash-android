@@ -78,7 +78,7 @@ public class ExportParams {
     /**
      * Destination for the exported transactions
      */
-    private ExportTarget mExportTarget = ExportTarget.SHARING;
+    private ExportTarget mExportTarget = ExportTarget.SD_CARD;
 
     /**
      * Location to save the file name being exported.

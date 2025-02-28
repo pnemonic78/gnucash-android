@@ -450,7 +450,7 @@ public class ExportFormFragment extends MenuFragment implements
         mBinding.spinnerExportDestination.setSelection(position);
 
         //**************** export start time bindings ******************
-        Timestamp timestamp = PreferencesHelper.getLastExportTime();
+        Timestamp timestamp = PreferencesHelper.getLastExportTime(context);
         final long date = timestamp.getTime() - DateUtils.WEEK_IN_MILLIS;
         mExportStartCalendar.setTimeInMillis(date);
 
@@ -592,7 +592,7 @@ public class ExportFormFragment extends MenuFragment implements
      */
     private void selectExportFile() {
         String bookName = BooksDbAdapter.getInstance().getActiveBookDisplayName();
-        String filename = Exporter.buildExportFilename(mExportParams.getExportFormat(), bookName);
+        String filename = Exporter.buildExportFilename(mExportParams.getExportFormat(), mExportParams.isCompressed, bookName);
 
         Intent createIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
             .setType("*/*")
