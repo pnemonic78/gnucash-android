@@ -84,7 +84,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * Transactions database adapter for manipulating transactions associated with accounts
      */
     @NonNull
-    final TransactionsDbAdapter transactionsDbAdapter;
+    public final TransactionsDbAdapter transactionsDbAdapter;
 
     /**
      * Commodities database adapter for commodity manipulation

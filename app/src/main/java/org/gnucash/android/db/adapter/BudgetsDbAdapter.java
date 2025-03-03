@@ -44,7 +44,7 @@ public class BudgetsDbAdapter extends DatabaseAdapter<Budget> {
     @NonNull
     final RecurrenceDbAdapter recurrenceDbAdapter;
     @NonNull
-    final BudgetAmountsDbAdapter budgetAmountsDbAdapter;
+    public final BudgetAmountsDbAdapter budgetAmountsDbAdapter;
 
     /**
      * Opens the database adapter with an existing database
@@ -83,7 +83,7 @@ public class BudgetsDbAdapter extends DatabaseAdapter<Budget> {
      * @param db SQLiteDatabase object
      */
     public BudgetsDbAdapter(SQLiteDatabase db, RecurrenceDbAdapter recurrenceDbAdapter) {
-        this(db, new BudgetAmountsDbAdapter(db), recurrenceDbAdapter);
+        this(new BudgetAmountsDbAdapter(db), recurrenceDbAdapter);
     }
 
     /**

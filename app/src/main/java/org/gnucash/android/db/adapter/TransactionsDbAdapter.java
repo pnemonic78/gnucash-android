@@ -61,7 +61,7 @@ import timber.log.Timber;
 public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
 
     @NonNull
-    final SplitsDbAdapter splitsDbAdapter;
+    public final SplitsDbAdapter splitsDbAdapter;
 
     @NonNull
     final CommoditiesDbAdapter commoditiesDbAdapter;
