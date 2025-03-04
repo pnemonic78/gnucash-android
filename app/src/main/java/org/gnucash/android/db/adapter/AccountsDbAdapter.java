@@ -651,13 +651,14 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         String uid = getOrCreateGnuCashRootAccountUID();
         String parentName = "";
         ArrayList<Account> accountsList = new ArrayList<>();
+        Commodity commodity = commoditiesDbAdapter.getDefaultCommodity();
         for (String token : tokens) {
             parentName += token;
             String parentUID = findAccountUidByFullName(parentName);
             if (parentUID != null) { //the parent account exists, don't recreate
                 uid = parentUID;
             } else {
-                Account account = new Account(token);
+                Account account = new Account(token, commodity);
                 account.setAccountType(accountType);
                 account.setParentUID(uid); //set its parent
                 account.setFullName(parentName);
@@ -1033,7 +1034,8 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             cursor.close();
         }
         // No ROOT exits, create a new one
-        Account rootAccount = new Account("ROOT Account");
+        Commodity commodity = commoditiesDbAdapter.getDefaultCommodity();
+        Account rootAccount = new Account("ROOT Account", commodity);
         rootAccount.setAccountType(AccountType.ROOT);
         rootAccount.setFullName(ROOT_ACCOUNT_FULL_NAME);
         rootAccount.setHidden(true);
