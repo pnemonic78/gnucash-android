@@ -27,7 +27,6 @@ import static androidx.test.espresso.matcher.RootMatchers.withDecorView;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static org.gnucash.android.test.ui.AccountsActivityTest.preventFirstRunDialogs;
@@ -71,7 +70,6 @@ import org.junit.Test;
 
 public class OwnCloudExportTest extends GnuAndroidTest {
 
-    private Context context;
     private SharedPreferences mPrefs;
 
     private String OC_SERVER = "https://demo.owncloud.org";
@@ -102,21 +100,16 @@ public class OwnCloudExportTest extends GnuAndroidTest {
     public static DisableAnimationsRule disableAnimationsRule = new DisableAnimationsRule();
 
     @BeforeClass
-    public static void prepareTestCase() throws Exception {
+    public static void prepareTestCase() {
         Context context = GnuCashApplication.getAppContext();
-        String testBookUID = GncXmlImporter.parse(context.getResources().openRawResource(R.raw.default_accounts));
-        BookUtils.activateBook(context, testBookUID);;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        prefs.edit().putBoolean(context.getString(R.string.key_first_run), false).apply();
+        preventFirstRunDialogs(context);
     }
 
     @Before
     public void setUp() throws Exception {
-        context = mActivityRule.getActivity();
+        Context context = GnuCashApplication.getAppContext();
         mPrefs = context.getSharedPreferences(
             context.getString(R.string.owncloud_pref), Context.MODE_PRIVATE);
-
-        preventFirstRunDialogs(getInstrumentation().getTargetContext());
 
         GnuCashApplication.initializeDatabaseAdapters(context);
 
@@ -132,7 +125,7 @@ public class OwnCloudExportTest extends GnuAndroidTest {
         Split split = new Split(new Money("11.11", currencyCode), account.getUID());
         transaction.addSplit(split);
         transaction.addSplit(split.createPair(
-            mAccountsDbAdapter.getOrCreateImbalanceAccountUID(Commodity.DEFAULT_COMMODITY)));
+            mAccountsDbAdapter.getOrCreateImbalanceAccountUID(context, Commodity.DEFAULT_COMMODITY)));
         account.addTransaction(transaction);
 
         mAccountsDbAdapter.addRecord(account, DatabaseAdapter.UpdateMethod.insert);
@@ -148,9 +141,9 @@ public class OwnCloudExportTest extends GnuAndroidTest {
      *
      * @return {@code true} is an internet connection is available, {@code false} otherwise
      */
-    public static boolean hasActiveInternetConnection() {
+    public static boolean hasActiveInternetConnection(Context context) {
         ConnectivityManager connectivityManager
-            = (ConnectivityManager) GnuCashApplication.getAppContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
@@ -160,7 +153,8 @@ public class OwnCloudExportTest extends GnuAndroidTest {
      */
     @Test
     public void ownCloudCredentials() {
-        Assume.assumeTrue(hasActiveInternetConnection());
+        Context context = GnuCashApplication.getAppContext();
+        Assume.assumeTrue(hasActiveInternetConnection(context));
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open());
         onView(withText(R.string.title_settings)).perform(scrollTo());
         onView(withText(R.string.title_settings)).perform(click());
@@ -188,7 +182,8 @@ public class OwnCloudExportTest extends GnuAndroidTest {
 
     //// FIXME: 20.04.2017 This test now fails since introduction of SAF.
     public void ownCloudExport() {
-        Assume.assumeTrue(hasActiveInternetConnection());
+        Context context = GnuCashApplication.getAppContext();
+        Assume.assumeTrue(hasActiveInternetConnection(context));
         mPrefs.edit().putBoolean(context.getString(R.string.key_owncloud_sync), true).commit();
 
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open());
@@ -211,19 +206,6 @@ public class OwnCloudExportTest extends GnuAndroidTest {
         onView(withText(toastString))
             .inRoot(withDecorView(not(is(mActivityRule.getActivity().getWindow().getDecorView()))))
             .check(matches(isDisplayed()));
-    }
-
-    /**
-     * Sleep the thread for a specified period
-     *
-     * @param millis Duration to sleep in milliseconds
-     */
-    private void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }
 
