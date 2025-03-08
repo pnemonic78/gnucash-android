@@ -19,6 +19,7 @@ package org.gnucash.android.export.qif;
 import static org.gnucash.android.db.DatabaseSchema.AccountEntry;
 import static org.gnucash.android.db.DatabaseSchema.SplitEntry;
 import static org.gnucash.android.db.DatabaseSchema.TransactionEntry;
+import static org.gnucash.android.math.MathExtKt.isZero;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -177,7 +178,7 @@ public class QifExporter extends Exporter {
                         // deal with imbalance first
                         double imbalance = cursor.getDouble(cursor.getColumnIndexOrThrow("trans_acct_balance"));
                         BigDecimal decimalImbalance = BigDecimal.valueOf(imbalance).setScale(2, BigDecimal.ROUND_HALF_UP);
-                        if (decimalImbalance.compareTo(BigDecimal.ZERO) != 0) {
+                        if (!isZero(decimalImbalance)) {
                             writer.append(QifHelper.SPLIT_CATEGORY_PREFIX)
                                     .append(AccountsDbAdapter.getImbalanceAccountName(
                                             Commodity.getInstance(cursor.getString(cursor.getColumnIndexOrThrow("acct1_currency")))
@@ -228,7 +229,7 @@ public class QifExporter extends Exporter {
             transactionsDbAdapter.updateTransaction(contentValues, null, null);
 
             /// export successful
-            PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow());
+            PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow(), getBookUID());
             close();
 
             List<String> exportedFiles = splitQIF(file);
