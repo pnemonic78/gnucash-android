@@ -15,6 +15,8 @@
  */
 package org.gnucash.android.importer;
 
+import static org.gnucash.android.util.ContentExtKt.getDocumentName;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
@@ -31,12 +33,17 @@ import androidx.annotation.Nullable;
 import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.model.Account;
 import org.gnucash.android.model.Book;
+import org.gnucash.android.model.Budget;
+import org.gnucash.android.model.Commodity;
+import org.gnucash.android.model.Price;
+import org.gnucash.android.model.ScheduledAction;
+import org.gnucash.android.model.Transaction;
 import org.gnucash.android.ui.common.GnucashProgressDialog;
 import org.gnucash.android.ui.util.TaskDelegate;
 import org.gnucash.android.util.BackupManager;
 import org.gnucash.android.util.BookUtils;
-import org.gnucash.android.util.ContentExtKt;
 
 import java.io.InputStream;
 
@@ -46,11 +53,54 @@ import timber.log.Timber;
  * Imports a GnuCash (desktop) account file and displays a progress dialog.
  * The AccountsActivity is opened when importing is done.
  */
-public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
+public class ImportAsyncTask extends AsyncTask<Uri, String, String> {
     private final Activity mContext;
     private final TaskDelegate mDelegate;
     private final boolean mBackup;
     private ProgressDialog mProgressDialog;
+    @NonNull
+    private final GncXmlListener listener = new GncXmlListener() {
+        @Override
+        public void onImportAccount(@NonNull Account account) {
+            publishProgress("Importing account: " + account.getName());
+        }
+
+        @Override
+        public void onImportBook(@NonNull String name) {
+            publishProgress("Importing book: " + name);
+        }
+
+        @Override
+        public void onImportBook(@NonNull Book book) {
+            onImportBook(book.getDisplayName());
+        }
+
+        @Override
+        public void onImportBudget(@NonNull Budget budget) {
+            publishProgress("Importing budget: " + budget.getName());
+        }
+
+        @Override
+        public void onImportCommodity(@NonNull Commodity commodity) {
+            publishProgress("Importing commodity: " + commodity.formatListItem());
+        }
+
+        @Override
+        public void onImportPrice(@NonNull Price price) {
+            publishProgress("Importing price: " + price.getCommodity() + " ~ " + price.getCurrency());
+        }
+
+        @Override
+        public void onImportSchedule(@NonNull ScheduledAction scheduledAction) {
+            publishProgress("Importing schedule: " + scheduledAction.getRuleString());
+        }
+
+        @Override
+        public void onImportTransaction(@NonNull Transaction transaction) {
+            // FIXME don't overload the handler with too many messages - try debounce.
+            publishProgress("Importing transaction: " + transaction.getDescription());
+        }
+    };
 
     public ImportAsyncTask(@NonNull Activity context) {
         this(context, null);
@@ -89,9 +139,14 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         Book book;
         String bookUID;
         try {
+            String name = getDocumentName(uri, mContext);
+            if (TextUtils.isEmpty(name)) {
+                name = uri.getLastPathSegment();
+            }
+            listener.onImportBook(name);
             ContentResolver contentResolver = mContext.getContentResolver();
             InputStream accountInputStream = contentResolver.openInputStream(uri);
-            book = GncXmlImporter.parseBook(accountInputStream);
+            book = GncXmlImporter.parseBook(accountInputStream, listener);
             book.setSourceUri(uri);
             bookUID = book.getUID();
         } catch (final Throwable e) {
@@ -104,7 +159,7 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         contentValues.put(DatabaseSchema.BookEntry.COLUMN_SOURCE_URI, uri.toString());
 
         String displayName = book.getDisplayName();
-        String name = ContentExtKt.getDocumentName(uri, mContext);
+        String name = getDocumentName(uri, mContext);
         if (!TextUtils.isEmpty(name)) {
             // Remove short file type extension, e.g. ".xml" or ".gnucash" or ".gnca.gz"
             int indexFileType = name.indexOf('.');
@@ -124,6 +179,15 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
             .apply();
 
         return bookUID;
+    }
+
+    @Override
+    protected void onProgressUpdate(String... values) {
+        int length = values.length;
+        if (length > 0) {
+            String value = values[length - 1];
+            mProgressDialog.setTitle(value);
+        }
     }
 
     @Override
