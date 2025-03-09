@@ -17,6 +17,7 @@
 
 package org.gnucash.android.importer;
 
+import static org.gnucash.android.db.adapter.AccountsDbAdapter.ROOT_ACCOUNT_NAME;
 import static org.gnucash.android.export.xml.GncXmlHelper.ATTR_KEY_TYPE;
 import static org.gnucash.android.export.xml.GncXmlHelper.ATTR_VALUE_FRAME;
 import static org.gnucash.android.export.xml.GncXmlHelper.ATTR_VALUE_NUMERIC;
@@ -141,11 +142,11 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.TimeZone;
 
 import timber.log.Timber;
@@ -173,16 +174,6 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
      * Reference to account which is built when each account tag is parsed in the XML file
      */
     private Account mAccount;
-
-    /**
-     * All the accounts found in a file to be imported, used for bulk import mode
-     */
-    private final List<Account> mAccountList;
-
-    /**
-     * List of all the template accounts found
-     */
-    private final List<Account> mTemplatAccountList;
 
     /**
      * Map of the template accounts to the template transactions UIDs
@@ -236,8 +227,6 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
 
     private boolean mPriceCommodity;
     private boolean mPriceCurrency;
-
-    private final List<Price> mPriceList;
 
     /**
      * Whether the quantity is negative
@@ -362,21 +351,27 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
 
         mContent = new StringBuilder();
 
-        mAccountList = new ArrayList<>();
         mAccountMap = new HashMap<>();
         mTransactionList = new ArrayList<>();
         mScheduledActionsList = new ArrayList<>();
         mBudgetList = new ArrayList<>();
 
-        mTemplatAccountList = new ArrayList<>();
         mTemplateTransactions = new ArrayList<>();
         mTemplateAccountToTransactionMap = new HashMap<>();
 
         mAutoBalanceSplits = new ArrayList<>();
 
-        mPriceList = new ArrayList<>();
         mCurrencyCount = new HashMap<>();
         mCommodities = new HashMap<>();
+    }
+
+    @Override
+    public void startDocument() throws SAXException {
+        super.startDocument();
+        mBook.setDisplayName(booksDbAdapter.generateDefaultBookName());
+
+        Timber.d("before clean up db");
+        mAccountsDbAdapter.deleteAllRecords();
     }
 
     @Override
@@ -573,15 +568,23 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 break;
             case TAG_ACCOUNT:
                 if (!mInTemplates) { //we ignore template accounts, we have no use for them. FIXME someday and import the templates too
-                    mAccountList.add(mAccount);
+                    mAccountsDbAdapter.addRecord(mAccount, DatabaseAdapter.UpdateMethod.insert);
                     mAccountMap.put(mAccount.getUID(), mAccount);
                     // check ROOT account
                     if (mAccount.getAccountType() == AccountType.ROOT) {
                         if (mRootAccount == null) {
                             mRootAccount = mAccount;
+                            mBook.setRootAccountUID(mRootAccount.getUID());
                         } else {
                             throw new SAXException("Multiple ROOT accounts exist in book");
                         }
+                    } else if (mRootAccount == null) {
+                        // The XML has no ROOT, create one
+                        mRootAccount = new Account(ROOT_ACCOUNT_NAME);
+                        mRootAccount.setAccountType(AccountType.ROOT);
+                        mAccountsDbAdapter.addRecord(mRootAccount, DatabaseAdapter.UpdateMethod.insert);
+                        mAccountMap.put(mRootAccount.getUID(), mRootAccount);
+                        mBook.setRootAccountUID(mRootAccount.getUID());
                     }
                     // prepare for next input
                     mAccount = null;
@@ -912,7 +915,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 break;
             case TAG_PRICE:
                 if (mPrice != null) {
-                    mPriceList.add(mPrice);
+                    mPricesDbAdapter.addRecord(mPrice, DatabaseAdapter.UpdateMethod.insert);
                     mPrice = null;
                 }
                 break;
@@ -942,6 +945,9 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
             case TAG_COMMODITY:
                 if (mCommodity != null) {
                     putCommodity(mCommodity);
+                    if (mCommodity.id == 0L) {
+                        mCommoditiesDbAdapter.addRecord(mCommodity, DatabaseAdapter.UpdateMethod.insert);
+                    }
                     mCommodity = null;
                 }
                 break;
@@ -959,88 +965,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-        Map<String, String> mapFullName = new HashMap<>(mAccountList.size());
-        Map<String, Account> mapImbalanceAccount = new HashMap<>();
-
-        // The XML has no ROOT, create one
-        if (mRootAccount == null) {
-            mRootAccount = new Account("ROOT");
-            mRootAccount.setAccountType(AccountType.ROOT);
-            mAccountList.add(mRootAccount);
-            mAccountMap.put(mRootAccount.getUID(), mRootAccount);
-        }
-
-        String imbalancePrefix = AccountsDbAdapter.getImbalanceAccountPrefix();
-
-        // Add all account without a parent to ROOT, and collect top level imbalance accounts
-        for (Account account : mAccountList) {
-            mapFullName.put(account.getUID(), null);
-            boolean topLevel = false;
-            if (account.getParentUID() == null && account.getAccountType() != AccountType.ROOT) {
-                account.setParentUID(mRootAccount.getUID());
-                topLevel = true;
-            }
-            if (topLevel || (mRootAccount.getUID().equals(account.getParentUID()))) {
-                if (account.getName().startsWith(imbalancePrefix)) {
-                    mapImbalanceAccount.put(account.getName().substring(imbalancePrefix.length()), account);
-                }
-            }
-        }
-
-        // Set the account for created balancing splits to correct imbalance accounts
-        for (Split split : mAutoBalanceSplits) {
-            // XXX: yes, getAccountUID() returns a currency code in this case (see Transaction.createAutoBalanceSplit())
-            String currencyCode = split.getAccountUID();
-            Account imbAccount = mapImbalanceAccount.get(currencyCode);
-            if (imbAccount == null) {
-                imbAccount = new Account(imbalancePrefix + currencyCode, getCommodity(Commodity.COMMODITY_CURRENCY, currencyCode));
-                imbAccount.setParentUID(mRootAccount.getUID());
-                imbAccount.setAccountType(AccountType.BANK);
-                mapImbalanceAccount.put(currencyCode, imbAccount);
-                mAccountList.add(imbAccount);
-            }
-            split.setAccountUID(imbAccount.getUID());
-        }
-
-        Stack<Account> stack = new Stack<>();
-        for (Account account : mAccountList) {
-            if (mapFullName.get(account.getUID()) != null) {
-                continue;
-            }
-            stack.push(account);
-            String parentAccountFullName;
-            while (!stack.isEmpty()) {
-                Account acc = stack.peek();
-                if (acc.getAccountType() == AccountType.ROOT) {
-                    // ROOT_ACCOUNT_FULL_NAME should ensure ROOT always sorts first
-                    mapFullName.put(acc.getUID(), AccountsDbAdapter.ROOT_ACCOUNT_FULL_NAME);
-                    stack.pop();
-                    continue;
-                }
-                String parentUID = acc.getParentUID();
-                Account parentAccount = mAccountMap.get(parentUID);
-                // ROOT account will be added if not exist, so now only ROOT
-                // has an empty parent
-                if (parentAccount.getAccountType() == AccountType.ROOT) {
-                    // top level account, full name is the same as its name
-                    mapFullName.put(acc.getUID(), acc.getName());
-                    stack.pop();
-                    continue;
-                }
-                parentAccountFullName = mapFullName.get(parentUID);
-                if (parentAccountFullName == null) {
-                    // non-top-level account, parent full name still unknown
-                    stack.push(parentAccount);
-                    continue;
-                }
-                mapFullName.put(acc.getUID(), parentAccountFullName +
-                    AccountsDbAdapter.ACCOUNT_NAME_SEPARATOR + acc.getName());
-                stack.pop();
-            }
-        }
-        for (Account account : mAccountList) {
-            account.setFullName(mapFullName.get(account.getUID()));
-        }
+        calculateImbalances();
 
         String mostAppearedCurrency = "";
         int mostCurrencyAppearance = 0;
@@ -1057,14 +982,49 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
         saveToDatabase();
     }
 
+    private void calculateImbalances() {
+        Collection<Account> accounts = mAccountMap.values();
+        Map<String, Account> mapImbalanceAccount = new HashMap<>();
+
+        String imbalancePrefix = AccountsDbAdapter.getImbalanceAccountPrefix();
+
+        // Add all account without a parent to ROOT, and collect top level imbalance accounts
+        for (Account account : accounts) {
+            boolean topLevel = false;
+            if (account.getParentUID() == null && account.getAccountType() != AccountType.ROOT) {
+                account.setParentUID(mRootAccount.getUID());
+                topLevel = true;
+            }
+            if (topLevel || (mRootAccount.getUID().equals(account.getParentUID()))) {
+                if (account.getName().startsWith(imbalancePrefix)) {
+                    mapImbalanceAccount.put(account.getName().substring(imbalancePrefix.length()), account);
+                }
+            }
+        }
+
+        // Set the account for created balancing splits to correct imbalance accounts
+        for (Split split : mAutoBalanceSplits) {
+            // XXX: yes, getAccountUID() returns a currency UID in this case (see Transaction.createAutoBalanceSplit())
+            String currencyUID = split.getAccountUID();
+            Account imbAccount = mapImbalanceAccount.get(currencyUID);
+            if (imbAccount == null) {
+                Commodity commodity = mCommoditiesDbAdapter.getRecord(currencyUID);
+                imbAccount = new Account(imbalancePrefix + commodity.getCurrencyCode());
+                imbAccount.setParentUID(mRootAccount.getUID());
+                imbAccount.setAccountType(AccountType.BANK);
+                mapImbalanceAccount.put(currencyUID, imbAccount);
+                mAccountsDbAdapter.addRecord(imbAccount, DatabaseAdapter.UpdateMethod.insert);
+            }
+            split.setAccountUID(imbAccount.getUID());
+        }
+    }
+
     /**
      * Saves the imported data to the database
      *
      * @return GUID of the newly created book, or null if not successful
      */
     private void saveToDatabase() {
-        mBook.setRootAccountUID(mRootAccount.getUID());
-        mBook.setDisplayName(booksDbAdapter.generateDefaultBookName());
         //we on purpose do not set the book active. Only import. Caller should handle activation
 
         long startTime = System.nanoTime();
@@ -1074,19 +1034,8 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
             // disable foreign key. The database structure should be ensured by the data inserted.
             // it will make insertion much faster.
             mAccountsDbAdapter.enableForeignKey(false);
-            Timber.d("before clean up db");
-            mAccountsDbAdapter.deleteAllRecords();
             Timber.d("db clean up done %d ns", System.nanoTime() - startTime);
 
-            List<Commodity> commodities = new ArrayList<>();
-            for (Map<String, Commodity> commoditiesById : mCommodities.values()) {
-                commodities.addAll(commoditiesById.values());
-            }
-            long nCommodities = mCommoditiesDbAdapter.bulkAddRecords(commodities, DatabaseAdapter.UpdateMethod.insert);
-            Timber.d("%d commodities inserted", nCommodities);
-
-            long nAccounts = mAccountsDbAdapter.bulkAddRecords(mAccountList, DatabaseAdapter.UpdateMethod.insert);
-            Timber.d("%d accounts inserted", nAccounts);
             //We need to add scheduled actions first because there is a foreign key constraint on transactions
             //which are generated from scheduled actions (we do auto-create some transactions during import)
             long nSchedActions = mScheduledActionsDbAdapter.bulkAddRecords(mScheduledActionsList, DatabaseAdapter.UpdateMethod.insert);
@@ -1097,9 +1046,6 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
 
             long nTransactions = mTransactionsDbAdapter.bulkAddRecords(mTransactionList, DatabaseAdapter.UpdateMethod.insert);
             Timber.d("%d transactions inserted", nTransactions);
-
-            long nPrices = mPricesDbAdapter.bulkAddRecords(mPriceList, DatabaseAdapter.UpdateMethod.insert);
-            Timber.d("%d prices inserted", nPrices);
 
             //// TODO: 01.06.2016 Re-enable import of Budget stuff when the UI is complete
 //            long nBudgets = mBudgetsDbAdapter.bulkAddRecords(mBudgetList, DatabaseAdapter.UpdateMethod.insert);
