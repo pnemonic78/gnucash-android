@@ -41,6 +41,7 @@ import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Price;
 import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.model.Transaction;
+import org.gnucash.android.service.ScheduledActionService;
 import org.gnucash.android.ui.common.GnucashProgressDialog;
 import org.gnucash.android.ui.util.TaskDelegate;
 import org.gnucash.android.util.BackupManager;
@@ -313,6 +314,8 @@ public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
             int message = R.string.toast_error_importing_accounts;
             Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
         }
+
+        ScheduledActionService.schedulePeriodic(mContext);
 
         if (mDelegate != null)
             mDelegate.onTaskComplete();

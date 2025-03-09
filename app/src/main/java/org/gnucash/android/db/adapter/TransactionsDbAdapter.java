@@ -119,7 +119,7 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
      */
     @Override
     public void addRecord(@NonNull Transaction transaction, UpdateMethod updateMethod) throws SQLException {
-        Timber.d("Adding transaction to the db via %s", updateMethod.name());
+        Timber.d("%s transaction to the db", updateMethod.name());
         try {
             beginTransaction();
             Split imbalanceSplit = transaction.createAutoBalanceSplit();
@@ -141,7 +141,7 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
                 }
                 splitUIDs.add(split.getUID());
             }
-            Timber.d("%d splits added", transaction.getSplits().size());
+            Timber.d("%d splits added", splitUIDs.size());
 
             long deleted = mDb.delete(SplitEntry.TABLE_NAME,
                     SplitEntry.COLUMN_TRANSACTION_UID + " = ? AND "
@@ -437,8 +437,7 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
         String currencyCode = c.getString(c.getColumnIndexOrThrow(TransactionEntry.COLUMN_CURRENCY));
         transaction.setCommodity(commoditiesDbAdapter.getCommodity(currencyCode));
         transaction.setScheduledActionUID(c.getString(c.getColumnIndexOrThrow(TransactionEntry.COLUMN_SCHEDX_ACTION_UID)));
-        long transactionID = c.getLong(c.getColumnIndexOrThrow(TransactionEntry._ID));
-        transaction.setSplits(mSplitsDbAdapter.getSplitsForTransaction(transactionID));
+        transaction.setSplits(mSplitsDbAdapter.getSplitsForTransaction(transaction.id));
 
         return transaction;
     }
