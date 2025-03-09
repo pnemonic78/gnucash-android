@@ -15,8 +15,8 @@
  */
 package org.gnucash.android.model
 
-import java.util.TimeZone
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
+import java.util.TimeZone
 import kotlin.math.log10
 
 /**
@@ -52,6 +52,9 @@ class Commodity(
 
     val isCurrency: Boolean
         get() = (COMMODITY_CURRENCY == namespace || COMMODITY_ISO4217 == namespace)
+
+    val isTemplate: Boolean
+        get() = (TEMPLATE == namespace) || (TEMPLATE == mnemonic) || (TEMPLATE == cusip)
 
     /**
      * Returns the mnemonic, or currency code for ISO4217 currencies

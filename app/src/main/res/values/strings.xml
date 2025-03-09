@@ -474,4 +474,10 @@
     <string name="summary_delete_transaction_backup">Backup the active book before deleting a transaction?</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
+    <string name="title_progress_importing_book">Importing book</string>
+    <string name="title_progress_importing_budgets">Importing budgets</string>
+    <string name="title_progress_importing_commodities">Importing commodities</string>
+    <string name="title_progress_importing_prices">Importing prices</string>
+    <string name="title_progress_importing_schedules">Importing schedules</string>
+    <string name="title_progress_importing_transactions">Importing transactions</string>
 </resources>

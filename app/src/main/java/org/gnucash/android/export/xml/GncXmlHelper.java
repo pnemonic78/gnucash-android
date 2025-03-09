@@ -179,6 +179,11 @@ public abstract class GncXmlHelper {
     public static final String KEY_FROM_SCHED_ACTION = "from-sched-xaction";
     public static final String KEY_DEFAULT_TRANSFER_ACCOUNT = "default_transfer_account";
 
+    public static final String CD_TYPE_COMMODITY = "commodity";
+    public static final String CD_TYPE_ACCOUNT = "account";
+    public static final String CD_TYPE_TRANSACTION = "transaction";
+    public static final String CD_TYPE_PRICE = "price";
+
     /**
      * Formats dates for the GnuCash XML format
      *

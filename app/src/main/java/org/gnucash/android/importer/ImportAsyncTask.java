@@ -15,6 +15,8 @@
  */
 package org.gnucash.android.importer;
 
+import static org.gnucash.android.util.ContentExtKt.getDocumentName;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
@@ -22,6 +24,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -31,12 +34,17 @@ import androidx.annotation.Nullable;
 import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.model.Account;
 import org.gnucash.android.model.Book;
+import org.gnucash.android.model.Budget;
+import org.gnucash.android.model.Commodity;
+import org.gnucash.android.model.Price;
+import org.gnucash.android.model.ScheduledAction;
+import org.gnucash.android.model.Transaction;
 import org.gnucash.android.ui.common.GnucashProgressDialog;
 import org.gnucash.android.ui.util.TaskDelegate;
 import org.gnucash.android.util.BackupManager;
 import org.gnucash.android.util.BookUtils;
-import org.gnucash.android.util.ContentExtKt;
 
 import java.io.InputStream;
 
@@ -46,11 +54,16 @@ import timber.log.Timber;
  * Imports a GnuCash (desktop) account file and displays a progress dialog.
  * The AccountsActivity is opened when importing is done.
  */
-public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
+public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
+    @NonNull
     private final Activity mContext;
+    @Nullable
     private final TaskDelegate mDelegate;
     private final boolean mBackup;
-    private ProgressDialog mProgressDialog;
+    @NonNull
+    private final ProgressDialog mProgressDialog;
+    @NonNull
+    private final GncXmlListener listener;
 
     public ImportAsyncTask(@NonNull Activity context) {
         this(context, null);
@@ -64,15 +77,143 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         this.mContext = context;
         this.mDelegate = delegate;
         this.mBackup = backup;
+        ProgressDialog progressDialog = new GnucashProgressDialog(mContext);
+        progressDialog.setTitle(R.string.title_progress_importing_book);
+        progressDialog.setCancelable(true);
+        progressDialog.setOnCancelListener(dialogInterface -> cancel(true));
+        mProgressDialog = progressDialog;
+        this.listener = new ProgressListener(context);
+    }
+
+    private class ProgressListener implements GncXmlListener {
+        private static final long PUBLISH_TIMEOUT = 70;
+
+        private static class PublishItem {
+            final Object[] values;
+            final long timestamp;
+
+            private PublishItem(Object[] values, long timestamp) {
+                this.values = values;
+                this.timestamp = timestamp;
+            }
+        }
+
+        private final String labelAccounts;
+        private final String labelBook;
+        private final String labelBudgets;
+        private final String labelCommodities;
+        private final String labelPrices;
+        private final String labelSchedules;
+        private final String labelTransactions;
+        private long countDataCommodityTotal = 0;
+        private long countDataCommodity = 0;
+        private long countDataAccountTotal = 0;
+        private long countDataAccount = 0;
+        private long countDataTransactionTotal = 0;
+        private long countDataTransaction = 0;
+        private long countDataPriceTotal = 0;
+        private long countDataPrice = 0;
+        @Nullable
+        private PublishItem itemPublished = null;
+
+        ProgressListener(Context context) {
+            labelAccounts = context.getString(R.string.title_progress_importing_accounts);
+            labelBook = context.getString(R.string.title_progress_importing_book);
+            labelBudgets = context.getString(R.string.title_progress_importing_budgets);
+            labelCommodities = context.getString(R.string.title_progress_importing_commodities);
+            labelPrices = context.getString(R.string.title_progress_importing_prices);
+            labelSchedules = context.getString(R.string.title_progress_importing_schedules);
+            labelTransactions = context.getString(R.string.title_progress_importing_transactions);
+        }
+
+        @Override
+        public void onImportAccountCount(long count) {
+            countDataAccountTotal = count;
+        }
+
+        @Override
+        public void onImportAccount(@NonNull Account account) {
+            publishProgressDebounce(labelAccounts, ++countDataAccount, countDataAccountTotal);
+        }
+
+        @Override
+        public void onImportBookCount(long count) {
+        }
+
+        @Override
+        public void onImportBook(@NonNull String name) {
+            publishProgressDebounce(labelBook);
+        }
+
+        @Override
+        public void onImportBook(@NonNull Book book) {
+            onImportBook(book.getDisplayName());
+        }
+
+        @Override
+        public void onImportBudgetCount(long count) {
+        }
+
+        @Override
+        public void onImportBudget(@NonNull Budget budget) {
+            publishProgressDebounce(labelBudgets);
+        }
+
+        @Override
+        public void onImportCommodityCount(long count) {
+            countDataCommodityTotal = count;
+        }
+
+        @Override
+        public void onImportCommodity(@NonNull Commodity commodity) {
+            if (commodity.isTemplate()) return;
+            publishProgressDebounce(labelCommodities, ++countDataCommodity, countDataCommodityTotal);
+        }
+
+        @Override
+        public void onImportPriceCount(long count) {
+            countDataPriceTotal = count;
+        }
+
+        @Override
+        public void onImportPrice(@NonNull Price price) {
+            publishProgressDebounce(labelPrices, ++countDataPrice, countDataPriceTotal);
+        }
+
+        @Override
+        public void onImportScheduleCount(long count) {
+        }
+
+        @Override
+        public void onImportSchedule(@NonNull ScheduledAction scheduledAction) {
+            publishProgressDebounce(labelSchedules);
+        }
+
+        @Override
+        public void onImportTransactionCount(long count) {
+            countDataTransactionTotal = count;
+        }
+
+        @Override
+        public void onImportTransaction(@NonNull Transaction transaction) {
+            if (transaction.isTemplate()) return;
+            publishProgressDebounce(labelTransactions, ++countDataTransaction, countDataTransactionTotal);
+        }
+
+        private void publishProgressDebounce(final Object... values) {
+            final PublishItem item = itemPublished;
+            long timestampDelta = (item == null) ? PUBLISH_TIMEOUT : SystemClock.elapsedRealtime() - item.timestamp;
+            if (timestampDelta >= PUBLISH_TIMEOUT) {
+                // Publish straight away, or if we waited enough time.
+                itemPublished = new PublishItem(values, SystemClock.elapsedRealtime());
+                publishProgress(values);
+            }
+        }
     }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        mProgressDialog = new GnucashProgressDialog(mContext);
-        mProgressDialog.setTitle(R.string.title_progress_importing_accounts);
-        mProgressDialog.setCancelable(true);
-        mProgressDialog.setOnCancelListener(dialogInterface -> cancel(true));
         mProgressDialog.show();
     }
 
@@ -89,9 +230,14 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         Book book;
         String bookUID;
         try {
+            String name = getDocumentName(uri, mContext);
+            if (TextUtils.isEmpty(name)) {
+                name = uri.getLastPathSegment();
+            }
+            listener.onImportBook(name);
             ContentResolver contentResolver = mContext.getContentResolver();
             InputStream accountInputStream = contentResolver.openInputStream(uri);
-            book = GncXmlImporter.parseBook(accountInputStream);
+            book = GncXmlImporter.parseBook(accountInputStream, listener);
             book.setSourceUri(uri);
             bookUID = book.getUID();
         } catch (final Throwable e) {
@@ -104,7 +250,7 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         contentValues.put(DatabaseSchema.BookEntry.COLUMN_SOURCE_URI, uri.toString());
 
         String displayName = book.getDisplayName();
-        String name = ContentExtKt.getDocumentName(uri, mContext);
+        String name = getDocumentName(uri, mContext);
         if (!TextUtils.isEmpty(name)) {
             // Remove short file type extension, e.g. ".xml" or ".gnucash" or ".gnca.gz"
             int indexFileType = name.indexOf('.');
@@ -127,16 +273,36 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
     }
 
     @Override
+    protected void onProgressUpdate(Object... values) {
+        final ProgressDialog progressDialog = mProgressDialog;
+        if (progressDialog == null) return;
+
+        int length = values.length;
+        if (length > 0) {
+            String value = (String) values[0];
+            mProgressDialog.setTitle(value);
+            if (length >= 3) {
+                float count = ((Number) values[1]).floatValue();
+                float total = ((Number) values[2]).floatValue();
+                float progress = (count * 100) / total;
+                progressDialog.setIndeterminate(false);
+                progressDialog.setProgress((int) progress);
+            } else {
+                progressDialog.setIndeterminate(true);
+            }
+        }
+    }
+
+    @Override
     protected void onPostExecute(String bookUID) {
+        final ProgressDialog progressDialog = mProgressDialog;
         try {
-            if (mProgressDialog != null && mProgressDialog.isShowing()) {
-                mProgressDialog.dismiss();
+            if (progressDialog.isShowing()) {
+                progressDialog.dismiss();
             }
         } catch (IllegalArgumentException ex) {
             //TODO: This is a hack to catch "View not attached to window" exceptions
             //FIXME by moving the creation and display of the progress dialog to the Fragment
-        } finally {
-            mProgressDialog = null;
         }
 
         if (!TextUtils.isEmpty(bookUID)) {

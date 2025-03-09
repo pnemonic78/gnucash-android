@@ -19,6 +19,7 @@ package org.gnucash.android.importer;
 import static java.util.zip.GZIPInputStream.GZIP_MAGIC;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.gnucash.android.db.adapter.TransactionsDbAdapter;
 import org.gnucash.android.model.Book;
@@ -69,10 +70,21 @@ public class GncXmlImporter {
      * @return the book into which the XML was imported
      */
     public static Book parseBook(@NonNull InputStream gncXmlInputStream) throws ParserConfigurationException, SAXException, IOException {
+        return parseBook(gncXmlInputStream, null);
+    }
+
+    /**
+     * Parse GnuCash XML input and populates the database
+     *
+     * @param gncXmlInputStream InputStream source of the GnuCash XML file
+     * @param listener the listener to receive events.
+     * @return the book into which the XML was imported
+     */
+    public static Book parseBook(@NonNull InputStream gncXmlInputStream, @Nullable GncXmlListener listener) throws ParserConfigurationException, SAXException, IOException {
         //TODO: Set an error handler which can log errors
         Timber.d("Start import");
         InputStream input = getInputStream(gncXmlInputStream);
-        GncXmlHandler handler = new GncXmlHandler();
+        GncXmlHandler handler = new GncXmlHandler(listener);
         XMLReader reader = createXMLReader(handler);
 
         long startTime = System.nanoTime();
