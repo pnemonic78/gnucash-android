@@ -78,6 +78,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * account's full name.
      */
     public static final String ROOT_ACCOUNT_FULL_NAME = " ";
+    public static final String ROOT_ACCOUNT_NAME = "Root Account";
 
     /**
      * Transactions database adapter for manipulating transactions associated with accounts
@@ -149,6 +150,9 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     @Override
     public void addRecord(@NonNull Account account, UpdateMethod updateMethod) {
         Timber.d("Replace account to db");
+        if (account.getAccountType() == AccountType.ROOT) {
+            rootUID = account.getUID();
+        }
         //in-case the account already existed, we want to update the templates based on it as well
         super.addRecord(account, updateMethod);
         //now add transactions if there are any
@@ -1051,7 +1055,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             cursor.close();
         }
         // No ROOT exits, create a new one
-        Account rootAccount = new Account("ROOT Account");
+        Account rootAccount = new Account(ROOT_ACCOUNT_NAME);
         rootAccount.setAccountType(AccountType.ROOT);
         rootAccount.setFullName(ROOT_ACCOUNT_FULL_NAME);
         rootAccount.setHidden(true);
