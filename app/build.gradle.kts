@@ -27,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "org.gnucash.pocket"
+        applicationId = "org.gnucash.pocket.pnemonic"
         minSdk = 21
         targetSdk = 36
         versionCode = (((((versionMajor * 100) + versionMinor) * 1000) + versionPatch) * 1000) + versionBuild
