@@ -281,6 +281,10 @@ public abstract class Exporter {
 
             deleteTransactions();
         }
+        try {
+            close();
+        } catch (Exception ignore) {
+        }
         return result;
     }
 
@@ -293,11 +297,6 @@ public abstract class Exporter {
             throw ee;
         } catch (Exception e) {
             throw new ExporterException(exportParams, e);
-        } finally {
-            try {
-                close();
-            } catch (Exception ignore) {
-            }
         }
         return cacheFile;
     }
