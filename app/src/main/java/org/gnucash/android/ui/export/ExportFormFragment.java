@@ -604,14 +604,13 @@ public class ExportFormFragment extends MenuFragment implements
         try {
             startActivityForResult(createIntent, REQUEST_EXPORT_FILE);
         } catch (ActivityNotFoundException e) {
-            String msg = "Cannot create document for export";
-            Timber.e(e, msg);
+            Timber.e(e, "Cannot create document for export");
             if (isVisible()) {
                 View view = getView();
                 assert view != null;
-                Snackbar.make(view, msg, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(view, R.string.toast_install_file_manager, Snackbar.LENGTH_LONG).show();
             } else {
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), R.string.toast_install_file_manager, Toast.LENGTH_LONG).show();
             }
         }
     }
