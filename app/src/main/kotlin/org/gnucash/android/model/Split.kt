@@ -26,7 +26,7 @@ class Split : BaseModel, Parcelable {
      * Money amount of the split with the currency of the transaction.
      * @see quantity
      */
-    var value: Money = Money.zeroInstance
+    var value: Money = Money.createZeroInstance(Commodity.DEFAULT_COMMODITY)
         private set
 
     /**
@@ -135,7 +135,7 @@ class Split : BaseModel, Parcelable {
      * The quantity is in the currency of the account to which the split is associated
      * @see value
      */
-    var quantity: Money = Money.zeroInstance
+    var quantity: Money = value
         set(value) {
             field = value.abs()
         }
@@ -368,7 +368,7 @@ class Split : BaseModel, Parcelable {
             accountUID: String?,
             splitType: TransactionType
         ): Money {
-            val uid = accountUID ?: return Money.zeroInstance
+            val uid = accountUID ?: return Money.createZeroInstance(amount.commodity)
             val isDebitAccount =
                 AccountsDbAdapter.getInstance().getAccountType(uid).hasDebitNormalBalance()
             val absAmount = amount.abs()
@@ -377,11 +377,11 @@ class Split : BaseModel, Parcelable {
                 if (isDebitSplit) {
                     absAmount
                 } else {
-                    absAmount.unaryMinus()
+                    -absAmount
                 }
             } else {
                 if (isDebitSplit) {
-                    absAmount.unaryMinus()
+                    -absAmount
                 } else {
                     absAmount
                 }
