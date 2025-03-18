@@ -40,7 +40,6 @@ import java.util.List;
 public class TransactionsDbAdapterTest extends GnuCashTest {
     private static final String ALPHA_ACCOUNT_NAME = "Alpha";
     private static final String BRAVO_ACCOUNT_NAME = "Bravo";
-    private static final Commodity DEFAULT_CURRENCY = Commodity.DEFAULT_COMMODITY;
 
     private AccountsDbAdapter mAccountsDbAdapter;
     private TransactionsDbAdapter mTransactionsDbAdapter;
@@ -62,20 +61,20 @@ public class TransactionsDbAdapterTest extends GnuCashTest {
         mAccountsDbAdapter.addRecord(bravoAccount);
         mAccountsDbAdapter.addRecord(alphaAccount);
 
-        mTestSplit = new Split(new Money(BigDecimal.TEN, DEFAULT_CURRENCY), alphaAccount.getUID());
+        mTestSplit = new Split(new Money(BigDecimal.TEN, alphaAccount.getCommodity()), alphaAccount.getUID());
     }
 
     @Test
     public void testTransactionsAreTimeSorted() {
         Transaction t1 = new Transaction("T800");
         t1.setTime(System.currentTimeMillis() - 10000);
-        Split split = new Split(Money.getZeroInstance(), alphaAccount.getUID());
+        Split split = new Split(Money.createZeroInstance(alphaAccount.getCommodity()), alphaAccount.getUID());
         t1.addSplit(split);
         t1.addSplit(split.createPair(bravoAccount.getUID()));
 
         Transaction t2 = new Transaction("T1000");
         t2.setTime(System.currentTimeMillis());
-        Split split2 = new Split(new Money("23.50", DEFAULT_CURRENCY.getCurrencyCode()), bravoAccount.getUID());
+        Split split2 = new Split(new Money("23.50", bravoAccount.getCommodity()), bravoAccount.getUID());
         t2.addSplit(split2);
         t2.addSplit(split2.createPair(alphaAccount.getUID()));
 
@@ -90,7 +89,7 @@ public class TransactionsDbAdapterTest extends GnuCashTest {
     @Test
     public void deletingTransactionsShouldDeleteSplits() {
         Transaction transaction = new Transaction("");
-        Split split = new Split(Money.getZeroInstance(), alphaAccount.getUID());
+        Split split = new Split(Money.createZeroInstance(alphaAccount.getCommodity()), alphaAccount.getUID());
         transaction.addSplit(split);
         mTransactionsDbAdapter.addRecord(transaction);
 
@@ -104,7 +103,7 @@ public class TransactionsDbAdapterTest extends GnuCashTest {
     public void shouldBalanceTransactionsOnSave() {
         Context context = GnuCashApplication.getAppContext();
         Transaction transaction = new Transaction("Auto balance");
-        Split split = new Split(new Money(BigDecimal.TEN, DEFAULT_CURRENCY),
+        Split split = new Split(new Money(BigDecimal.TEN, alphaAccount.getCommodity()),
                 alphaAccount.getUID());
 
         transaction.addSplit(split);
@@ -121,10 +120,10 @@ public class TransactionsDbAdapterTest extends GnuCashTest {
     @Test
     public void testComputeBalance() {
         Transaction transaction = new Transaction("Compute");
-        Money firstSplitAmount = new Money("4.99", DEFAULT_CURRENCY.getCurrencyCode());
+        Money firstSplitAmount = new Money("4.99", alphaAccount.getCommodity());
         Split split = new Split(firstSplitAmount, alphaAccount.getUID());
         transaction.addSplit(split);
-        Money secondSplitAmount = new Money("3.50", DEFAULT_CURRENCY.getCurrencyCode());
+        Money secondSplitAmount = new Money("3.50", bravoAccount.getCommodity());
         split = new Split(secondSplitAmount, bravoAccount.getUID());
         transaction.addSplit(split);
 
@@ -132,11 +131,11 @@ public class TransactionsDbAdapterTest extends GnuCashTest {
 
         //balance is negated because the CASH account has inverse normal balance
         transaction = mTransactionsDbAdapter.getRecord(transaction.getUID());
-        Money savedBalance = transaction.getBalance(alphaAccount.getUID());
+        Money savedBalance = transaction.getBalance(alphaAccount);
         assertThat(savedBalance).isEqualTo(firstSplitAmount.unaryMinus());
 
-        savedBalance = transaction.getBalance(bravoAccount.getUID());
-        assertThat(savedBalance.getNumerator()).isEqualTo(secondSplitAmount.unaryMinus().getNumerator());
+        savedBalance = transaction.getBalance(bravoAccount);
+        assertThat(savedBalance).isEqualTo(secondSplitAmount.unaryMinus());
         assertThat(savedBalance.getCommodity()).isEqualTo(secondSplitAmount.getCommodity());
     }
 

@@ -37,6 +37,7 @@ import static org.gnucash.android.export.qif.QifHelper.SPLIT_MEMO_PREFIX;
 import static org.gnucash.android.export.qif.QifHelper.TYPE_PREFIX;
 import static org.gnucash.android.export.qif.QifHelper.formatDate;
 import static org.gnucash.android.export.qif.QifHelper.getQifAccountType;
+import static org.gnucash.android.math.MathExtKt.isZero;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -249,7 +250,7 @@ public class QifExporter extends Exporter {
                     }
                     // deal with imbalance first
                     BigDecimal decimalImbalance = BigDecimal.valueOf(imbalance).setScale(2, BigDecimal.ROUND_HALF_UP);
-                    if (decimalImbalance.compareTo(BigDecimal.ZERO) != 0) {
+                    if (!isZero(decimalImbalance)) {
                         writer.append(SPLIT_CATEGORY_PREFIX)
                             .append('[')
                             .append(AccountsDbAdapter.getImbalanceAccountName(mContext, commodity))
@@ -311,7 +312,7 @@ public class QifExporter extends Exporter {
             transactionsDbAdapter.updateTransaction(contentValues, null, null);
 
             /// export successful
-            PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow());
+            PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow(), getBookUID());
         } catch (IOException e) {
             throw new ExporterException(exportParams, e);
         } finally {

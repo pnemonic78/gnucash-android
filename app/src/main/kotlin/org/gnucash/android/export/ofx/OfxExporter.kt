@@ -105,7 +105,7 @@ class OfxExporter(context: Context, params: ExportParams, bookUID: String) :
         generateOfx(accounts, document, root)
         val useXmlHeader = PreferenceManager.getDefaultSharedPreferences(mContext)
             .getBoolean(mContext.getString(R.string.key_xml_ofx_header), false)
-        PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow())
+        PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow(), bookUID)
         if (useXmlHeader) {
             write(document, writer, false)
         } else {

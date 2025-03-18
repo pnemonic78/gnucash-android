@@ -111,7 +111,7 @@ class CsvTransactionsExporter(
             writeSplitsToCsv(transaction.splits, fields, writer)
         }
         cursor.close()
-        PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow())
+        PreferencesHelper.setLastExportTime(TimestampHelper.getTimestampFromNow(), bookUID)
     }
 
     private fun maybeNull(s: String?): String? {
