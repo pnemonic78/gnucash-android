@@ -46,7 +46,6 @@ public abstract class GncXmlHelper {
     public static final String ATTR_VALUE_STRING = "string";
     public static final String ATTR_VALUE_NUMERIC = "numeric";
     public static final String ATTR_VALUE_GUID = "guid";
-    public static final String ATTR_VALUE_BOOK = "book";
     public static final String ATTR_VALUE_FRAME = "frame";
     public static final String TAG_GDATE = "gdate";
 
@@ -179,6 +178,7 @@ public abstract class GncXmlHelper {
     public static final String KEY_FROM_SCHED_ACTION = "from-sched-xaction";
     public static final String KEY_DEFAULT_TRANSFER_ACCOUNT = "default_transfer_account";
 
+    public static final String CD_TYPE_BOOK = "book";
     public static final String CD_TYPE_COMMODITY = "commodity";
     public static final String CD_TYPE_ACCOUNT = "account";
     public static final String CD_TYPE_TRANSACTION = "transaction";

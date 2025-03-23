@@ -114,7 +114,6 @@ public class BudgetsDbAdapter extends DatabaseAdapter<Budget> {
         String recurrenceUID = cursor.getString(cursor.getColumnIndexOrThrow(BudgetEntry.COLUMN_RECURRENCE_UID));
         long numPeriods = cursor.getLong(cursor.getColumnIndexOrThrow(BudgetEntry.COLUMN_NUM_PERIODS));
 
-
         Budget budget = new Budget(name);
         populateBaseModelAttributes(cursor, budget);
         budget.setDescription(description);

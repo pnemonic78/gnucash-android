@@ -128,81 +128,81 @@ public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
         }
 
         @Override
-        public void onImportAccountCount(long count) {
+        public void onAccountCount(long count) {
             countDataAccountTotal = count;
         }
 
         @Override
-        public void onImportAccount(@NonNull Account account) {
+        public void onAccount(@NonNull Account account) {
             Timber.v("%s: %s", labelAccounts, account);
             publishProgressDebounce(labelAccounts, ++countDataAccount, countDataAccountTotal);
         }
 
         @Override
-        public void onImportBookCount(long count) {
+        public void onBookCount(long count) {
         }
 
         @Override
-        public void onImportBook(@NonNull String name) {
+        public void onBook(@NonNull String name) {
             Timber.v("%s: %s", labelBook, name);
             publishProgressDebounce(labelBook);
         }
 
         @Override
-        public void onImportBook(@NonNull Book book) {
-            onImportBook(book.getDisplayName());
+        public void onBook(@NonNull Book book) {
+            onBook(book.getDisplayName());
         }
 
         @Override
-        public void onImportBudgetCount(long count) {
+        public void onBudgetCount(long count) {
         }
 
         @Override
-        public void onImportBudget(@NonNull Budget budget) {
+        public void onBudget(@NonNull Budget budget) {
             Timber.v("%s: %s", labelBudgets, budget);
             publishProgressDebounce(labelBudgets);
         }
 
         @Override
-        public void onImportCommodityCount(long count) {
+        public void onCommodityCount(long count) {
             countDataCommodityTotal = count;
         }
 
         @Override
-        public void onImportCommodity(@NonNull Commodity commodity) {
+        public void onCommodity(@NonNull Commodity commodity) {
             if (commodity.isTemplate()) return;
             Timber.v("%s: %s", labelCommodities, commodity);
             publishProgressDebounce(labelCommodities, ++countDataCommodity, countDataCommodityTotal);
         }
 
         @Override
-        public void onImportPriceCount(long count) {
+        public void onPriceCount(long count) {
             countDataPriceTotal = count;
         }
 
         @Override
-        public void onImportPrice(@NonNull Price price) {
+        public void onPrice(@NonNull Price price) {
             Timber.v("%s: %s", labelPrices, price);
             publishProgressDebounce(labelPrices, ++countDataPrice, countDataPriceTotal);
         }
 
         @Override
-        public void onImportScheduleCount(long count) {
+        public void onScheduleCount(long count) {
         }
 
         @Override
-        public void onImportSchedule(@NonNull ScheduledAction scheduledAction) {
+        public void onSchedule(@NonNull ScheduledAction scheduledAction) {
             Timber.v("%s: %s", labelSchedules, scheduledAction);
             publishProgressDebounce(labelSchedules);
         }
 
         @Override
-        public void onImportTransactionCount(long count) {
+        public void onTransactionCount(long count) {
             countDataTransactionTotal = count;
         }
 
         @Override
-        public void onImportTransaction(@NonNull Transaction transaction) {
+        public void onTransaction(@NonNull Transaction transaction) {
             if (transaction.isTemplate()) return;
             Timber.v("%s: %s", labelTransactions, transaction);
             publishProgressDebounce(labelTransactions, ++countDataTransaction, countDataTransactionTotal);
@@ -242,7 +242,7 @@ public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
             if (TextUtils.isEmpty(name)) {
                 name = uri.getLastPathSegment();
             }
-            listener.onImportBook(name);
+            listener.onBook(name);
             ContentResolver contentResolver = mContext.getContentResolver();
             InputStream accountInputStream = contentResolver.openInputStream(uri);
             book = GncXmlImporter.parseBook(accountInputStream, listener);

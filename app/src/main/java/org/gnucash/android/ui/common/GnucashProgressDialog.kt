@@ -1,9 +1,9 @@
 package org.gnucash.android.ui.common
 
-import android.app.Activity
 import android.app.ProgressDialog
+import android.content.Context
 
-class GnucashProgressDialog(context: Activity) : ProgressDialog(context) {
+class GnucashProgressDialog(context: Context) : ProgressDialog(context) {
     init {
         isIndeterminate = true
         setProgressStyle(STYLE_HORIZONTAL)

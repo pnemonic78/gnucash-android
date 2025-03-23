@@ -26,11 +26,13 @@ import android.content.pm.ResolveInfo;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
 import com.dropbox.core.DbxException;
@@ -60,6 +62,14 @@ import org.gnucash.android.export.csv.CsvTransactionsExporter;
 import org.gnucash.android.export.ofx.OfxExporter;
 import org.gnucash.android.export.qif.QifExporter;
 import org.gnucash.android.export.xml.GncXmlExporter;
+import org.gnucash.android.importer.GncXmlListener;
+import org.gnucash.android.importer.ImportAsyncTask;
+import org.gnucash.android.model.Account;
+import org.gnucash.android.model.Book;
+import org.gnucash.android.model.Budget;
+import org.gnucash.android.model.Commodity;
+import org.gnucash.android.model.Price;
+import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.model.Transaction;
 import org.gnucash.android.ui.common.GnucashProgressDialog;
 import org.gnucash.android.ui.common.Refreshable;
@@ -83,51 +93,180 @@ import timber.log.Timber;
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Integer> {
-
-    /**
-     * App context
-     */
+public class ExportAsyncTask extends AsyncTask<ExportParams, Object, Integer> {
+    @NonNull
     private final Context mContext;
-
-    private ProgressDialog mProgressDialog;
-
+    @Nullable
+    private final ProgressDialog mProgressDialog;
+    @NonNull
     private final String mBookUID;
-
     /**
      * Export parameters
      */
     private ExportParams mExportParams;
+    @Nullable
+    private final GncXmlListener listener;
 
-    public ExportAsyncTask(Context context, String bookUID) {
-        super();
+    public ExportAsyncTask(@NonNull Context context, @NonNull String bookUID) {
         this.mContext = context;
         this.mBookUID = bookUID;
+        if (context instanceof Activity) {
+            ProgressDialog progressDialog = new GnucashProgressDialog(context);
+            progressDialog.setTitle(R.string.title_progress_exporting_book);
+            progressDialog.setCancelable(true);
+            progressDialog.setOnCancelListener(dialogInterface -> cancel(true));
+            mProgressDialog = progressDialog;
+            this.listener = new ProgressListener(context);
+        } else {
+            mProgressDialog = null;
+            this.listener = null;
+        }
+    }
+
+    private class ProgressListener implements GncXmlListener {
+        private static final long PUBLISH_TIMEOUT = 100;
+
+        private static class PublishItem {
+            final Object[] values;
+            final long timestamp;
+
+            private PublishItem(Object[] values, long timestamp) {
+                this.values = values;
+                this.timestamp = timestamp;
+            }
+        }
+
+        private final String labelAccounts;
+        private final String labelBook;
+        private final String labelBudgets;
+        private final String labelCommodities;
+        private final String labelPrices;
+        private final String labelSchedules;
+        private final String labelTransactions;
+        private long countDataCommodityTotal = 0;
+        private long countDataCommodity = 0;
+        private long countDataAccountTotal = 0;
+        private long countDataAccount = 0;
+        private long countDataTransactionTotal = 0;
+        private long countDataTransaction = 0;
+        private long countDataPriceTotal = 0;
+        private long countDataPrice = 0;
+        @Nullable
+        private PublishItem itemPublished = null;
+
+        ProgressListener(Context context) {
+            labelAccounts = context.getString(R.string.title_progress_exporting_accounts);
+            labelBook = context.getString(R.string.title_progress_exporting_book);
+            labelBudgets = context.getString(R.string.title_progress_exporting_budgets);
+            labelCommodities = context.getString(R.string.title_progress_exporting_commodities);
+            labelPrices = context.getString(R.string.title_progress_exporting_prices);
+            labelSchedules = context.getString(R.string.title_progress_exporting_schedules);
+            labelTransactions = context.getString(R.string.title_progress_exporting_transactions);
+        }
+
+        @Override
+        public void onAccountCount(long count) {
+            countDataAccountTotal = count;
+        }
+
+        @Override
+        public void onAccount(@NonNull Account account) {
+            Timber.v("%s: %s", labelAccounts, account);
+            publishProgressDebounce(labelAccounts, ++countDataAccount, countDataAccountTotal);
+        }
+
+        @Override
+        public void onBookCount(long count) {
+        }
+
+        @Override
+        public void onBook(@NonNull String name) {
+            Timber.v("%s: %s", labelBook, name);
+            publishProgressDebounce(labelBook);
+        }
+
+        @Override
+        public void onBook(@NonNull Book book) {
+            onBook(book.getDisplayName());
+        }
+
+        @Override
+        public void onBudgetCount(long count) {
+        }
+
+        @Override
+        public void onBudget(@NonNull Budget budget) {
+            Timber.v("%s: %s", labelBudgets, budget);
+            publishProgressDebounce(labelBudgets);
+        }
+
+        @Override
+        public void onCommodityCount(long count) {
+            countDataCommodityTotal = count;
+        }
+
+        @Override
+        public void onCommodity(@NonNull Commodity commodity) {
+            if (commodity.isTemplate()) return;
+            Timber.v("%s: %s", labelCommodities, commodity);
+            publishProgressDebounce(labelCommodities, ++countDataCommodity, countDataCommodityTotal);
+        }
+
+        @Override
+        public void onPriceCount(long count) {
+            countDataPriceTotal = count;
+        }
+
+        @Override
+        public void onPrice(@NonNull Price price) {
+            Timber.v("%s: %s", labelPrices, price);
+            publishProgressDebounce(labelPrices, ++countDataPrice, countDataPriceTotal);
+        }
+
+        @Override
+        public void onScheduleCount(long count) {
+        }
+
+        @Override
+        public void onSchedule(@NonNull ScheduledAction scheduledAction) {
+            Timber.v("%s: %s", labelSchedules, scheduledAction);
+            publishProgressDebounce(labelSchedules);
+        }
+
+        @Override
+        public void onTransactionCount(long count) {
+            countDataTransactionTotal = count;
+        }
+
+        @Override
+        public void onTransaction(@NonNull Transaction transaction) {
+            if (transaction.isTemplate()) return;
+            Timber.v("%s: %s", labelTransactions, transaction);
+            publishProgressDebounce(labelTransactions, ++countDataTransaction, countDataTransactionTotal);
+        }
+
+        private void publishProgressDebounce(final Object... values) {
+            final PublishItem item = itemPublished;
+            long timestampDelta = (item == null) ? PUBLISH_TIMEOUT : SystemClock.elapsedRealtime() - item.timestamp;
+            if (timestampDelta >= PUBLISH_TIMEOUT) {
+                // Publish straight away, or if we waited enough time.
+                itemPublished = new PublishItem(values, SystemClock.elapsedRealtime());
+                publishProgress(values);
+            }
+        }
     }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        if (mContext instanceof Activity) {
-            mProgressDialog = new GnucashProgressDialog((Activity) mContext);
-            mProgressDialog.setTitle(R.string.title_progress_exporting_transactions);
-            mProgressDialog.setCancelable(true);
-            mProgressDialog.setOnCancelListener(dialogInterface -> cancel(true));
-            mProgressDialog.show();
-        }
+        mProgressDialog.show();
     }
 
-    /**
-     * Generates the appropriate exported transactions file for the given parameters
-     *
-     * @param params Export parameters
-     * @return <code>true</code> if export was successful, <code>false</code> otherwise
-     */
     @Override
     protected Integer doInBackground(ExportParams... params) {
         final ExportParams exportParams = params[0];
         mExportParams = exportParams;
-        Exporter exporter = getExporter(exportParams);
+        Exporter exporter = getExporter(exportParams, listener);
         List<String> exportedFiles;
 
         try {
@@ -154,12 +293,6 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Integer> {
         return exportedFiles.size();
     }
 
-    /**
-     * Transmits the exported transactions to the designated location, either SD card or third-party application
-     * Finishes the activity if the export was starting  in the context of an activity
-     *
-     * @param exportSuccessful Result of background export execution
-     */
     @Override
     protected void onPostExecute(Integer exportSuccessful) {
         dismissProgressDialog();
@@ -188,27 +321,21 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Integer> {
     }
 
     private void dismissProgressDialog() {
+        final ProgressDialog progressDialog = mProgressDialog;
         try {
-            if (mProgressDialog != null && mProgressDialog.isShowing()) {
-                mProgressDialog.dismiss();
+            if (progressDialog.isShowing()) {
+                progressDialog.dismiss();
             }
         } catch (IllegalArgumentException ex) {
             //TODO: This is a hack to catch "View not attached to window" exceptions
             //FIXME by moving the creation and display of the progress dialog to the Fragment
-        } finally {
-            mProgressDialog = null;
-        }
-        if (mContext instanceof Activity) {
-            ((Activity) mContext).finish();
         }
     }
 
     /**
-     * Returns an exporter corresponding to the user settings.
-     *
-     * @return Object of one of {@link QifExporter}, {@link OfxExporter} or {@link GncXmlExporter}, {@Link CsvAccountExporter} or {@Link CsvTransactionsExporter}
+     * Creates an exporter corresponding to the user settings.
      */
-    private Exporter getExporter(ExportParams exportParams) {
+    private Exporter getExporter(@NonNull ExportParams exportParams, @Nullable GncXmlListener listener) {
         switch (exportParams.getExportFormat()) {
             case QIF:
                 return new QifExporter(mContext, exportParams, mBookUID);
@@ -220,7 +347,7 @@ public class ExportAsyncTask extends AsyncTask<ExportParams, Void, Integer> {
                 return new CsvTransactionsExporter(mContext, exportParams, mBookUID);
             case XML:
             default:
-                return new GncXmlExporter(mContext, exportParams, mBookUID);
+                return new GncXmlExporter(mContext, exportParams, mBookUID, listener);
         }
     }
 

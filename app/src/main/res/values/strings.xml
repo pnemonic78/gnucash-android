@@ -480,4 +480,10 @@
     <string name="title_progress_importing_prices">Importing prices</string>
     <string name="title_progress_importing_schedules">Importing schedules</string>
     <string name="title_progress_importing_transactions">Importing transactions</string>
+    <string name="title_progress_exporting_accounts">Exporting accounts</string>
+    <string name="title_progress_exporting_book">Exporting book</string>
+    <string name="title_progress_exporting_budgets">Exporting budgets</string>
+    <string name="title_progress_exporting_commodities">Exporting commodities</string>
+    <string name="title_progress_exporting_prices">Exporting prices</string>
+    <string name="title_progress_exporting_schedules">Exporting schedules</string>
 </resources>

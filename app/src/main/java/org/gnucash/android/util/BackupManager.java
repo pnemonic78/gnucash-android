@@ -140,7 +140,7 @@ public class BackupManager {
             GZIPOutputStream gzipOutputStream = new GZIPOutputStream(bufferedOutputStream);
             OutputStreamWriter writer = new OutputStreamWriter(gzipOutputStream);
 
-            new GncXmlExporter(context, params, bookUID).generateExport(writer);
+            new GncXmlExporter(context, params, bookUID).export(writer);
             writer.close();
             return true;
         } catch (Throwable e) {
