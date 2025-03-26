@@ -206,7 +206,7 @@ public class GncXmlExporter extends Exporter {
         List<String> slotType = new ArrayList<>();
         List<String> slotValue = new ArrayList<>();
 
-        if (account.isPlaceholderAccount()) {
+        if (account.isPlaceholder()) {
             slotKey.add(KEY_PLACEHOLDER);
             slotType.add(ATTR_VALUE_STRING);
             slotValue.add("true");
@@ -230,6 +230,13 @@ public class GncXmlExporter extends Exporter {
             slotKey.add(KEY_FAVORITE);
             slotType.add(ATTR_VALUE_STRING);
             slotValue.add("true");
+        }
+
+        String notes = account.getNote();
+        if (!TextUtils.isEmpty(notes)) {
+            slotKey.add(KEY_NOTES);
+            slotType.add(ATTR_VALUE_STRING);
+            slotValue.add(notes);
         }
 
         if (!slotKey.isEmpty()) {
@@ -950,7 +957,7 @@ public class GncXmlExporter extends Exporter {
                 xmlSerializer.attribute(null, "xmlns:" + ns, "http://www.gnucash.org/XML/" + ns);
             }
             // book count
-            if (listener != null) listener.onBookCount(0);
+            if (listener != null) listener.onBookCount(1);
             xmlSerializer.startTag(null, TAG_COUNT_DATA);
             xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, CD_TYPE_BOOK);
             xmlSerializer.text("1");

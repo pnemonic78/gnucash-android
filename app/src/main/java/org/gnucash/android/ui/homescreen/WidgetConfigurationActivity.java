@@ -319,7 +319,7 @@ public class WidgetConfigurationActivity extends Activity {
             .getActivity(context, appWidgetId, accountViewIntent, FLAGS_UPDATE);
         views.setOnClickPendingIntent(R.id.widget_layout, accountPendingIntent);
 
-        if (accountsDbAdapter.isPlaceholderAccount(accountUID)) {
+        if (accountsDbAdapter.isPlaceholder(accountUID)) {
             views.setViewVisibility(R.id.btn_new_transaction, View.GONE);
         } else {
             Intent newTransactionIntent = new Intent(context, FormActivity.class)

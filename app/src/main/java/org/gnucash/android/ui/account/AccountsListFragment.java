@@ -529,8 +529,8 @@ public class AccountsListFragment extends MenuFragment implements
                 int colorCode = (colorValue != null) ? colorValue : Account.DEFAULT_COLOR;
                 colorStripView.setBackgroundColor(colorCode);
 
-                boolean isPlaceholderAccount = mAccountsDbAdapter.isPlaceholderAccount(accountUID);
-                if (isPlaceholderAccount) {
+                boolean isPlaceholder = mAccountsDbAdapter.isPlaceholder(accountUID);
+                if (isPlaceholder) {
                     createTransaction.setVisibility(View.INVISIBLE);
                 } else {
                     createTransaction.setOnClickListener(new View.OnClickListener() {

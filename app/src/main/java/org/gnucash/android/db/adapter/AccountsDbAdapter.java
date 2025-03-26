@@ -114,7 +114,8 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
                 AccountEntry.COLUMN_HIDDEN,
                 AccountEntry.COLUMN_COMMODITY_UID,
                 AccountEntry.COLUMN_PARENT_ACCOUNT_UID,
-                AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID
+                AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID,
+                AccountEntry.COLUMN_NOTES
         });
         mTransactionsAdapter = transactionsDbAdapter;
         mCommoditiesDbAdapter = transactionsDbAdapter.commoditiesDbAdapter;
@@ -224,7 +225,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         }
         stmt.bindLong(6, account.isFavorite() ? 1 : 0);
         stmt.bindString(7, account.getFullName());
-        stmt.bindLong(8, account.isPlaceholderAccount() ? 1 : 0);
+        stmt.bindLong(8, account.isPlaceholder() ? 1 : 0);
         stmt.bindString(9, TimestampHelper.getUtcStringFromTimestamp(account.getCreatedTimestamp()));
         stmt.bindLong(10, account.isHidden() ? 1 : 0);
         stmt.bindString(11, account.getCommodity().getUID());
@@ -239,7 +240,10 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         } else {
             stmt.bindNull(13);
         }
-        stmt.bindString(14, account.getUID());
+        if (account.getNote() != null) {
+            stmt.bindString(14, account.getNote());
+        }
+        stmt.bindString(15, account.getUID());
 
         return stmt;
     }
@@ -454,7 +458,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         account.setAccountType(AccountType.valueOf(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_TYPE))));
         String currencyCode = c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_CURRENCY));
         account.setCommodity(mCommoditiesDbAdapter.getCommodity(currencyCode));
-        account.setPlaceHolderFlag(c.getInt(c.getColumnIndexOrThrow(AccountEntry.COLUMN_PLACEHOLDER)) != 0);
+        account.setPlaceholder(c.getInt(c.getColumnIndexOrThrow(AccountEntry.COLUMN_PLACEHOLDER)) != 0);
         account.setDefaultTransferAccountUID(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID)));
         String color = c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_COLOR_CODE));
         if (!TextUtils.isEmpty(color))
@@ -462,6 +466,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         account.setFavorite(c.getInt(c.getColumnIndexOrThrow(AccountEntry.COLUMN_FAVORITE)) != 0);
         account.setFullName(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_FULL_NAME)));
         account.setHidden(c.getInt(c.getColumnIndexOrThrow(AccountEntry.COLUMN_HIDDEN)) != 0);
+        account.setNote(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_NOTES)));
         return account;
     }
 
@@ -1059,7 +1064,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         rootAccount.setAccountType(AccountType.ROOT);
         rootAccount.setFullName(ROOT_ACCOUNT_FULL_NAME);
         rootAccount.setHidden(true);
-        rootAccount.setPlaceHolderFlag(true);
+        rootAccount.setPlaceholder(true);
         ContentValues contentValues = new ContentValues();
         contentValues.put(AccountEntry.COLUMN_UID, rootAccount.getUID());
         contentValues.put(AccountEntry.COLUMN_NAME, rootAccount.getName());
@@ -1204,13 +1209,13 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      * @param accountUID Unique identifier of the account
      * @return <code>true</code> if the account is a placeholder account, <code>false</code> otherwise
      */
-    public boolean isPlaceholderAccount(String accountUID) {
+    public boolean isPlaceholder(String accountUID) {
         String isPlaceholder = getAttribute(accountUID, AccountEntry.COLUMN_PLACEHOLDER);
         return Integer.parseInt(isPlaceholder) != 0;
     }
 
     /**
-     * Convenience method, resolves the account unique ID and calls {@link #isPlaceholderAccount(String)}
+     * Convenience method, resolves the account unique ID and calls {@link #isPlaceholder(String)}
      *
      * @param accountUID GUID of the account
      * @return <code>true</code> if the account is hidden, <code>false</code> otherwise

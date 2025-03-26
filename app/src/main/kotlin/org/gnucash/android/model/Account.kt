@@ -18,6 +18,7 @@ package org.gnucash.android.model
 import android.graphics.Color
 import androidx.annotation.ColorInt
 import org.gnucash.android.BuildConfig
+import org.gnucash.android.export.ofx.OfxAccountType
 import org.gnucash.android.util.NotSet
 import org.gnucash.android.util.formatHexRGB
 import org.gnucash.android.util.parseColor
@@ -34,18 +35,14 @@ import org.gnucash.android.util.parseColor
  * @see AccountType
  */
 class Account : BaseModel {
-    /**
-     * Accounts types which are used by the OFX standard
-     */
-    enum class OfxAccountType {
-        CHECKING, SAVINGS, MONEYMRKT, CREDITLINE
-    }
 
     /**
      * Name of this account
      */
     var name: String = ""
-        private set
+        set(value) {
+            field = value.trim { it <= ' ' }
+        }
 
     /**
      * Fully qualified name of this account including the parent hierarchy.
@@ -83,13 +80,13 @@ class Account : BaseModel {
      * Save UID of a default account for transfers.
      * All transactions in this account will by default be transfers to the other account
      */
-    private var _defaultTransferAccountUID: String? = null
+    var defaultTransferAccountUID: String? = null
 
     /**
      * Flag for placeholder accounts.
      * These accounts cannot have transactions
      */
-    private var _isPlaceholderAccount = false
+    var isPlaceholder = false
 
     /**
      * `true` if this account is flagged as a favorite account, `false` if not
@@ -99,7 +96,7 @@ class Account : BaseModel {
     /**
      * Flag which indicates if this account is a hidden account or not
      */
-    private var _isHidden = false
+    var isHidden = false
 
     /**
      * Overloaded constructor
@@ -109,18 +106,9 @@ class Account : BaseModel {
      */
     @JvmOverloads
     constructor(name: String, commodity: Commodity = Commodity.DEFAULT_COMMODITY) {
-        setName(name)
+        this.name = name
         fullName = this.name
         this.commodity = commodity
-    }
-
-    /**
-     * Sets the name of the account
-     *
-     * @param name String name of the account
-     */
-    fun setName(name: String) {
-        this.name = name.trim { it <= ' ' }
     }
 
     /**
@@ -204,8 +192,8 @@ class Account : BaseModel {
      * @throws java.lang.IllegalArgumentException if the color code is not properly formatted or
      * the color is transparent.
      */
-    fun setColor(colorCode: String) {
-        if (colorCode == NotSet) {
+    fun setColor(colorCode: String?) {
+        if (colorCode.isNullOrEmpty() || colorCode == NotSet) {
             color = DEFAULT_COLOR
             return
         }
@@ -222,64 +210,7 @@ class Account : BaseModel {
             _commodity = value
         }
 
-    /**
-     * Returns `true` if this account is a placeholder account, `false` otherwise.
-     *
-     * @return `true` if this account is a placeholder account, `false` otherwise
-     */
-    fun isPlaceholderAccount(): Boolean {
-        return _isPlaceholderAccount
-    }
-
-    /**
-     * Returns the hidden property of this account.
-     *
-     * Hidden accounts are not visible in the UI
-     *
-     * @return `true` if the account is hidden, `false` otherwise.
-     */
-    fun isHidden(): Boolean {
-        return _isHidden
-    }
-
-    /**
-     * Toggles the hidden property of the account.
-     *
-     * Hidden accounts are not visible in the UI
-     *
-     * @param hidden boolean specifying is hidden or not
-     */
-    fun setHidden(hidden: Boolean) {
-        _isHidden = hidden
-    }
-
-    /**
-     * Sets the placeholder flag for this account.
-     * Placeholder accounts cannot have transactions
-     *
-     * @param isPlaceholder Boolean flag indicating if the account is a placeholder account or not
-     */
-    fun setPlaceHolderFlag(isPlaceholder: Boolean) {
-        _isPlaceholderAccount = isPlaceholder
-    }
-
-    /**
-     * Return the unique ID of accounts to which to default transfer transactions to
-     *
-     * @return Unique ID string of default transfer account
-     */
-    fun getDefaultTransferAccountUID(): String? {
-        return _defaultTransferAccountUID
-    }
-
-    /**
-     * Set the unique ID of account which is the default transfer target
-     *
-     * @param defaultTransferAccountUID Unique ID string of default transfer account
-     */
-    fun setDefaultTransferAccountUID(defaultTransferAccountUID: String?) {
-        _defaultTransferAccountUID = defaultTransferAccountUID
-    }
+    var note: String? = null
 
     override fun toString(): String = fullName ?: name
 
@@ -314,37 +245,8 @@ class Account : BaseModel {
         private const val maskRGB: Int = 0xFFFFFF
         private const val maskOpaque: Int = 0xFF000000.toInt()
 
-        /**
-         * Maps the `accountType` to the corresponding account type.
-         * `accountType` have corresponding values to GnuCash desktop
-         *
-         * @param accountType [AccountType] of an account
-         * @return Corresponding [OfxAccountType] for the `accountType`
-         * @see AccountType
-         *
-         * @see OfxAccountType
-         */
         fun convertToOfxAccountType(accountType: AccountType?): OfxAccountType {
-            return when (accountType) {
-                AccountType.CREDIT,
-                AccountType.LIABILITY -> OfxAccountType.CREDITLINE
-
-                AccountType.CASH,
-                AccountType.INCOME,
-                AccountType.EXPENSE,
-                AccountType.PAYABLE,
-                AccountType.RECEIVABLE -> OfxAccountType.CHECKING
-
-                AccountType.BANK,
-                AccountType.ASSET -> OfxAccountType.SAVINGS
-
-                AccountType.MUTUAL,
-                AccountType.STOCK,
-                AccountType.EQUITY,
-                AccountType.CURRENCY -> OfxAccountType.MONEYMRKT
-
-                else -> OfxAccountType.CHECKING
-            }
+            return OfxAccountType.of(accountType)
         }
     }
 }

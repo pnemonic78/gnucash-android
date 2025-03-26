@@ -40,7 +40,6 @@ import timber.log.Timber;
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-@SuppressWarnings("unused")
 public class MigrationHelper {
 
     /**
@@ -66,6 +65,9 @@ public class MigrationHelper {
         if (oldVersion < 16) {
             migrateTo16(db);
         }
+        if (oldVersion < 18) {
+            migrateTo18(db);
+        }
     }
 
     /**
@@ -81,13 +83,21 @@ public class MigrationHelper {
         String sqlAddQuoteTZ = "ALTER TABLE " + DatabaseSchema.CommodityEntry.TABLE_NAME +
             " ADD COLUMN " + DatabaseSchema.CommodityEntry.COLUMN_QUOTE_TZ + " varchar(100)";
 
-        try {
-            db.beginTransaction();
-            db.execSQL(sqlAddQuoteSource);
-            db.execSQL(sqlAddQuoteTZ);
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
-        }
+        db.execSQL(sqlAddQuoteSource);
+        db.execSQL(sqlAddQuoteTZ);
+    }
+
+    /**
+     * Upgrade the database to version 18.
+     *
+     * @param db the database.
+     */
+    private static void migrateTo18(SQLiteDatabase db) {
+        Timber.i("Upgrading database to version 18");
+
+        String sqlAddNotes = "ALTER TABLE " + DatabaseSchema.AccountEntry.TABLE_NAME +
+            " ADD COLUMN " + DatabaseSchema.AccountEntry.COLUMN_NOTES + " text";
+
+        db.execSQL(sqlAddNotes);
     }
 }

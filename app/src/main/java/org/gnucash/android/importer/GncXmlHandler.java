@@ -640,7 +640,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
             case TAG_SLOT_VALUE:
                 if (mInPlaceHolderSlot) {
                     //Timber.v("Setting account placeholder flag");
-                    mAccount.setPlaceHolderFlag(Boolean.parseBoolean(characterString));
+                    mAccount.setPlaceholder(Boolean.parseBoolean(characterString));
                     mInPlaceHolderSlot = false;
                 } else if (mInColorSlot) {
                     //Timber.d("Parsing color code: " + characterString);
@@ -662,6 +662,8 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 } else if (mIsNote) {
                     if (mTransaction != null) {
                         mTransaction.setNote(characterString);
+                    } else if (mAccount != null) {
+                        mAccount.setNote(characterString);
                     }
                     mIsNote = false;
                 } else if (mInDefaultTransferAccount) {

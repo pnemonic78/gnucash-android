@@ -96,10 +96,8 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/description_input_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="9dp"
             android:layout_marginBottom="10dp">
 
             <EditText
@@ -109,7 +107,21 @@
                 android:layout_marginBottom="@dimen/form_row_bottom_margin"
                 android:ems="15"
                 android:hint="@string/hint_account_description"
-                android:inputType="textCapSentences"></EditText>
+                android:inputType="textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp">
+
+            <EditText
+                android:id="@+id/notes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/form_row_bottom_margin"
+                android:hint="@string/hint_notes"
+                android:inputType="textCapSentences" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <CheckBox
