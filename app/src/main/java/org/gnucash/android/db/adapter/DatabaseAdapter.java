@@ -837,6 +837,17 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
     }
 
     /**
+     * Returns the number of transactions in the database which fulfill the conditions
+     *
+     * @param where     SQL WHERE clause without the "WHERE" itself
+     * @param whereArgs Arguments to substitute question marks for
+     * @return Number of records in the databases
+     */
+    public long getRecordsCount(@Nullable String where, @Nullable String[] whereArgs) {
+        return DatabaseUtils.queryNumEntries(mDb, mTableName, where, whereArgs);
+    }
+
+    /**
      * Expose mDb.beginTransaction()
      */
     public void beginTransaction() {

@@ -36,6 +36,7 @@ import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.ui.settings.dialog.DeleteAllTransactionsConfirmationDialog;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -128,7 +129,7 @@ public class TransactionsPreferenceFragment extends PreferenceFragmentCompat imp
     private void setImbalanceAccountsHidden(boolean useDoubleEntry) {
         String isHidden = useDoubleEntry ? "0" : "1";
         AccountsDbAdapter accountsDbAdapter = AccountsDbAdapter.getInstance();
-        List<Commodity> commodities = accountsDbAdapter.getCommoditiesInUse();
+        Collection<Commodity> commodities = accountsDbAdapter.getCommoditiesInUse();
         for (Commodity commodity : commodities) {
             String uid = accountsDbAdapter.getImbalanceAccountUID(commodity);
             if (uid != null) {

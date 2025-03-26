@@ -25,6 +25,7 @@ import static org.gnucash.android.export.xml.GncXmlHelper.ATTR_VALUE_NUMERIC;
 import static org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_ACCOUNT;
 import static org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_COMMODITY;
 import static org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_PRICE;
+import static org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_SCHEDXACTION;
 import static org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_TRANSACTION;
 import static org.gnucash.android.export.xml.GncXmlHelper.COMMODITY_CURRENCY;
 import static org.gnucash.android.export.xml.GncXmlHelper.COMMODITY_ISO4217;
@@ -966,12 +967,16 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                             case CD_TYPE_PRICE:
                                 if (listener != null) listener.onPriceCount(count);
                                 break;
+                            case CD_TYPE_SCHEDXACTION:
+                                if (listener != null) listener.onScheduleCount(count);
+                                break;
                             case CD_TYPE_TRANSACTION:
                                 if (listener != null) listener.onTransactionCount(count);
                                 break;
                         }
                     }
                 }
+                countDataType = null;
                 break;
         }
 

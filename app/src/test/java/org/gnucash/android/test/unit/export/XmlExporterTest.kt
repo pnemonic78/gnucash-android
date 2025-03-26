@@ -19,7 +19,7 @@ class XmlExporterTest : BookHelperTest() {
     }
 
     @Test
-    fun `the exported file is exactly like the imported file`() {
+    fun `the exported file is exactly like the imported file - common accounts`() {
         val context = GnuCashApplication.getAppContext()
         val bookUID = importGnuCashXml("acctchrt_common.gnucash")
         assertThat(bookUID).isEqualTo("a7682e5d878e43cea216611401f08463")
@@ -32,7 +32,33 @@ class XmlExporterTest : BookHelperTest() {
         val writer = StringWriter()
         exporter.export(bookUID, writer)
         val actual = writer.toString()
+        val actualIgnoreRoot = actual.substring(actual.indexOf('>', actual.indexOf("<gnc-v2")))
+            .replace("\r\n", "\n")
+
         val expected = readFile("expected.acctchrt_common.gnucash")
-        assertThat(actual).isEqualTo(expected)
+        val expectedIgnoreRoot = expected.substring(expected.indexOf('>', expected.indexOf("<gnc-v2")))
+        assertThat(actualIgnoreRoot).isEqualTo(expectedIgnoreRoot)
+    }
+
+    @Test
+    fun `the exported file is exactly like the imported file - common accounts with 1 of each type`() {
+        val context = GnuCashApplication.getAppContext()
+        val bookUID = importGnuCashXml("common_1.gnucash")
+        assertThat(bookUID).isEqualTo("a7682e5d878e43cea216611401f08463")
+
+        val exportParams = ExportParams(ExportFormat.XML).apply {
+            //TODO isCompressed = false
+        }
+        val exporter = GncXmlExporter(context, exportParams, bookUID)
+
+        val writer = StringWriter()
+        exporter.export(bookUID, writer)
+        val actual = writer.toString()
+        val actualIgnoreRoot = actual.substring(actual.indexOf('>', actual.indexOf("<gnc-v2")))
+            .replace("\r\n", "\n")
+
+        val expected = readFile("expected.common_1.gnucash")
+        val expectedIgnoreRoot = expected.substring(expected.indexOf('>', expected.indexOf("<gnc-v2")))
+        assertThat(actualIgnoreRoot).isEqualTo(expectedIgnoreRoot)
     }
 }

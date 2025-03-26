@@ -17,7 +17,6 @@
 
 package org.gnucash.android.export.xml;
 
-import static org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry;
 import static org.gnucash.android.db.DatabaseSchema.TransactionEntry;
 import static org.gnucash.android.db.adapter.AccountsDbAdapter.ROOT_ACCOUNT_NAME;
 import static org.gnucash.android.export.xml.GncXmlHelper.*;
@@ -33,8 +32,6 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.gnucash.android.db.DatabaseSchema;
-import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.RecurrenceDbAdapter;
 import org.gnucash.android.export.ExportParams;
 import org.gnucash.android.export.Exporter;
@@ -120,6 +117,46 @@ public class GncXmlExporter extends Exporter {
         this.listener = listener;
     }
 
+    private void writeCounts(XmlSerializer xmlSerializer) throws IOException {
+        // commodities count
+        long count = mAccountsDbAdapter.getCommoditiesInUseCount();
+        if (listener != null) listener.onCommodityCount(count);
+        writeCount(xmlSerializer, CD_TYPE_COMMODITY, count);
+
+        // accounts count
+        count = mAccountsDbAdapter.getRecordsCount();
+        if (listener != null) listener.onAccountCount(count);
+        writeCount(xmlSerializer, CD_TYPE_ACCOUNT, count);
+
+        // transactions count
+        count = mTransactionsDbAdapter.getRecordsCount(TransactionEntry.COLUMN_TEMPLATE + "=0", null);
+        if (listener != null) listener.onTransactionCount(count);
+        writeCount(xmlSerializer, CD_TYPE_TRANSACTION, count);
+
+        // scheduled transactions count
+        count = mScheduledActionDbAdapter.getRecordsCount(ScheduledAction.ActionType.TRANSACTION);
+        if (listener != null) listener.onScheduleCount(count);
+        writeCount(xmlSerializer, CD_TYPE_SCHEDXACTION, count);
+
+        // budgets count
+        count = mBudgetsDbAdapter.getRecordsCount();
+        if (listener != null) listener.onBudgetCount(count);
+        writeCount(xmlSerializer, CD_TYPE_BUDGET, count);
+
+        // prices count
+        count = mPricesDbAdapter.getRecordsCount();
+        if (listener != null) listener.onPriceCount(count);
+        writeCount(xmlSerializer, CD_TYPE_PRICE, count);
+    }
+
+    private void writeCount(XmlSerializer xmlSerializer, String type, long count) throws IOException {
+        if (count <= 0) return;
+        xmlSerializer.startTag(null, TAG_COUNT_DATA);
+        xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, type);
+        xmlSerializer.text(String.valueOf(count));
+        xmlSerializer.endTag(null, TAG_COUNT_DATA);
+    }
+
     private void writeSlots(XmlSerializer xmlSerializer,
                             List<String> slotKey,
                             List<String> slotType,
@@ -148,14 +185,6 @@ public class GncXmlExporter extends Exporter {
         // gnucash desktop requires that parent account appears before its descendants.
         // sort by full-name to fulfill the request
         List<Account> accounts = mAccountsDbAdapter.getSimpleAccountList(null, null, BaseColumns._ID);
-
-        //account count
-        long count = accounts.size();
-        if (listener != null) listener.onAccountCount(count);
-        xmlSerializer.startTag(null, TAG_COUNT_DATA);
-        xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, CD_TYPE_ACCOUNT);
-        xmlSerializer.text(String.valueOf(count));
-        xmlSerializer.endTag(null, TAG_COUNT_DATA);
 
         for (Account account : accounts) {
             writeAccount(xmlSerializer, account);
@@ -297,14 +326,6 @@ public class GncXmlExporter extends Exporter {
         if (!cursor.moveToFirst()) {
             return;
         }
-
-        //transaction count
-        long count = cursor.getCount();
-        xmlSerializer.startTag(null, TAG_COUNT_DATA);
-        xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, CD_TYPE_TRANSACTION);
-        xmlSerializer.text(String.valueOf(count));
-        xmlSerializer.endTag(null, TAG_COUNT_DATA);
-        if (listener != null) listener.onTransactionCount(count);
 
         if (isTemplates) {
             mRootTemplateAccount = new Account(ROOT_ACCOUNT_NAME);
@@ -516,10 +537,7 @@ public class GncXmlExporter extends Exporter {
      */
     private void writeScheduledTransactions(XmlSerializer xmlSerializer) throws IOException {
         Timber.i("export scheduled transactions");
-        final String where = ScheduledActionEntry.COLUMN_TYPE + "=?";
-        final String[] whereArgs = new String[]{ScheduledAction.ActionType.TRANSACTION.name()};
-        List<ScheduledAction> actions = mScheduledActionDbAdapter.getAllRecords(where, whereArgs);
-        if (listener != null) listener.onScheduleCount(actions.size());
+        List<ScheduledAction> actions = mScheduledActionDbAdapter.getRecords(ScheduledAction.ActionType.TRANSACTION);
 
         for (ScheduledAction scheduledAction : actions) {
             writeScheduledTransaction(xmlSerializer, scheduledAction);
@@ -639,19 +657,16 @@ public class GncXmlExporter extends Exporter {
 
     private void writeCommodities(XmlSerializer xmlSerializer) throws IOException {
         Timber.i("export commodities");
-        List<Commodity> commodities = mAccountsDbAdapter.getCommoditiesInUse();
-
-        //commodity count
-        long count = commodities.size();
-        if (listener != null) listener.onCommodityCount(count);
-        xmlSerializer.startTag(null, TAG_COUNT_DATA);
-        xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, CD_TYPE_COMMODITY);
-        xmlSerializer.text(String.valueOf(count));
-        xmlSerializer.endTag(null, TAG_COUNT_DATA);
+        Collection<Commodity> commodities = mAccountsDbAdapter.getCommoditiesInUse();
 
         for (Commodity commodity : commodities) {
             writeCommodity(xmlSerializer, commodity);
         }
+
+        Commodity template = new Commodity(Commodity.TEMPLATE, Commodity.TEMPLATE, 1);
+        template.setNamespace(Commodity.TEMPLATE);
+        template.setCusip(Commodity.TEMPLATE);
+        writeCommodity(xmlSerializer, template);
     }
 
     private void writeCommodity(XmlSerializer xmlSerializer, Commodity commodity) throws IOException {
@@ -664,19 +679,25 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.startTag(null, TAG_COMMODITY_ID);
         xmlSerializer.text(commodity.getCurrencyCode());
         xmlSerializer.endTag(null, TAG_COMMODITY_ID);
-        if (commodity.getFullname() != null) {
+        if (commodity.getFullname() != null && !commodity.isCurrency()) {
             xmlSerializer.startTag(null, TAG_COMMODITY_NAME);
             xmlSerializer.text(commodity.getFullname());
             xmlSerializer.endTag(null, TAG_COMMODITY_NAME);
         }
+        String cusip = commodity.getCusip();
+        if (!TextUtils.isEmpty(cusip)) {
+            try {
+                // "exchange-code is stored in ISIN/CUSIP"
+                Integer.parseInt(cusip);
+            } catch (NumberFormatException e) {
+                xmlSerializer.startTag(null, TAG_COMMODITY_XCODE);
+                xmlSerializer.text(cusip);
+                xmlSerializer.endTag(null, TAG_COMMODITY_XCODE);
+            }
+        }
         xmlSerializer.startTag(null, TAG_COMMODITY_FRACTION);
         xmlSerializer.text(String.valueOf(commodity.getSmallestFraction()));
         xmlSerializer.endTag(null, TAG_COMMODITY_FRACTION);
-        if (commodity.getCusip() != null) {
-            xmlSerializer.startTag(null, TAG_COMMODITY_XCODE);
-            xmlSerializer.text(commodity.getCusip());
-            xmlSerializer.endTag(null, TAG_COMMODITY_XCODE);
-        }
         if (commodity.getQuoteFlag()) {
             xmlSerializer.startTag(null, TAG_COMMODITY_GET_QUOTES);
             xmlSerializer.endTag(null, TAG_COMMODITY_GET_QUOTES);
@@ -684,11 +705,11 @@ public class GncXmlExporter extends Exporter {
             xmlSerializer.text(commodity.getQuoteSource());
             xmlSerializer.endTag(null, TAG_COMMODITY_QUOTE_SOURCE);
             TimeZone tz = commodity.getQuoteTimeZone();
+            xmlSerializer.startTag(null, TAG_COMMODITY_QUOTE_TZ);
             if (tz != null) {
-                xmlSerializer.startTag(null, TAG_COMMODITY_QUOTE_TZ);
                 xmlSerializer.text(tz.getID());
-                xmlSerializer.endTag(null, TAG_COMMODITY_QUOTE_TZ);
             }
+            xmlSerializer.endTag(null, TAG_COMMODITY_QUOTE_TZ);
         }
         xmlSerializer.endTag(null, TAG_COMMODITY);
     }
@@ -696,14 +717,7 @@ public class GncXmlExporter extends Exporter {
     private void writePrices(XmlSerializer xmlSerializer) throws IOException {
         Timber.i("export prices");
         List<Price> prices = mPricesDbAdapter.getAllRecords();
-        long count = prices.size();
-        if (listener != null) listener.onPriceCount(count);
-        if (count == 0) return;
-        //price count
-        xmlSerializer.startTag(null, TAG_COUNT_DATA);
-        xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, CD_TYPE_PRICE);
-        xmlSerializer.text(String.valueOf(count));
-        xmlSerializer.endTag(null, TAG_COUNT_DATA);
+        if (prices.isEmpty()) return;
 
         xmlSerializer.startTag(null, TAG_PRICEDB);
         for (Price price : prices) {
@@ -804,7 +818,6 @@ public class GncXmlExporter extends Exporter {
     private void writeBudgets(XmlSerializer xmlSerializer) throws IOException {
         Timber.i("export budgets");
         Cursor cursor = mBudgetsDbAdapter.fetchAllRecords();
-        if (listener != null) listener.onBudgetCount(cursor.getCount());
 
         while (cursor.moveToNext()) {
             Budget budget = mBudgetsDbAdapter.buildModelInstance(cursor);
@@ -922,7 +935,7 @@ public class GncXmlExporter extends Exporter {
      * Generates an XML export of the database and writes it to the {@code writer} output stream
      *
      * @param bookUID the book UID to export.
-     * @param writer Output stream
+     * @param writer  Output stream
      * @throws ExporterException
      */
     public void export(@NonNull String bookUID, @NonNull Writer writer) throws ExporterException {
@@ -933,7 +946,7 @@ public class GncXmlExporter extends Exporter {
     /**
      * Generates an XML export of the database and writes it to the {@code writer} output stream
      *
-     * @param book the book to export.
+     * @param book   the book to export.
      * @param writer Output stream
      * @throws ExporterException
      */
@@ -943,7 +956,8 @@ public class GncXmlExporter extends Exporter {
         try {
             String[] namespaces = new String[]{"gnc", "act", "book", "cd", "cmdty", "price", "slot",
                 "split", "trn", "ts", "sx", "bgt", "recurrence"};
-            XmlSerializer xmlSerializer = XmlPullParserFactory.newInstance().newSerializer();
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlSerializer xmlSerializer = factory.newSerializer();
             try {
                 xmlSerializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
             } catch (IllegalStateException e) {
@@ -958,10 +972,7 @@ public class GncXmlExporter extends Exporter {
             }
             // book count
             if (listener != null) listener.onBookCount(1);
-            xmlSerializer.startTag(null, TAG_COUNT_DATA);
-            xmlSerializer.attribute(null, ATTR_KEY_CD_TYPE, CD_TYPE_BOOK);
-            xmlSerializer.text("1");
-            xmlSerializer.endTag(null, TAG_COUNT_DATA);
+            writeCount(xmlSerializer, CD_TYPE_BOOK, 1);
             writeBook(xmlSerializer, book);
             xmlSerializer.endTag(null, TAG_ROOT);
             xmlSerializer.endDocument();
@@ -985,6 +996,8 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID);
         xmlSerializer.text(book.getUID());
         xmlSerializer.endTag(null, TAG_BOOK_ID);
+
+        writeCounts(xmlSerializer);
 
         // export the commodities used in the DB
         writeCommodities(xmlSerializer);
