@@ -253,4 +253,16 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
             new String[]{scheduledActionUID}
         );
     }
+
+    public List<ScheduledAction> getRecords(ScheduledAction.ActionType actionType) {
+        final String where = ScheduledActionEntry.COLUMN_TYPE + "=?";
+        final String[] whereArgs = new String[]{actionType.name()};
+        return getAllRecords(where, whereArgs);
+    }
+
+    public long getRecordsCount(ScheduledAction.ActionType actionType) {
+        final String where = ScheduledActionEntry.COLUMN_TYPE + "=?";
+        final String[] whereArgs = new String[]{actionType.name()};
+        return getRecordsCount(where, whereArgs);
+    }
 }

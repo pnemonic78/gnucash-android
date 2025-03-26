@@ -179,9 +179,11 @@ public abstract class GncXmlHelper {
     public static final String KEY_DEFAULT_TRANSFER_ACCOUNT = "default_transfer_account";
 
     public static final String CD_TYPE_BOOK = "book";
+    public static final String CD_TYPE_BUDGET = "budget";
     public static final String CD_TYPE_COMMODITY = "commodity";
     public static final String CD_TYPE_ACCOUNT = "account";
     public static final String CD_TYPE_TRANSACTION = "transaction";
+    public static final String CD_TYPE_SCHEDXACTION = "schedxaction";
     public static final String CD_TYPE_PRICE = "price";
 
     /**

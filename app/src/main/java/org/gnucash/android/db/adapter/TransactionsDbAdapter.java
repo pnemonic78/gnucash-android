@@ -402,24 +402,10 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
      * @return Number of records in the databases
      */
     public long getRecordsCount(@Nullable String where, @Nullable String[] whereArgs) {
-        Cursor cursor = mDb.query(true, TransactionEntry.TABLE_NAME + " , trans_extra_info ON "
-                        + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID
-                        + " = trans_extra_info.trans_acct_t_uid",
-                new String[]{"COUNT(*)"},
-                where,
-                whereArgs,
-                null,
-                null,
-                null,
-                null);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getLong(0);
-            }
-        } finally {
-            cursor.close();
-        }
-        return 0L;
+        String table = mTableName + " , trans_extra_info ON "
+            + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID
+            + " = trans_extra_info.trans_acct_t_uid";
+        return DatabaseUtils.queryNumEntries(mDb, table, where, whereArgs);
     }
 
     /**
