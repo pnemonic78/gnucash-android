@@ -173,7 +173,6 @@ public class TransactionsListFragment extends MenuFragment implements
     @Override
     public void onResume() {
         super.onResume();
-        ((TransactionsActivity) getActivity()).updateNavigationSelection();
         refresh();
     }
 
