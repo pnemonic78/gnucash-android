@@ -368,23 +368,15 @@ class Split : BaseModel, Parcelable {
             accountUID: String?,
             splitType: TransactionType
         ): Money {
-            val uid = accountUID ?: return Money.createZeroInstance(amount.commodity)
+            val accountUID = accountUID ?: return Money.createZeroInstance(amount.commodity)
             val isDebitAccount =
-                AccountsDbAdapter.getInstance().getAccountType(uid).hasDebitNormalBalance()
+                AccountsDbAdapter.getInstance().getAccountType(accountUID).hasDebitNormalBalance()
             val absAmount = amount.abs()
             val isDebitSplit = splitType === TransactionType.DEBIT
-            return if (isDebitAccount) {
-                if (isDebitSplit) {
-                    absAmount
-                } else {
-                    -absAmount
-                }
+            return if ((isDebitAccount && isDebitSplit) || (!isDebitAccount && !isDebitSplit)) {
+                absAmount
             } else {
-                if (isDebitSplit) {
-                    -absAmount
-                } else {
-                    absAmount
-                }
+                -absAmount
             }
         }
 
@@ -404,7 +396,8 @@ class Split : BaseModel, Parcelable {
         fun parseSplit(splitCsvString: String): Split {
             //TODO: parse reconciled state and date
             val tokens =
-                splitCsvString.split(SEPARATOR_CSV.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                splitCsvString.split(SEPARATOR_CSV.toRegex()).dropLastWhile { it.isEmpty() }
+                    .toTypedArray()
             return if (tokens.size < 8) { //old format splits
                 val amount = Money(tokens[0], tokens[1])
                 val split = Split(amount, tokens[2])
