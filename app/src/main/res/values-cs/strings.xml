@@ -249,7 +249,7 @@
     <string name="nav_menu_open">Otevřít…</string>
     <string name="nav_menu_reports">Přehledy</string>
     <string name="nav_menu_export">Exportovat…</string>
-    <string name="nav_menu_settings">Nastavení</string>
+    <string name="menu_settings" msgid="3524924670246877187">"Nastavení"</string>
     <string name="username">Uživatelské jméno</string>
     <string name="password">Heslo</string>
     <string name="owncloud_server_invalid">OC server nebyl nalezen</string>
@@ -466,4 +466,9 @@
     <string name="action_backup">backup to</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
+    <string name="category_name_appearance" msgid="8287486771764166805">"Vzhled"</string>
+    <string name="settings_screen_theme">Motiv</string>
+    <string name="default_theme" msgid="4815428567082263639">"Výchozí"</string>
+    <string name="light_ui_title">"Světelný режим"</string>
+    <string name="dark_ui_title" msgid="3373976268671557416">"Tmavý režim"</string>
 </resources>

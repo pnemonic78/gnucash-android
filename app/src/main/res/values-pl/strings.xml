@@ -249,7 +249,7 @@
     <string name="nav_menu_open">Otwórz…</string>
     <string name="nav_menu_reports">Raporty</string>
     <string name="nav_menu_export">Eksport…</string>
-    <string name="nav_menu_settings">Ustawienia</string>
+    <string name="menu_settings" msgid="3524924670246877187">"Ustawienia"</string>
     <string name="username">Nazwa użytkownika</string>
     <string name="password">Hasło</string>
     <string name="owncloud_server_invalid">Nie znaleziono serwera OC</string>
@@ -466,4 +466,9 @@
     <string name="action_backup">backup to</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
+    <string name="category_name_appearance" msgid="8287486771764166805">"Wygląd"</string>
+    <string name="settings_screen_theme">Motyw</string>
+    <string name="default_theme" msgid="4815428567082263639">"Wartość domyślna"</string>
+    <string name="light_ui_title">"Tryb jasny"</string>
+    <string name="dark_ui_title" msgid="3373976268671557416">"Tryb ciemny"</string>
 </resources>

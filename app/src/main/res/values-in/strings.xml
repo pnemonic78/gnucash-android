@@ -246,7 +246,7 @@
     <string name="nav_menu_open">Buka…</string>
     <string name="nav_menu_reports">Laporan</string>
     <string name="nav_menu_export">Ekspor…</string>
-    <string name="nav_menu_settings">Pengaturan</string>
+    <string name="menu_settings" msgid="3524924670246877187">"Setelan"</string>
     <string name="username">Nama Pengguna</string>
     <string name="password">Kata Sandi</string>
     <string name="owncloud_server_invalid">Server OC tidak ditemukan</string>
@@ -457,4 +457,9 @@
     <string name="action_backup">backup to</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
+    <string name="category_name_appearance" msgid="8287486771764166805">"Tampilan"</string>
+    <string name="settings_screen_theme">"Tema"</string>
+    <string name="default_theme" msgid="4815428567082263639">"Default"</string>
+    <string name="light_ui_title">"Mode terang"</string>
+    <string name="dark_ui_title" msgid="3373976268671557416">"Mode Gelap"</string>
 </resources>

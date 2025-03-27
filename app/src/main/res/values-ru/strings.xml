@@ -249,7 +249,7 @@
     <string name="nav_menu_open">Открыть…</string>
     <string name="nav_menu_reports">Отчёты</string>
     <string name="nav_menu_export">Экспорт…</string>
-    <string name="nav_menu_settings">Настройки</string>
+    <string name="menu_settings" msgid="3524924670246877187">"Настройки"</string>
     <string name="username">Имя пользователя</string>
     <string name="password">Пароль</string>
     <string name="owncloud_server_invalid">OC сервер не найден</string>
@@ -467,4 +467,9 @@
     <string name="action_backup">backup to</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
+    <string name="category_name_appearance" msgid="8287486771764166805">"Оформление"</string>
+    <string name="settings_screen_theme">Тема</string>
+    <string name="default_theme" msgid="4815428567082263639">"По умолчанию"</string>
+    <string name="light_ui_title">"Яркий тема"</string>
+    <string name="dark_ui_title" msgid="3373976268671557416">"Тёмная тема"</string>
 </resources>

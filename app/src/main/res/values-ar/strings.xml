@@ -251,7 +251,7 @@
     <string name="nav_menu_open">فتح…</string>
     <string name="nav_menu_reports">التقارير</string>
     <string name="nav_menu_export">تصدير…</string>
-    <string name="nav_menu_settings">الإعدادات</string>
+  <string name="menu_settings" msgid="3524924670246877187">"الإعدادات"</string>
     <string name="username">إسم المستخدم</string>
     <string name="password">كلمة المرور</string>
     <string name="owncloud_server_invalid">لم يتم العثور على خادم OC</string>
@@ -472,4 +472,9 @@
     <string name="action_backup">backup to</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
+    <string name="category_name_appearance" msgid="8287486771764166805">"المظهر"</string>
+    <string name="settings_screen_theme" msgid="2137262503543943871">"المظهر"</string>
+    <string name="default_theme" msgid="4815428567082263639">"تلقائي"</string>
+    <string name="light_ui_title">"وضع الضوء"</string>
+    <string name="dark_ui_title" msgid="3373976268671557416">"الوضع الداكن"</string>
 </resources>

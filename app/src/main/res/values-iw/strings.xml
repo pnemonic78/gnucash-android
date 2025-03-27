@@ -230,7 +230,7 @@
     <string name="nav_menu_open">פתיחה…</string>
     <string name="nav_menu_reports">דו\"חות</string>
     <string name="nav_menu_export">ייצוא…</string>
-    <string name="nav_menu_settings">הגדרות</string>
+  <string name="menu_settings" msgid="3524924670246877187">"הגדרות"</string>
     <string name="username">שם משתמש</string>
     <string name="password">סיסמה</string>
     <string name="owncloud_server_invalid">שרת OC לא נמצא</string>
@@ -442,4 +442,9 @@
     <string name="action_backup">גיבוי ל-</string>
     <string name="title_import_book_backup">כאשר מייבאים ספר?</string>
     <string name="summary_import_book_backup">לגבות את הספר הפעיל לפני ייבוא ספר?</string>
+    <string name="category_name_appearance" msgid="8287486771764166805">"מראה"</string>
+    <string name="settings_screen_theme">עיצוב</string>
+    <string name="default_theme" msgid="4815428567082263639">"ברירת מחדל"</string>
+    <string name="light_ui_title">"מצב בהיר"</string>
+    <string name="dark_ui_title" msgid="3373976268671557416">"מצב כהה"</string>
 </resources>
