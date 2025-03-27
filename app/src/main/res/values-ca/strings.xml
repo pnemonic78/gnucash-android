@@ -463,8 +463,6 @@
     <string name="action_backup">backup to</string>
     <string name="title_import_book_backup">When importing a book?</string>
     <string name="summary_import_book_backup">Backup the active book before importing a book?</string>
-    <string name="label_dropbox_export_destination">Export to \'/Apps/GnuCash Android/\' folder on Dropbox</string>
-    <string name="title_section_preferences">Preferències</string>
     <string name="category_name_appearance" msgid="8287486771764166805">"Aparença"</string>
     <string name="settings_screen_theme" msgid="2137262503543943871">"Theme"</string>
     <string name="default_theme" msgid="4815428567082263639">"Predeterminat"</string>

@@ -363,6 +363,7 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
     }
 
     private void importFileAndFinish(Intent data) {
+        final Activity context = this;
         final BooksDbAdapter dbAdapter = BooksDbAdapter.getInstance();
         final String bookUID = dbAdapter.getActiveBookUID();
         Book bookOld = dbAdapter.getRecord(bookUID);
@@ -371,7 +372,7 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
             @Override
             public void onTaskComplete() {
                 if (!TextUtils.isEmpty(bookUID)) {
-                    dbAdapter.deleteBook(bookUID);
+                    dbAdapter.deleteBook(context, bookUID);
                     Book book = dbAdapter.getActiveBook();
                     book.setDisplayName(bookName);
                     dbAdapter.updateRecord(book);
@@ -379,7 +380,7 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
                 finish();
             }
         };
-        importXmlFileFromIntent(this, data, callbackAfterImport);
+        importXmlFileFromIntent(context, data, callbackAfterImport);
     }
 
     public class WizardPagerAdapter extends FragmentStateAdapter {
