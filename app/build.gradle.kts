@@ -15,7 +15,7 @@ plugins {
 val versionMajor = 2
 val versionMinor = 5
 val versionPatch = 7
-val versionBuild = 0
+val versionBuild = 1
 
 val dropboxAppKey =
     (project.properties["RELEASE_DROPBOX_APP_KEY"] as String?) ?: "dhjh8ke9wf05948"
