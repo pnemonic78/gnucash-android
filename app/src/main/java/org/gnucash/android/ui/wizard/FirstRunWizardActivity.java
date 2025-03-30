@@ -34,6 +34,7 @@ import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -50,10 +51,10 @@ import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.databinding.ActivityFirstRunWizardBinding;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.importer.ImportBookCallback;
 import org.gnucash.android.model.Book;
 import org.gnucash.android.ui.account.AccountsActivity;
 import org.gnucash.android.ui.settings.ThemeHelper;
-import org.gnucash.android.ui.util.TaskDelegate;
 import org.gnucash.android.ui.util.widget.FragmentStateAdapter;
 
 import java.util.ArrayList;
@@ -178,15 +179,10 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
             //save the UID of the active book, and then delete it after successful import
             final BooksDbAdapter booksDbAdapter = BooksDbAdapter.getInstance();
             final String bookOldUID = booksDbAdapter.getActiveBookUID();
-            Book bookOld = booksDbAdapter.getRecord(bookOldUID);
-            final String bookName = bookOld.getDisplayName();
-            TaskDelegate callbackAfterImport = !TextUtils.isEmpty(bookOldUID) ? new TaskDelegate() {
+            ImportBookCallback callbackAfterImport = !TextUtils.isEmpty(bookOldUID) ? new ImportBookCallback() {
                 @Override
-                public void onTaskComplete() {
-                    booksDbAdapter.deleteBook(activity, bookOldUID);
-                    Book book = booksDbAdapter.getActiveBook();
-                    book.setDisplayName(bookName);
-                    booksDbAdapter.updateRecord(book);
+                public void onBookImported(@Nullable String bookUID) {
+                    maybeDeleteOldBook(activity, bookOldUID, bookUID);
                 }
             } : null;
             createDefaultAccounts(activity, currencyCode, callbackAfterImport);
@@ -363,24 +359,32 @@ public class FirstRunWizardActivity extends AppCompatActivity implements
     }
 
     private void importFileAndFinish(Intent data) {
-        final Activity context = this;
-        final BooksDbAdapter dbAdapter = BooksDbAdapter.getInstance();
-        final String bookUID = dbAdapter.getActiveBookUID();
-        Book bookOld = dbAdapter.getRecord(bookUID);
-        final String bookName = bookOld.getDisplayName();
-        TaskDelegate callbackAfterImport = new TaskDelegate() {
+        final Activity activity = this;
+        final BooksDbAdapter booksDbAdapter = BooksDbAdapter.getInstance();
+        final String bookOldUID = booksDbAdapter.getActiveBookUID();
+        ImportBookCallback callbackAfterImport = new ImportBookCallback() {
             @Override
-            public void onTaskComplete() {
-                if (!TextUtils.isEmpty(bookUID)) {
-                    dbAdapter.deleteBook(context, bookUID);
-                    Book book = dbAdapter.getActiveBook();
-                    book.setDisplayName(bookName);
-                    dbAdapter.updateRecord(book);
-                }
+            public void onBookImported(@Nullable String bookUID) {
+                maybeDeleteOldBook(activity, bookOldUID, bookUID);
                 finish();
             }
         };
-        importXmlFileFromIntent(context, data, callbackAfterImport);
+        importXmlFileFromIntent(activity, data, callbackAfterImport);
+    }
+
+    private void maybeDeleteOldBook(@NonNull Context context, @Nullable String bookOldUID, @Nullable String bookNewUID) {
+        if (TextUtils.isEmpty(bookOldUID)) return;
+        if (TextUtils.isEmpty(bookNewUID)) return;
+        if (bookOldUID.equals(bookNewUID)) return;
+
+        final BooksDbAdapter booksDbAdapter = BooksDbAdapter.getInstance();
+        Book bookOld = booksDbAdapter.getRecord(bookOldUID);
+        Book bookNew = booksDbAdapter.getRecord(bookNewUID);
+
+        final String bookName = bookOld.getDisplayName();
+        booksDbAdapter.deleteBook(context, bookOldUID);
+        bookNew.setDisplayName(bookName);
+        booksDbAdapter.updateRecord(bookNew);
     }
 
     public class WizardPagerAdapter extends FragmentStateAdapter {
