@@ -219,7 +219,7 @@ public class AccountsDbAdapterTest extends GnuCashTest {
         List<Account> accounts = mAccountsDbAdapter.getSimpleAccountList();
         assertThat(accounts).extracting("accountType").contains(AccountType.ROOT);
 
-        String rootAccountUID = mAccountsDbAdapter.getOrCreateGnuCashRootAccountUID();
+        String rootAccountUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
         assertThat(rootAccountUID).isEqualTo(accounts.get(1).getParentUID());
     }
 
