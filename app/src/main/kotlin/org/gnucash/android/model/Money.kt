@@ -31,7 +31,6 @@ import java.util.Locale
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Money represents a money amount and a corresponding currency.
@@ -70,7 +69,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      */
     constructor(amount: BigDecimal, commodity: Commodity) {
         //commodity has to be set first. Because we use it's scale
-        this.commodity = commodity
+        setCommodity(commodity)
         setAmount(amount)
     }
 
@@ -159,7 +158,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      * @param commodity [Commodity] to assign to new `Money` object
      * @return [Money] object with same value as current object, but with new `currency`
      */
-    fun withCurrency(commodity: Commodity): Money {
+    fun withCommodity(commodity: Commodity): Money {
         return Money(_amount, commodity)
     }
 
@@ -180,7 +179,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      * @param currencyCode ISO 4217 currency code
      */
     private fun setCommodity(currencyCode: String) {
-        commodity = Commodity.getInstance(currencyCode)
+        setCommodity(Commodity.getInstance(currencyCode))
     }
 
     /**
@@ -192,7 +191,8 @@ class Money : Number, Comparable<Money>, Parcelable {
      */
     val numerator: Long
         get() = try {
-            _amount.scaleByPowerOfTen(scale).longValueExact()
+            val a = _amount
+            a.scaleByPowerOfTen(a.scale()).longValueExact()
         } catch (e: ArithmeticException) {
             val msg = "Currency " + commodity.currencyCode +
                     " with scale " + scale +
@@ -209,7 +209,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      * @return GnuCash format denominator
      */
     val denominator: Long
-        get() = BigDecimal.ONE.scaleByPowerOfTen(scale).longValueExact()
+        get() = BigDecimal.ONE.scaleByPowerOfTen(_amount.scale()).longValueExact()
 
     /**
      * Returns the scale (precision) used for the decimal places of this amount.
@@ -218,14 +218,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      *
      * @return Scale of amount as integer
      */
-    private val scale: Int
-        get() {
-            var scale = _amount.scale()
-            if (scale <= 0) {
-                scale = commodity.smallestFractionDigits
-            }
-            return max(1, scale)
-        }
+    private val scale: Int get() = max(0, commodity.smallestFractionDigits)
 
     /**
      * Returns the amount represented by this Money object
@@ -235,7 +228,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      * @return [BigDecimal] valure of amount in object
      */
     fun asBigDecimal(): BigDecimal {
-        return _amount.setScale(commodity.smallestFractionDigits, RoundingMode.HALF_EVEN)
+        return _amount.setScale(scale, RoundingMode.HALF_EVEN)
     }
 
     fun toBigDecimal(): BigDecimal {
@@ -355,7 +348,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      * @param amount [BigDecimal] amount to be set
      */
     private fun setAmount(amount: BigDecimal) {
-        _amount = amount.setScale(amount.scale(), roundingMode)
+        _amount = amount
     }
 
     /**
@@ -449,8 +442,7 @@ class Money : Number, Comparable<Money>, Parcelable {
             commodity,
             divisor.commodity
         )
-        val amount =
-            _amount.divide(divisor._amount, commodity.smallestFractionDigits, roundingMode)
+        val amount = _amount.divide(divisor._amount, scale, roundingMode)
         return Money(amount, commodity)
     }
 
@@ -474,7 +466,7 @@ class Money : Number, Comparable<Money>, Parcelable {
     }
 
     operator fun div(divisor: BigDecimal): Money {
-        val amount = _amount.divide(divisor, commodity.smallestFractionDigits, roundingMode)
+        val amount = _amount.divide(divisor, scale, roundingMode)
         return Money(amount, commodity)
     }
 
@@ -548,7 +540,7 @@ class Money : Number, Comparable<Money>, Parcelable {
      * @return String representation of the amount (without currency) of the Money object
      */
     fun toPlainString(): String {
-        return _amount.setScale(commodity.smallestFractionDigits, roundingMode).toPlainString()
+        return _amount.toPlainString()
     }
 
     /**

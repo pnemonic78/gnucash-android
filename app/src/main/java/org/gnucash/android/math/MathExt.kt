@@ -39,5 +39,7 @@ val Number.numberOfTrailingZeros: Int
  * @return BigDecimal representation of the number
  */
 fun toBigDecimal(numerator: Long, denominator: Long): BigDecimal {
-    return BigDecimal.valueOf(numerator).divide(BigDecimal.valueOf(denominator))
+    // Assume denominator is multiple of "10"s only.
+    val scale = denominator.numberOfTrailingZeros
+    return BigDecimal.valueOf(numerator, scale)
 }
