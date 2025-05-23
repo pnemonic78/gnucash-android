@@ -137,8 +137,9 @@ public class TransactionDetailActivity extends PasscodeLockActivity implements F
         mBinding.trnDescription.setText(transaction.getDescription());
         mBinding.transactionAccount.setText(getString(R.string.label_inside_account_with_name, accountsDbAdapter.getAccountFullName(mAccountUID)));
 
+        Account account = accountsDbAdapter.getSimpleRecord(mAccountUID);
         Money accountBalance = accountsDbAdapter.getAccountBalance(mAccountUID, -1, transaction.getTimeMillis(), false);
-        TextView balanceTextView = accountBalance.isNegative() ? mBinding.balanceDebit : mBinding.balanceCredit;
+        TextView balanceTextView = account.getAccountType().hasDebitDisplayBalance ? mBinding.balanceDebit : mBinding.balanceCredit;
         displayBalance(balanceTextView, accountBalance, colorBalanceZero);
 
         mDetailTableRows = mBinding.fragmentTransactionDetails.getChildCount();
