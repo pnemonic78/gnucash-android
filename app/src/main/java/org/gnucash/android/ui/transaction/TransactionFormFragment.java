@@ -407,10 +407,11 @@ public class TransactionFormFragment extends MenuFragment implements
      * This method is called if the fragment is used for editing a transaction
      */
     private void initializeViewsWithTransaction(@NonNull final FragmentTransactionFormBinding binding, @NonNull Transaction transaction) {
+        final Context context = binding.getRoot().getContext();
         setTextToEnd(binding.inputTransactionName, transaction.getDescription());
 
+        TransactionType transactionType = GnuCashApplication.getDefaultTransactionType(context);
         binding.inputTransactionType.setAccountType(account.getAccountType());
-        TransactionType transactionType = TransactionType.DEBIT;
         binding.inputTransactionType.setChecked(transactionType);
 
         //when autocompleting, only change the amount if the user has not manually changed it already
@@ -450,7 +451,9 @@ public class TransactionFormFragment extends MenuFragment implements
             }
         } else {
             setDoubleEntryViewsVisibility(binding, View.GONE);
-            transactionType = mSplitValue.isNegative() ? TransactionType.CREDIT : TransactionType.DEBIT;
+            if (mSplitValue != null) {
+                transactionType = mSplitValue.isNegative() ? TransactionType.CREDIT : TransactionType.DEBIT;
+            }
         }
 
         Commodity accountCommodity = mAccountsDbAdapter.getCommodity(mAccountUID);
@@ -461,7 +464,6 @@ public class TransactionFormFragment extends MenuFragment implements
         binding.checkboxSaveTemplate.setChecked(transaction.isTemplate());
         String scheduledActionUID = transaction.getScheduledActionUID();
         if (!TextUtils.isEmpty(scheduledActionUID)) {
-            Context context = binding.inputRecurrence.getContext();
             ScheduledAction scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID);
             onRecurrenceSet(scheduledAction.getRuleString());
         }
