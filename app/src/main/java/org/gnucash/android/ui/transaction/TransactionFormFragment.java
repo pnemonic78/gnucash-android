@@ -290,7 +290,12 @@ public class TransactionFormFragment extends MenuFragment implements
         scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance();
         mAccountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID, mAccountsDbAdapter.getOrCreateGnuCashRootAccountUID());
         assert !TextUtils.isEmpty(mAccountUID);
-        account = mAccountsDbAdapter.getSimpleRecord(mAccountUID);
+        try {
+            account = mAccountsDbAdapter.getSimpleRecord(mAccountUID);
+        } catch (IllegalArgumentException e) {
+            Timber.e(e);
+            account = null;
+        }
         if (account == null) {
             Timber.e("Account not found %s", mAccountUID);
             finish(Activity.RESULT_CANCELED);
