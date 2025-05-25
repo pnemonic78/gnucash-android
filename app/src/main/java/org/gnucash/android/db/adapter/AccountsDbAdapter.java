@@ -1002,7 +1002,11 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         }
         for (Account account : accounts) {
             Money accountBalance = getAccountBalance(account, startTimestamp, endTimestamp);
-            // FIXME beware of CurrencyMismatchException
+            if (accountBalance.isAmountZero()) continue;
+            Price price = pricesDbAdapter.getPrice(accountBalance.getCommodity(), commodity);
+            if (price != null) {
+                accountBalance = accountBalance.times(price);
+            }
             balance = balance.plus(accountBalance);
         }
         return balance;
