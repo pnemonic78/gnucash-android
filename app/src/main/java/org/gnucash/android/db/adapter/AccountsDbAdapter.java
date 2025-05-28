@@ -58,9 +58,12 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import timber.log.Timber;
 
@@ -463,6 +466,10 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         account.setFullName(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_FULL_NAME)));
         account.setHidden(c.getInt(c.getColumnIndexOrThrow(AccountEntry.COLUMN_HIDDEN)) != 0);
         account.setNote(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_NOTES)));
+        if (account.isRoot()) {
+            account.setHidden(false);
+            account.setPlaceholder(false);
+        }
         return account;
     }
 
@@ -1162,7 +1169,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             AccountEntry._ID + " = " + accountID,
             null, null, null, null);
         try {
-            if (cursor.moveToNext()) {
+            if (cursor.moveToFirst()) {
                 String uid = cursor.getString(
                     cursor.getColumnIndexOrThrow(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID));
                 return TextUtils.isEmpty(uid) ? 0 : getID(uid);
@@ -1371,19 +1378,25 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      *
      * @return List of commodities in use
      */
-    public List<Commodity> getCommoditiesInUse() {
-        Cursor cursor = mDb.query(true, mTableName, new String[]{AccountEntry.COLUMN_COMMODITY_UID},
-            null, null, null, null, null, null);
-        List<Commodity> commodities = new ArrayList<>();
+    public Collection<Commodity> getCommoditiesInUse() {
+        String[] columns = new String[]{AccountEntry.COLUMN_COMMODITY_UID};
+        Cursor cursor = mDb.query(true, mTableName, columns, null, null, null, null, null, null);
+        Set<Commodity> commodities = new HashSet<>();
         try {
-            while (cursor.moveToNext()) {
-                String currencyUID = cursor.getString(0);
-                commodities.add(commoditiesDbAdapter.getRecord(currencyUID));
+            if (cursor.moveToFirst()) {
+                do {
+                    String commodityUID = cursor.getString(0);
+                    commodities.add(commoditiesDbAdapter.getRecord(commodityUID));
+                } while (cursor.moveToNext());
             }
         } finally {
             cursor.close();
         }
         return commodities;
+    }
+
+    public long getCommoditiesInUseCount() {
+        return DatabaseUtils.longForQuery(mDb, "select count(distinct " + AccountEntry.COLUMN_COMMODITY_UID + ") from " + mTableName, null);
     }
 
     /**

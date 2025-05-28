@@ -17,6 +17,7 @@ package org.gnucash.android.test.unit.importer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter;
 import org.gnucash.android.export.xml.GncXmlHelper;
@@ -62,8 +63,9 @@ public class GncXmlHandlerTest extends BookHelperTest {
 
         Account rootAccount = mAccountsDbAdapter.getRecord("308ade8cf0be2b0b05c5eec3114a65fa");
         assertThat(rootAccount.getParentUID()).isNull();
-        assertThat(rootAccount.getName()).isEqualTo("Root Account");
-        assertThat(rootAccount.isHidden()).isTrue();
+        assertThat(rootAccount.getName()).isEqualTo(AccountsDbAdapter.ROOT_ACCOUNT_NAME);
+        assertThat(rootAccount.isHidden()).isFalse();
+        assertThat(rootAccount.isPlaceholder()).isFalse();
 
         Account assetsAccount = mAccountsDbAdapter.getRecord("3f44d61cb1afd201e8ea5a54ec4fbbff");
         assertThat(assetsAccount.getParentUID()).isEqualTo(rootAccount.getUID());
@@ -356,6 +358,7 @@ public class GncXmlHandlerTest extends BookHelperTest {
     @Test
     public void commodities() {
         String bookUID = importGnuCashXml("commodities.xml");
+        assertThat(bookUID).isEqualTo("76d1839cfd30459998717d04ce719add");
         assertThat(BooksDbAdapter.isBookDatabase(bookUID)).isTrue();
 
         CommoditiesDbAdapter commoditiesDbAdapter = mCommoditiesDbAdapter;
