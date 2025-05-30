@@ -403,7 +403,7 @@ public class TransactionsListFragment extends MenuFragment implements
         }
     }
 
-    private void deleteTransaction(String transactionUID) {
+    private void deleteTransaction(final String transactionUID) {
         final Activity activity = requireActivity();
         if (GnuCashApplication.shouldBackupTransactions(activity)) {
             BackupManager.backupActiveBookAsync(activity, result -> {

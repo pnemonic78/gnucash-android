@@ -15,9 +15,10 @@
  */
 package org.gnucash.android.importer;
 
+import static org.gnucash.android.util.ContentExtKt.openStream;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -89,8 +90,7 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         Book book;
         String bookUID;
         try {
-            ContentResolver contentResolver = mContext.getContentResolver();
-            InputStream accountInputStream = contentResolver.openInputStream(uri);
+            final InputStream accountInputStream = openStream(uri, mContext);
             book = GncXmlImporter.parseBook(mContext, accountInputStream);
             book.setSourceUri(uri);
             bookUID = book.getUID();
@@ -104,18 +104,24 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         contentValues.put(DatabaseSchema.BookEntry.COLUMN_SOURCE_URI, uri.toString());
 
         String displayName = book.getDisplayName();
-        String name = ContentExtKt.getDocumentName(uri, mContext);
-        if (!TextUtils.isEmpty(name)) {
-            // Remove short file type extension, e.g. ".xml" or ".gnucash" or ".gnca.gz"
-            int indexFileType = name.indexOf('.');
-            if (indexFileType > 0) {
-                name = name.substring(0, indexFileType);
+        if (TextUtils.isEmpty(displayName)) {
+            String name = ContentExtKt.getDocumentName(uri, mContext);
+            if (!TextUtils.isEmpty(name)) {
+                // Remove short file type extension, e.g. ".xml" or ".gnucash" or ".gnca.gz"
+                int indexFileType = name.indexOf('.');
+                if (indexFileType > 0) {
+                    name = name.substring(0, indexFileType);
+                }
+                displayName = name;
+                book.setDisplayName(displayName);
             }
-            displayName = name;
+            if (TextUtils.isEmpty(displayName)) {
+                displayName = BooksDbAdapter.getInstance().generateDefaultBookName();
+            }
             book.setDisplayName(displayName);
+            contentValues.put(DatabaseSchema.BookEntry.COLUMN_DISPLAY_NAME, displayName);
+            BooksDbAdapter.getInstance().updateRecord(bookUID, contentValues);
         }
-        contentValues.put(DatabaseSchema.BookEntry.COLUMN_DISPLAY_NAME, displayName);
-        BooksDbAdapter.getInstance().updateRecord(bookUID, contentValues);
 
         //set the preferences to their default values
         mContext.getSharedPreferences(bookUID, Context.MODE_PRIVATE)
