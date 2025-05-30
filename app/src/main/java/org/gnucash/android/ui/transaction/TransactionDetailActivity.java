@@ -117,12 +117,11 @@ public class TransactionDetailActivity extends PasscodeLockActivity implements F
         displayBalance(balanceView, split.getFormattedQuantity(account), colorBalanceZero);
     }
 
-    private void bind(RowBalanceBinding binding, String accountUID) {
+    private void bind(RowBalanceBinding binding, String accountUID, long timeMillis) {
         Account account = accountsDbAdapter.getSimpleRecord(accountUID);
-        Money accountBalance = accountsDbAdapter.getAccountBalance(accountUID);
+        Money accountBalance = accountsDbAdapter.getAccountBalance(accountUID, -1, timeMillis, true);
         TextView balanceTextView = account.getAccountType().hasDebitDisplayBalance ? binding.balanceDebit : binding.balanceCredit;
         displayBalance(balanceTextView, accountBalance, balanceTextView.getCurrentTextColor());
-
     }
 
     /**
@@ -153,7 +152,7 @@ public class TransactionDetailActivity extends PasscodeLockActivity implements F
         }
 
         RowBalanceBinding balanceBinding = RowBalanceBinding.inflate(inflater, binding.transactionItems, true);
-        bind(balanceBinding, mAccountUID);
+        bind(balanceBinding, mAccountUID, transaction.getTimeMillis());
 
         String timeAndDate = DateExtKt.formatFullDate(transaction.getTimeMillis());
         binding.trnTimeAndDate.setText(timeAndDate);
