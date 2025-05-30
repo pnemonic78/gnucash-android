@@ -123,7 +123,7 @@ public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
 
         String displayName = book.getDisplayName();
         if (TextUtils.isEmpty(displayName)) {
-            String name = ContentExtKt.getDocumentName(uri, mContext);
+            String name = ContentExtKt.getDocumentName(uri, context);
             if (!TextUtils.isEmpty(name)) {
                 // Remove short file type extension, e.g. ".xml" or ".gnucash" or ".gnca.gz"
                 int indexFileType = name.indexOf('.');
@@ -131,15 +131,14 @@ public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
                     name = name.substring(0, indexFileType);
                 }
                 displayName = name;
-                book.setDisplayName(displayName);
             }
             if (TextUtils.isEmpty(displayName)) {
                 displayName = booksDbAdapter.generateDefaultBookName();
             }
             book.setDisplayName(displayName);
             contentValues.put(DatabaseSchema.BookEntry.COLUMN_DISPLAY_NAME, displayName);
-            booksDbAdapter.updateRecord(bookUID, contentValues);
         }
+        booksDbAdapter.updateRecord(bookUID, contentValues);
 
         //set the preferences to their default values
         context.getSharedPreferences(bookUID, Context.MODE_PRIVATE)

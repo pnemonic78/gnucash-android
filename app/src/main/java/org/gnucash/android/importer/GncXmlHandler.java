@@ -397,7 +397,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
 
         switch (qualifiedName) {
             case TAG_BOOK:
-                mBook.setDisplayName(booksDbAdapter.generateDefaultBookName());
+                // mBook.setDisplayName(booksDbAdapter.generateDefaultBookName());
                 break;
             case TAG_ACCOUNT:
                 mAccount = new Account(""); // dummy name, will be replaced when we find name tag
@@ -499,7 +499,12 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 break;
             case TAG_BOOK:
             case TAG_ROOT:
+            case AccountsTemplate.TAG_ROOT:
                 booksDbAdapter.addRecord(mBook, DatabaseAdapter.UpdateMethod.replace);
+                if (listener != null) listener.onBook(mBook);
+                break;
+            case TAG_ACCT_TITLE:
+                mBook.setDisplayName(characterString);
                 if (listener != null) listener.onBook(mBook);
                 break;
             case TAG_BOOK_ID:
@@ -1043,9 +1048,6 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                     }
                 }
                 countDataType = null;
-                break;
-            case TAG_ACCT_TITLE:
-                mBook.setDisplayName(characterString);
                 break;
         }
 
