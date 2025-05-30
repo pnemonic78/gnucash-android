@@ -32,7 +32,9 @@ import androidx.annotation.Nullable;
 import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.gnc.AsyncTaskProgressListener;
 import org.gnucash.android.model.Book;
+import org.gnucash.android.service.ScheduledActionService;
 import org.gnucash.android.ui.common.GnucashProgressDialog;
 import org.gnucash.android.util.BackupManager;
 import org.gnucash.android.util.BookUtils;
@@ -46,12 +48,14 @@ import timber.log.Timber;
  * Imports a GnuCash (desktop) account file and displays a progress dialog.
  * The AccountsActivity is opened when importing is done.
  */
-public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
-    private final Activity mContext;
+public class ImportAsyncTask extends AsyncTask<Uri, Object, String> {
     @Nullable
     private final ImportBookCallback bookCallback;
     private final boolean mBackup;
-    private ProgressDialog mProgressDialog;
+    @NonNull
+    private final ProgressDialog progressDialog;
+    @NonNull
+    private final AsyncTaskProgressListener listener;
 
     public ImportAsyncTask(@NonNull Activity context) {
         this(context, null);
@@ -62,19 +66,31 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
     }
 
     public ImportAsyncTask(@NonNull Activity context, @Nullable ImportBookCallback callback, boolean backup) {
-        this.mContext = context;
         this.bookCallback = callback;
         this.mBackup = backup;
+        progressDialog = new GnucashProgressDialog(context);
+        progressDialog.setTitle(R.string.title_import_accounts);
+        progressDialog.setCancelable(true);
+        progressDialog.setOnCancelListener(dialogInterface -> cancel(true));
+        this.listener = new ProgressListener(context);
+    }
+
+    private class ProgressListener extends AsyncTaskProgressListener {
+
+        ProgressListener(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void publishProgress(@NonNull String label, long progress, long total) {
+            ImportAsyncTask.this.publishProgress(label, progress, total);
+        }
     }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        mProgressDialog = new GnucashProgressDialog(mContext);
-        mProgressDialog.setTitle(R.string.title_progress_importing_accounts);
-        mProgressDialog.setCancelable(true);
-        mProgressDialog.setOnCancelListener(dialogInterface -> cancel(true));
-        mProgressDialog.show();
+        progressDialog.show();
     }
 
     @Override
@@ -87,11 +103,12 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
         }
 
         Uri uri = uris[0];
+        final Context context = progressDialog.getContext();
         Book book;
         String bookUID;
         try {
-            final InputStream accountInputStream = openStream(uri, mContext);
-            book = GncXmlImporter.parseBook(mContext, accountInputStream);
+            final InputStream accountInputStream = openStream(uri, context);
+            book = GncXmlImporter.parseBook(context, accountInputStream, listener);
             book.setSourceUri(uri);
             bookUID = book.getUID();
         } catch (final Throwable e) {
@@ -100,6 +117,7 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
             return null;
         }
 
+        BooksDbAdapter booksDbAdapter = BooksDbAdapter.getInstance();
         ContentValues contentValues = new ContentValues();
         contentValues.put(DatabaseSchema.BookEntry.COLUMN_SOURCE_URI, uri.toString());
 
@@ -116,46 +134,57 @@ public class ImportAsyncTask extends AsyncTask<Uri, Void, String> {
                 book.setDisplayName(displayName);
             }
             if (TextUtils.isEmpty(displayName)) {
-                displayName = BooksDbAdapter.getInstance().generateDefaultBookName();
+                displayName = booksDbAdapter.generateDefaultBookName();
             }
             book.setDisplayName(displayName);
             contentValues.put(DatabaseSchema.BookEntry.COLUMN_DISPLAY_NAME, displayName);
-            BooksDbAdapter.getInstance().updateRecord(bookUID, contentValues);
+            booksDbAdapter.updateRecord(bookUID, contentValues);
         }
 
         //set the preferences to their default values
-        mContext.getSharedPreferences(bookUID, Context.MODE_PRIVATE)
+        context.getSharedPreferences(bookUID, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean(mContext.getString(R.string.key_use_double_entry), true)
+            .putBoolean(context.getString(R.string.key_use_double_entry), true)
             .apply();
 
         return bookUID;
     }
 
     @Override
+    protected void onProgressUpdate(Object... values) {
+        listener.showProgress(progressDialog, values);
+    }
+
+    @Override
     protected void onPostExecute(String bookUID) {
+        final Context context = progressDialog.getContext();
+        dismissProgressDialog();
+
+        if (!TextUtils.isEmpty(bookUID)) {
+            int message = R.string.toast_success_importing_accounts;
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+            BookUtils.loadBook(context, bookUID);
+        } else {
+            int message = R.string.toast_error_importing_accounts;
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        }
+
+        ScheduledActionService.schedulePeriodic(context);
+
+        if (bookCallback != null) {
+            bookCallback.onBookImported(bookUID);
+        }
+    }
+
+    private void dismissProgressDialog() {
+        final ProgressDialog progressDialog = this.progressDialog;
         try {
-            if (mProgressDialog != null && mProgressDialog.isShowing()) {
-                mProgressDialog.dismiss();
+            if (progressDialog.isShowing()) {
+                progressDialog.dismiss();
             }
         } catch (IllegalArgumentException ex) {
             //TODO: This is a hack to catch "View not attached to window" exceptions
             //FIXME by moving the creation and display of the progress dialog to the Fragment
-        } finally {
-            mProgressDialog = null;
-        }
-
-        if (!TextUtils.isEmpty(bookUID)) {
-            int message = R.string.toast_success_importing_accounts;
-            Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
-            BookUtils.loadBook(mContext, bookUID);
-        } else {
-            int message = R.string.toast_error_importing_accounts;
-            Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
-        }
-
-        if (bookCallback != null) {
-            bookCallback.onBookImported(bookUID);
         }
     }
 }
