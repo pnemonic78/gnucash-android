@@ -1005,12 +1005,11 @@ public class TransactionFormFragment extends MenuFragment implements
      */
     private void setSplits(FragmentTransactionFormBinding binding, List<Split> splitList) {
         mSplitsList = splitList;
-        Money balance = Transaction.computeBalance(mAccountUID, splitList);
+        Money balance = Transaction.computeBalance(account, splitList);
 
         binding.inputTransactionAmount.setValue(balance.asBigDecimal());
         binding.inputTransactionType.setChecked(balance.isNegative());
     }
-
 
     /**
      * Finishes the fragment appropriately.

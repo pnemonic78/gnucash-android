@@ -18,8 +18,6 @@ package org.gnucash.android.ui.report.sheet;
 import static org.gnucash.android.ui.util.TextViewExtKt.displayBalance;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -36,6 +34,7 @@ import androidx.annotation.Nullable;
 import org.gnucash.android.R;
 import org.gnucash.android.databinding.FragmentTextReportBinding;
 import org.gnucash.android.databinding.RowBalanceSheetBinding;
+import org.gnucash.android.databinding.TotalBalanceSheetBinding;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.AccountType;
@@ -47,7 +46,6 @@ import org.gnucash.android.ui.report.ReportType;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Balance sheet report fragment
@@ -147,7 +145,7 @@ public class BalanceSheetFragment extends BaseReportFragment {
         boolean isRowEven = true;
 
         for (Account account : accounts) {
-            Money balance = mAccountsDbAdapter.getAccountBalance(account);
+            Money balance = mAccountsDbAdapter.getAccountBalance(account.getUID());
             if (balance.isAmountZero()) continue;
             AccountType accountType = account.getAccountType();
             balance = (accountType.hasDebitDisplayBalance) ? balance : balance.unaryMinus();
@@ -172,22 +170,9 @@ public class BalanceSheetFragment extends BaseReportFragment {
             total = total.plus(balance);
         }
 
-        RowBalanceSheetBinding binding = RowBalanceSheetBinding.inflate(inflater, tableLayout, true);
-        View totalView = binding.getRoot();
-        totalView.setPadding(
-            totalView.getPaddingLeft(),
-            totalView.getPaddingTop() + 20,
-            totalView.getPaddingRight(),
-            totalView.getPaddingBottom()
-        );
+        TotalBalanceSheetBinding binding = TotalBalanceSheetBinding.inflate(inflater, tableLayout, true);
 
-        TextView accountName = binding.accountName;
-        accountName.setTextSize(16);
-        accountName.setText(R.string.label_balance_sheet_total);
-        accountName.setTypeface(null, Typeface.BOLD);
         TextView accountBalance = binding.accountBalance;
-        accountBalance.setTextSize(16);
-        accountBalance.setTypeface(null, Typeface.BOLD);
         @ColorInt int colorBalanceZero = accountBalance.getCurrentTextColor();
         displayBalance(accountBalance, total, colorBalanceZero);
     }
