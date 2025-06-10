@@ -24,7 +24,6 @@ import static org.gnucash.android.db.adapter.AccountsDbAdapter.TEMPLATE_ACCOUNT_
 import static org.gnucash.android.export.xml.GncXmlHelper.*;
 import static org.gnucash.android.importer.CommoditiesXmlHandler.SOURCE_CURRENCY;
 import static org.gnucash.android.math.MathExtKt.toBigDecimal;
-import static org.gnucash.android.model.Commodity.TEMPLATE;
 import static org.gnucash.android.util.ColorExtKt.formatRGB;
 
 import android.content.Context;
@@ -677,7 +676,7 @@ public class GncXmlExporter extends Exporter {
 
         xmlSerializer.startTag(null, TAG_SX_TEMPL_ACCOUNT);
         xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID);
-        xmlSerializer.text(accountUID);
+        xmlSerializer.text(account.getUID());
         xmlSerializer.endTag(null, TAG_SX_TEMPL_ACCOUNT);
 
         //// FIXME: 11.10.2015 Retrieve the information for this section from the recurrence table

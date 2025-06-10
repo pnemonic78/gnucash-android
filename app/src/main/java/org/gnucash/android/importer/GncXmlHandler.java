@@ -764,6 +764,9 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
             case TAG_RX_START:
                 mIsRecurrenceStart = false;
                 break;
+            case TAG_RX_START:
+                mIsRecurrenceStart = false;
+                break;
             case TAG_RX_MULT:
                 mRecurrence.setMultiplier(Integer.parseInt(characterString));
                 break;
