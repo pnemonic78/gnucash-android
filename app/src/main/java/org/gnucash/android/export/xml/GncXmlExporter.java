@@ -19,16 +19,15 @@ package org.gnucash.android.export.xml;
 
 import static org.gnucash.android.db.DatabaseSchema.SplitEntry;
 import static org.gnucash.android.db.DatabaseSchema.TransactionEntry;
-import static org.gnucash.android.db.adapter.AccountsDbAdapter.ROOT_ACCOUNT_NAME;
+import static org.gnucash.android.db.adapter.AccountsDbAdapter.TEMPLATE_ACCOUNT_NAME;
 import static org.gnucash.android.export.xml.GncXmlHelper.*;
+import static org.gnucash.android.importer.CommoditiesXmlHandler.SOURCE_CURRENCY;
 import static org.gnucash.android.math.MathExtKt.toBigDecimal;
-import static org.gnucash.android.model.Commodity.TEMPLATE;
-import static org.gnucash.android.util.ColorExtKt.formatHexRGB;
+import static org.gnucash.android.util.ColorExtKt.formatRGB;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.os.SystemClock;
-import android.provider.BaseColumns;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -50,6 +49,7 @@ import org.gnucash.android.model.PeriodType;
 import org.gnucash.android.model.Price;
 import org.gnucash.android.model.Recurrence;
 import org.gnucash.android.model.ScheduledAction;
+import org.gnucash.android.model.Slot;
 import org.gnucash.android.model.Transaction;
 import org.gnucash.android.model.TransactionType;
 import org.gnucash.android.model.WeekendAdjust;
@@ -158,40 +158,48 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.endTag(null, TAG_COUNT_DATA);
     }
 
-    private void writeSlots(XmlSerializer xmlSerializer,
-                            List<String> slotKey,
-                            List<String> slotType,
-                            List<String> slotValue) throws IOException {
-        if (slotKey == null || slotType == null || slotValue == null ||
-            slotKey.isEmpty() || slotType.size() != slotKey.size() || slotValue.size() != slotKey.size()) {
+    private void writeSlots(XmlSerializer xmlSerializer, List<Slot> slots) throws IOException {
+        if (slots == null || slots.isEmpty()) {
             return;
         }
 
-        final int length = slotKey.size();
+        final int length = slots.size();
         for (int i = 0; i < length; i++) {
-            xmlSerializer.startTag(null, TAG_SLOT);
-            xmlSerializer.startTag(null, TAG_SLOT_KEY);
-            xmlSerializer.text(slotKey.get(i));
-            xmlSerializer.endTag(null, TAG_SLOT_KEY);
-            xmlSerializer.startTag(null, TAG_SLOT_VALUE);
-            xmlSerializer.attribute(null, ATTR_KEY_TYPE, slotType.get(i));
-            xmlSerializer.text(slotValue.get(i));
-            xmlSerializer.endTag(null, TAG_SLOT_VALUE);
-            xmlSerializer.endTag(null, TAG_SLOT);
+            writeSlot(xmlSerializer, slots.get(i));
         }
+    }
+
+    private void writeSlot(XmlSerializer xmlSerializer, Slot slot) throws IOException {
+        xmlSerializer.startTag(null, TAG_SLOT);
+        xmlSerializer.startTag(null, TAG_SLOT_KEY);
+        xmlSerializer.text(slot.key);
+        xmlSerializer.endTag(null, TAG_SLOT_KEY);
+        xmlSerializer.startTag(null, TAG_SLOT_VALUE);
+        xmlSerializer.attribute(null, ATTR_KEY_TYPE, slot.type);
+        if (slot.value != null) {
+            if (slot.isDate()) {
+                xmlSerializer.startTag(null, TAG_GDATE);
+                xmlSerializer.text(formatDate(slot.getAsDate()));
+                xmlSerializer.endTag(null, TAG_GDATE);
+            } else if (slot.isFrame()) {
+                List<Slot> frame = slot.getAsFrame();
+                writeSlots(xmlSerializer, frame);
+            } else {
+                xmlSerializer.text(slot.toString());
+            }
+        }
+        xmlSerializer.endTag(null, TAG_SLOT_VALUE);
+        xmlSerializer.endTag(null, TAG_SLOT);
     }
 
     private void writeAccounts(XmlSerializer xmlSerializer) throws IOException {
-        Timber.i("export accounts");
-        // gnucash desktop requires that parent account appears before its descendants.
-        // sort by full-name to fulfill the request
-        List<Account> accounts = mAccountsDbAdapter.getSimpleAccountList(null, null, BaseColumns._ID);
-        for (Account account : accounts) {
-            writeAccount(xmlSerializer, account);
-        }
+        Timber.i("write accounts");
+        String rootUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
+        Account account = mAccountsDbAdapter.getSimpleRecord(rootUID);
+        writeAccount(xmlSerializer, account);
     }
 
-    private void writeAccount(XmlSerializer xmlSerializer, Account account) throws IOException {
+    private void writeAccount(XmlSerializer xmlSerializer, @NonNull Account account) throws IOException {
         if (listener != null && !account.isTemplate()) listener.onAccount(account);
         // write account
         xmlSerializer.startTag(null, TAG_ACCOUNT);
@@ -232,52 +240,38 @@ public class GncXmlExporter extends Exporter {
             xmlSerializer.endTag(null, TAG_ACCT_DESCRIPTION);
         }
         // account slots, color, placeholder, default transfer account, favorite
-        List<String> slotKey = new ArrayList<>();
-        List<String> slotType = new ArrayList<>();
-        List<String> slotValue = new ArrayList<>();
+        List<Slot> slots = new ArrayList<>();
 
         if (account.isPlaceholder()) {
-            slotKey.add(KEY_PLACEHOLDER);
-            slotType.add(ATTR_VALUE_STRING);
-            slotValue.add("true");
+            slots.add(new Slot(KEY_PLACEHOLDER, Slot.TYPE_STRING, "true"));
         }
 
         int color = account.getColor();
         if (color != Account.DEFAULT_COLOR) {
-            slotKey.add(KEY_COLOR);
-            slotType.add(ATTR_VALUE_STRING);
-            slotValue.add(formatHexRGB(color));
+            slots.add(new Slot(KEY_COLOR, Slot.TYPE_STRING, formatRGB(color)));
         }
 
         String defaultTransferAcctUID = account.getDefaultTransferAccountUID();
         if (!TextUtils.isEmpty(defaultTransferAcctUID)) {
-            slotKey.add(KEY_DEFAULT_TRANSFER_ACCOUNT);
-            slotType.add(ATTR_VALUE_STRING);
-            slotValue.add(defaultTransferAcctUID);
+            slots.add(new Slot(KEY_DEFAULT_TRANSFER_ACCOUNT, Slot.TYPE_STRING, defaultTransferAcctUID));
         }
 
         if (account.isFavorite()) {
-            slotKey.add(KEY_FAVORITE);
-            slotType.add(ATTR_VALUE_STRING);
-            slotValue.add("true");
+            slots.add(new Slot(KEY_FAVORITE, Slot.TYPE_STRING, "true"));
         }
 
         if (account.isHidden()) {
-            slotKey.add(KEY_HIDDEN);
-            slotType.add(ATTR_VALUE_STRING);
-            slotValue.add("true");
+            slots.add(new Slot(KEY_HIDDEN, Slot.TYPE_STRING, "true"));
         }
 
         String notes = account.getNote();
         if (!TextUtils.isEmpty(notes)) {
-            slotKey.add(KEY_NOTES);
-            slotType.add(ATTR_VALUE_STRING);
-            slotValue.add(notes);
+            slots.add(new Slot(KEY_NOTES, Slot.TYPE_STRING, notes));
         }
 
-        if (!slotKey.isEmpty()) {
+        if (!slots.isEmpty()) {
             xmlSerializer.startTag(null, TAG_ACCT_SLOTS);
-            writeSlots(xmlSerializer, slotKey, slotType, slotValue);
+            writeSlots(xmlSerializer, slots);
             xmlSerializer.endTag(null, TAG_ACCT_SLOTS);
         }
 
@@ -292,25 +286,12 @@ public class GncXmlExporter extends Exporter {
             Timber.d("root account : %s", account.getUID());
         }
         xmlSerializer.endTag(null, TAG_ACCOUNT);
-    }
 
-    /**
-     * Exports template accounts
-     * <p>Template accounts are just dummy accounts created for use with template transactions</p>
-     *
-     * @param xmlSerializer XML serializer
-     * @param accounts      List of template accounts
-     * @throws IOException if could not write XML to output stream
-     */
-    private void writeTemplateAccounts(XmlSerializer xmlSerializer, Collection<Account> accounts) throws IOException {
-        Commodity commodity = new Commodity(TEMPLATE, TEMPLATE, 1);
-        commodity.setNamespace(TEMPLATE);
-        commodity.setLocalSymbol(TEMPLATE);
-        commodity.setCusip(TEMPLATE);
-
-        for (Account account : accounts) {
-            account.setCommodity(commodity);
-            writeAccount(xmlSerializer, account);
+        // gnucash desktop requires that parent account appears before its descendants.
+        List<String> children = mAccountsDbAdapter.getChildren(account.getUID());
+        for (String childUID : children) {
+            Account child = mAccountsDbAdapter.getSimpleRecord(childUID);
+            writeAccount(xmlSerializer, child);
         }
     }
 
@@ -322,7 +303,7 @@ public class GncXmlExporter extends Exporter {
      * @throws IOException if the XML serializer cannot be written to
      */
     private void writeTransactions(XmlSerializer xmlSerializer, boolean isTemplates) throws IOException {
-        Timber.i("export transactions");
+        Timber.i("write transactions");
         String[] projection = new String[]{
             TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " AS trans_uid",
             TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_DESCRIPTION + " AS trans_desc",
@@ -332,6 +313,7 @@ public class GncXmlExporter extends Exporter {
             TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_COMMODITY_UID + " AS trans_commodity",
             TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_CREATED_AT + " AS trans_date_posted",
             TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_SCHEDX_ACTION_UID + " AS trans_from_sched_action",
+            SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_ID + " AS split_id",
             SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_UID + " AS split_uid",
             SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_MEMO + " AS split_memo",
             SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TYPE + " AS split_type",
@@ -347,8 +329,10 @@ public class GncXmlExporter extends Exporter {
         } else {
             where = TransactionEntry.COLUMN_TEMPLATE + "=0";
         }
-        String orderBy = TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " ASC , " +
-            TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TIMESTAMP + " ASC";
+        String orderBy = "trans_date_posted ASC"
+            + ", " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " ASC"
+            + ", " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TIMESTAMP + " ASC"
+            + ", " + "split_id ASC";
         final Cursor cursor = mTransactionsDbAdapter.fetchTransactionsWithSplits(projection, where, null, orderBy);
         if (!cursor.moveToFirst()) {
             cursor.close();
@@ -356,7 +340,7 @@ public class GncXmlExporter extends Exporter {
         }
 
         if (isTemplates) {
-            mRootTemplateAccount = new Account(ROOT_ACCOUNT_NAME);
+            mRootTemplateAccount = new Account(TEMPLATE_ACCOUNT_NAME, Commodity.template);
             mRootTemplateAccount.setAccountType(AccountType.ROOT);
             mTransactionToTemplateAccountMap.put(" ", mRootTemplateAccount);
 
@@ -364,7 +348,7 @@ public class GncXmlExporter extends Exporter {
             //this will allow use to maintain the template account GUID when we import from the desktop and also use the same for the splits
             do {
                 String txUID = cursor.getString(cursor.getColumnIndexOrThrow("trans_uid"));
-                Account account = new Account(BaseModel.generateUID());
+                Account account = new Account(BaseModel.generateUID(), Commodity.template);
                 account.setAccountType(AccountType.BANK);
                 mTransactionToTemplateAccountMap.put(txUID, account);
             } while (cursor.moveToNext());
@@ -410,7 +394,8 @@ public class GncXmlExporter extends Exporter {
                 xmlSerializer.endTag(null, TAG_COMMODITY_ID);
                 xmlSerializer.endTag(null, TAG_TRX_CURRENCY);
                 // date posted, time which user put on the transaction
-                String strDate = formatDateTime(cursor.getLong(cursor.getColumnIndexOrThrow("trans_time")));
+                long datePosted = cursor.getLong(cursor.getColumnIndexOrThrow("trans_time"));
+                String strDate = formatDateTime(datePosted);
                 xmlSerializer.startTag(null, TAG_DATE_POSTED);
                 xmlSerializer.startTag(null, TAG_TS_DATE);
                 xmlSerializer.text(strDate);
@@ -431,27 +416,25 @@ public class GncXmlExporter extends Exporter {
                 xmlSerializer.text(transaction.getDescription());
                 xmlSerializer.endTag(null, TAG_TRN_DESCRIPTION);
                 lastTrxUID = curTrxUID;
+
                 // slots
-                List<String> slotKey = new ArrayList<>();
-                List<String> slotType = new ArrayList<>();
-                List<String> slotValue = new ArrayList<>();
+                List<Slot> slots = new ArrayList<>();
+                slots.add(new Slot(ATTR_KEY_DATE_POSTED, Slot.TYPE_GDATE, datePosted));
 
                 String notes = cursor.getString(cursor.getColumnIndexOrThrow("trans_notes"));
                 if (!TextUtils.isEmpty(notes)) {
-                    slotKey.add(KEY_NOTES);
-                    slotType.add(ATTR_VALUE_STRING);
-                    slotValue.add(notes);
+                    slots.add(new Slot(KEY_NOTES, Slot.TYPE_STRING, notes));
                 }
 
                 String scheduledActionUID = cursor.getString(cursor.getColumnIndexOrThrow("trans_from_sched_action"));
                 if (!TextUtils.isEmpty(scheduledActionUID)) {
-                    slotKey.add(KEY_FROM_SCHED_ACTION);
-                    slotType.add(ATTR_VALUE_GUID);
-                    slotValue.add(scheduledActionUID);
+                    slots.add(new Slot(KEY_FROM_SCHED_ACTION, Slot.TYPE_GUID, scheduledActionUID));
                 }
-                xmlSerializer.startTag(null, TAG_TRN_SLOTS);
-                writeSlots(xmlSerializer, slotKey, slotType, slotValue);
-                xmlSerializer.endTag(null, TAG_TRN_SLOTS);
+                if (!slots.isEmpty()) {
+                    xmlSerializer.startTag(null, TAG_TRN_SLOTS);
+                    writeSlots(xmlSerializer, slots);
+                    xmlSerializer.endTag(null, TAG_TRN_SLOTS);
+                }
 
                 // splits start
                 xmlSerializer.startTag(null, TAG_TRN_SPLITS);
@@ -475,13 +458,13 @@ public class GncXmlExporter extends Exporter {
             xmlSerializer.endTag(null, TAG_RECONCILED_STATE);
             //todo: if split is reconciled, add reconciled date
             // value, in the transaction's currency
-            String trxType = cursor.getString(cursor.getColumnIndexOrThrow("split_type"));
-            int splitValueNum = cursor.getInt(cursor.getColumnIndexOrThrow("split_value_num"));
-            int splitValueDenom = cursor.getInt(cursor.getColumnIndexOrThrow("split_value_denom"));
+            TransactionType trxType = TransactionType.of(cursor.getString(cursor.getColumnIndexOrThrow("split_type")));
+            long splitValueNum = cursor.getLong(cursor.getColumnIndexOrThrow("split_value_num"));
+            long splitValueDenom = cursor.getLong(cursor.getColumnIndexOrThrow("split_value_denom"));
             BigDecimal splitAmount = toBigDecimal(splitValueNum, splitValueDenom);
             String strValue = "0/100";
             if (!isTemplates) { //when doing normal transaction export
-                strValue = (trxType.equals("CREDIT") ? "-" : "") + splitValueNum + "/" + splitValueDenom;
+                strValue = (trxType == TransactionType.CREDIT ? "-" : "") + splitValueNum + "/" + splitValueDenom;
             }
             xmlSerializer.startTag(null, TAG_SPLIT_VALUE);
             xmlSerializer.text(strValue);
@@ -489,8 +472,9 @@ public class GncXmlExporter extends Exporter {
             // quantity, in the split account's currency
             String splitQuantityNum = cursor.getString(cursor.getColumnIndexOrThrow("split_quantity_num"));
             String splitQuantityDenom = cursor.getString(cursor.getColumnIndexOrThrow("split_quantity_denom"));
+            strValue = "0/1";
             if (!isTemplates) {
-                strValue = (trxType.equals("CREDIT") ? "-" : "") + splitQuantityNum + "/" + splitQuantityDenom;
+                strValue = (trxType == TransactionType.CREDIT ? "-" : "") + splitQuantityNum + "/" + splitQuantityDenom;
             }
             xmlSerializer.startTag(null, TAG_SPLIT_QUANTITY);
             xmlSerializer.text(strValue);
@@ -519,30 +503,21 @@ public class GncXmlExporter extends Exporter {
                 xmlSerializer.startTag(null, TAG_SLOT_VALUE);
                 xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_FRAME);
 
-                List<String> slotKeys = new ArrayList<>();
-                List<String> slotTypes = new ArrayList<>();
-                List<String> slotValues = new ArrayList<>();
-                slotKeys.add(KEY_SPLIT_ACCOUNT_SLOT);
-                slotTypes.add(ATTR_VALUE_GUID);
-                slotValues.add(cursor.getString(cursor.getColumnIndexOrThrow("split_acct_uid")));
-                TransactionType type = TransactionType.valueOf(trxType);
-                if (type == TransactionType.CREDIT) {
-                    slotKeys.add(KEY_CREDIT_FORMULA);
-                    slotTypes.add(ATTR_VALUE_STRING);
-                    slotValues.add(formatTemplateSplitAmount(splitAmount));
-                    slotKeys.add(KEY_CREDIT_NUMERIC);
-                    slotTypes.add(ATTR_VALUE_NUMERIC);
-                    slotValues.add(formatSplitAmount(splitAmount, trnCommodity));
+                List<Slot> slots = new ArrayList<>();
+                slots.add(new Slot(KEY_SPLIT_ACCOUNT_SLOT, Slot.TYPE_GUID, splitAccountUID));
+                if (trxType == TransactionType.CREDIT) {
+                    slots.add(new Slot(KEY_CREDIT_FORMULA, Slot.TYPE_STRING, formatTemplateSplitAmount(splitAmount)));
+                    slots.add(new Slot(KEY_CREDIT_NUMERIC, Slot.TYPE_NUMERIC, formatNumeric(splitValueNum, splitValueDenom)));
+                    slots.add(new Slot(KEY_DEBIT_FORMULA, Slot.TYPE_STRING, ""));
+                    slots.add(new Slot(KEY_DEBIT_NUMERIC, Slot.TYPE_NUMERIC, "0/1"));
                 } else {
-                    slotKeys.add(KEY_DEBIT_FORMULA);
-                    slotTypes.add(ATTR_VALUE_STRING);
-                    slotValues.add(formatTemplateSplitAmount(splitAmount));
-                    slotKeys.add(KEY_DEBIT_NUMERIC);
-                    slotTypes.add(ATTR_VALUE_NUMERIC);
-                    slotValues.add(formatSplitAmount(splitAmount, trnCommodity));
+                    slots.add(new Slot(KEY_CREDIT_FORMULA, Slot.TYPE_STRING, ""));
+                    slots.add(new Slot(KEY_CREDIT_NUMERIC, Slot.TYPE_NUMERIC, "0/1"));
+                    slots.add(new Slot(KEY_DEBIT_FORMULA, Slot.TYPE_STRING, formatTemplateSplitAmount(splitAmount)));
+                    slots.add(new Slot(KEY_DEBIT_NUMERIC, Slot.TYPE_NUMERIC, formatNumeric(splitValueNum, splitValueDenom)));
                 }
 
-                writeSlots(xmlSerializer, slotKeys, slotTypes, slotValues);
+                writeSlots(xmlSerializer, slots);
 
                 xmlSerializer.endTag(null, TAG_SLOT_VALUE);
                 xmlSerializer.endTag(null, TAG_SLOT);
@@ -573,7 +548,7 @@ public class GncXmlExporter extends Exporter {
      * @throws IOException
      */
     private void writeScheduledTransactions(XmlSerializer xmlSerializer) throws IOException {
-        Timber.i("export scheduled transactions");
+        Timber.i("write scheduled transactions");
         List<ScheduledAction> actions = mScheduledActionDbAdapter.getRecords(ScheduledAction.ActionType.TRANSACTION);
         for (ScheduledAction scheduledAction : actions) {
             writeScheduledTransaction(xmlSerializer, scheduledAction);
@@ -583,16 +558,16 @@ public class GncXmlExporter extends Exporter {
     private void writeScheduledTransaction(XmlSerializer xmlSerializer, ScheduledAction scheduledAction) throws IOException {
         if (listener != null) listener.onSchedule(scheduledAction);
         String actionUID = scheduledAction.getActionUID();
-        Account accountUID = mTransactionToTemplateAccountMap.get(actionUID);
+        Account account = mTransactionToTemplateAccountMap.get(actionUID);
 
-        if (accountUID == null) //if the action UID does not belong to a transaction we've seen before, skip it
+        if (account == null) //if the action UID does not belong to a transaction we've seen before, skip it
             return;
 
         xmlSerializer.startTag(null, TAG_SCHEDULED_ACTION);
         xmlSerializer.attribute(null, ATTR_KEY_VERSION, BOOK_VERSION);
         xmlSerializer.startTag(null, TAG_SX_ID);
 
-        String nameUID = accountUID.getName();
+        String nameUID = account.getName();
         xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID);
         xmlSerializer.text(nameUID);
         xmlSerializer.endTag(null, TAG_SX_ID);
@@ -667,7 +642,7 @@ public class GncXmlExporter extends Exporter {
 
         xmlSerializer.startTag(null, TAG_SX_TEMPL_ACCOUNT);
         xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID);
-        xmlSerializer.text(accountUID.getUID());
+        xmlSerializer.text(account.getUID());
         xmlSerializer.endTag(null, TAG_SX_TEMPL_ACCOUNT);
 
         //// FIXME: 11.10.2015 Retrieve the information for this section from the recurrence table
@@ -698,20 +673,16 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.endTag(null, tag);
     }
 
-    private void writeCommodities(XmlSerializer xmlSerializer, Collection<Commodity> commodities) throws IOException {
-        Timber.i("export commodities");
+    private void writeCommodities(XmlSerializer xmlSerializer, List<Commodity> commodities) throws IOException {
+        Timber.i("write commodities");
         for (Commodity commodity : commodities) {
             writeCommodity(xmlSerializer, commodity);
         }
-
-        Commodity template = new Commodity(Commodity.TEMPLATE, Commodity.TEMPLATE, 1);
-        template.setNamespace(Commodity.TEMPLATE);
-        template.setCusip(Commodity.TEMPLATE);
-        writeCommodity(xmlSerializer, template);
+        writeCommodity(xmlSerializer, Commodity.template);
     }
 
     private void writeCommodities(XmlSerializer xmlSerializer) throws IOException {
-        Collection<Commodity> commodities = mAccountsDbAdapter.getCommoditiesInUse();
+        List<Commodity> commodities = mAccountsDbAdapter.getCommoditiesInUse();
         writeCommodities(xmlSerializer, commodities);
     }
 
@@ -725,25 +696,27 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.startTag(null, TAG_COMMODITY_ID);
         xmlSerializer.text(commodity.getCurrencyCode());
         xmlSerializer.endTag(null, TAG_COMMODITY_ID);
-        if (commodity.getFullname() != null && !commodity.isCurrency()) {
-            xmlSerializer.startTag(null, TAG_COMMODITY_NAME);
-            xmlSerializer.text(commodity.getFullname());
-            xmlSerializer.endTag(null, TAG_COMMODITY_NAME);
-        }
-        String cusip = commodity.getCusip();
-        if (!TextUtils.isEmpty(cusip)) {
-            try {
-                // "exchange-code is stored in ISIN/CUSIP"
-                Integer.parseInt(cusip);
-            } catch (NumberFormatException e) {
-                xmlSerializer.startTag(null, TAG_COMMODITY_XCODE);
-                xmlSerializer.text(cusip);
-                xmlSerializer.endTag(null, TAG_COMMODITY_XCODE);
+        if (!SOURCE_CURRENCY.equals(commodity.getQuoteSource())) {
+            if (!TextUtils.isEmpty(commodity.getFullname()) && !commodity.isCurrency()) {
+                xmlSerializer.startTag(null, TAG_COMMODITY_NAME);
+                xmlSerializer.text(commodity.getFullname());
+                xmlSerializer.endTag(null, TAG_COMMODITY_NAME);
             }
+            String cusip = commodity.getCusip();
+            if (!TextUtils.isEmpty(cusip)) {
+                try {
+                    // "exchange-code is stored in ISIN/CUSIP"
+                    Integer.parseInt(cusip);
+                } catch (NumberFormatException e) {
+                    xmlSerializer.startTag(null, TAG_COMMODITY_XCODE);
+                    xmlSerializer.text(cusip);
+                    xmlSerializer.endTag(null, TAG_COMMODITY_XCODE);
+                }
+            }
+            xmlSerializer.startTag(null, TAG_COMMODITY_FRACTION);
+            xmlSerializer.text(String.valueOf(commodity.getSmallestFraction()));
+            xmlSerializer.endTag(null, TAG_COMMODITY_FRACTION);
         }
-        xmlSerializer.startTag(null, TAG_COMMODITY_FRACTION);
-        xmlSerializer.text(String.valueOf(commodity.getSmallestFraction()));
-        xmlSerializer.endTag(null, TAG_COMMODITY_FRACTION);
         if (commodity.getQuoteFlag()) {
             xmlSerializer.startTag(null, TAG_COMMODITY_GET_QUOTES);
             xmlSerializer.endTag(null, TAG_COMMODITY_GET_QUOTES);
@@ -761,9 +734,10 @@ public class GncXmlExporter extends Exporter {
     }
 
     private void writePrices(XmlSerializer xmlSerializer) throws IOException {
-        Timber.i("export prices");
         List<Price> prices = mPricesDbAdapter.getAllRecords();
         if (prices.isEmpty()) return;
+
+        Timber.i("write prices");
         xmlSerializer.startTag(null, TAG_PRICEDB);
         xmlSerializer.attribute(null, ATTR_KEY_VERSION, "1");
         for (Price price : prices) {
@@ -862,7 +836,7 @@ public class GncXmlExporter extends Exporter {
     }
 
     private void writeBudgets(XmlSerializer xmlSerializer) throws IOException {
-        Timber.i("export budgets");
+        Timber.i("write budgets");
         Cursor cursor = mBudgetsDbAdapter.fetchAllRecords();
         while (cursor.moveToNext()) {
             Budget budget = mBudgetsDbAdapter.buildModelInstance(cursor);
@@ -897,6 +871,7 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.endTag(null, TAG_BUDGET_NUM_PERIODS);
         // budget recurrence
         xmlSerializer.startTag(null, TAG_BUDGET_RECURRENCE);
+        xmlSerializer.attribute(null, ATTR_KEY_VERSION, RECURRENCE_VERSION);
         writeRecurrence(xmlSerializer, budget.getRecurrence());
         xmlSerializer.endTag(null, TAG_BUDGET_RECURRENCE);
 
@@ -913,26 +888,21 @@ public class GncXmlExporter extends Exporter {
     }
 
     private void writeBudgetAmounts(XmlSerializer xmlSerializer, Budget budget) throws IOException {
-        List<String> slotKey = new ArrayList<>();
-        List<String> slotType = new ArrayList<>();
-        List<String> slotValue = new ArrayList<>();
+        List<Slot> slots = new ArrayList<>();
 
         for (String accountID : budget.getAccounts()) {
-            slotKey.clear();
-            slotType.clear();
-            slotValue.clear();
+            slots.clear();
 
             final long periodCount = budget.getNumberOfPeriods();
             for (long period = 0; period < periodCount; period++) {
                 BudgetAmount budgetAmount = budget.getBudgetAmount(accountID, period);
                 if (budgetAmount == null) continue;
                 Money amount = budgetAmount.getAmount();
-                slotKey.add(String.valueOf(period));
-                slotType.add(ATTR_VALUE_NUMERIC);
-                slotValue.add(amount.getNumerator() + "/" + amount.getDenominator());
+                if (amount.isAmountZero()) continue;
+                slots.add(new Slot(String.valueOf(period), Slot.TYPE_NUMERIC, formatNumeric(amount)));
             }
 
-            if (slotKey.isEmpty()) continue;
+            if (slots.isEmpty()) continue;
 
             xmlSerializer.startTag(null, TAG_SLOT);
             xmlSerializer.startTag(null, TAG_SLOT_KEY);
@@ -940,54 +910,37 @@ public class GncXmlExporter extends Exporter {
             xmlSerializer.endTag(null, TAG_SLOT_KEY);
             xmlSerializer.startTag(null, TAG_SLOT_VALUE);
             xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_FRAME);
-            writeSlots(xmlSerializer, slotKey, slotType, slotValue);
+            writeSlots(xmlSerializer, slots);
             xmlSerializer.endTag(null, TAG_SLOT_VALUE);
             xmlSerializer.endTag(null, TAG_SLOT);
         }
     }
 
     private void writeBudgetNotes(XmlSerializer xmlSerializer, Budget budget) throws IOException {
-        List<String> slotKey = new ArrayList<>();
-        List<String> slotType = new ArrayList<>();
-        List<String> slotValue = new ArrayList<>();
-
-        xmlSerializer.startTag(null, TAG_SLOT);
-        xmlSerializer.startTag(null, TAG_SLOT_KEY);
-        xmlSerializer.text(KEY_NOTES);
-        xmlSerializer.endTag(null, TAG_SLOT_KEY);
-        xmlSerializer.startTag(null, TAG_SLOT_VALUE);
-        xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_FRAME);
+        List<Slot> notes = new ArrayList<>();
 
         for (String accountID : budget.getAccounts()) {
-            slotKey.clear();
-            slotType.clear();
-            slotValue.clear();
+            List<Slot> frame = new ArrayList<>();
 
             final long periodCount = budget.getNumberOfPeriods();
             for (long period = 0; period < periodCount; period++) {
                 BudgetAmount budgetAmount = budget.getBudgetAmount(accountID, period);
                 if (budgetAmount == null) continue;
-                String notes = budgetAmount.getNotes();
-                if (TextUtils.isEmpty(notes)) continue;
-                slotKey.add(String.valueOf(period));
-                slotType.add(ATTR_VALUE_STRING);
-                slotValue.add(notes);
+                String note = budgetAmount.getNotes();
+                if (TextUtils.isEmpty(note)) continue;
+                frame.add(new Slot(String.valueOf(period), Slot.TYPE_STRING, note));
             }
 
-            if (slotKey.isEmpty()) continue;
-            xmlSerializer.startTag(null, TAG_SLOT);
-            xmlSerializer.startTag(null, TAG_SLOT_KEY);
-            xmlSerializer.text(accountID);
-            xmlSerializer.endTag(null, TAG_SLOT_KEY);
-            xmlSerializer.startTag(null, TAG_SLOT_VALUE);
-            xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_FRAME);
-            writeSlots(xmlSerializer, slotKey, slotType, slotValue);
-            xmlSerializer.endTag(null, TAG_SLOT_VALUE);
-            xmlSerializer.endTag(null, TAG_SLOT);
+            if (!frame.isEmpty()) {
+                notes.add(new Slot(accountID, Slot.TYPE_FRAME, frame));
+            }
         }
 
-        xmlSerializer.endTag(null, TAG_SLOT_VALUE);
-        xmlSerializer.endTag(null, TAG_SLOT);
+        if (!notes.isEmpty()) {
+            List<Slot> slots = new ArrayList<>();
+            slots.add(new Slot(KEY_NOTES, Slot.TYPE_FRAME, notes));
+            writeSlots(xmlSerializer, slots);
+        }
     }
 
     /**

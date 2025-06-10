@@ -142,10 +142,10 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
             }
 
             if (didChange) {
-                long deleted = mDb.delete(SplitEntry.TABLE_NAME,
-                    SplitEntry.COLUMN_TRANSACTION_UID + " = ? AND "
-                        + SplitEntry.COLUMN_UID + " NOT IN ('" + TextUtils.join("','", splitUIDs) + "')",
-                    new String[]{transaction.getUID()});
+                String deleteWhere = SplitEntry.COLUMN_TRANSACTION_UID + " = ? AND "
+                    + SplitEntry.COLUMN_UID + " NOT IN ('" + TextUtils.join("','", splitUIDs) + "')";
+                String[] deleteArgs = new String[]{transaction.getUID()};
+                long deleted = mDb.delete(SplitEntry.TABLE_NAME, deleteWhere, deleteArgs);
                 Timber.d("%d splits deleted", deleted);
             }
 
@@ -327,12 +327,11 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
     }
 
     public Cursor fetchTransactionsWithSplits(String[] columns, @Nullable String where, @Nullable String[] whereArgs, @Nullable String orderBy) {
-        return mDb.query(TransactionEntry.TABLE_NAME + " , " + SplitEntry.TABLE_NAME +
-                " ON " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID +
-                " = " + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID +
-                " , trans_extra_info ON trans_extra_info.trans_acct_t_uid = " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID,
-            columns, where, whereArgs, null, null,
-            orderBy);
+        String table = TransactionEntry.TABLE_NAME + ", " + SplitEntry.TABLE_NAME +
+            " ON " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID +
+            " = " + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID +
+            ", trans_extra_info ON trans_extra_info.trans_acct_t_uid = " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID;
+        return mDb.query(table, columns, where, whereArgs, null, null, orderBy);
     }
 
     /**
@@ -584,13 +583,16 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
             null, null, null, null, null);
 
         Timestamp timestamp = TimestampHelper.getTimestampFromNow();
-        if (cursor.moveToFirst()) {
-            String timeString = cursor.getString(0);
-            if (timeString != null) { //in case there were no transactions in the XML file (account structure only)
-                timestamp = TimestampHelper.getTimestampFromUtcString(timeString);
+        try {
+            if (cursor.moveToFirst()) {
+                String timeString = cursor.getString(0);
+                if (timeString != null) { //in case there were no transactions in the XML file (account structure only)
+                    timestamp = TimestampHelper.getTimestampFromUtcString(timeString);
+                }
             }
+        } finally {
+            cursor.close();
         }
-        cursor.close();
         return timestamp;
     }
 
@@ -618,10 +620,11 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
             + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TEMPLATE + " = 0";
         Cursor cursor = mDb.rawQuery(sql, new String[]{type.name(), commodityUID});
         long timestamp = 0;
-        if (cursor != null) {
+        try {
             if (cursor.moveToFirst()) {
                 timestamp = cursor.getLong(0);
             }
+        } finally {
             cursor.close();
         }
         return timestamp;

@@ -105,7 +105,7 @@ class Account : BaseModel {
     @JvmOverloads
     constructor(name: String, commodity: Commodity = Commodity.DEFAULT_COMMODITY) {
         this.name = name
-        fullName = this.name
+        this.fullName = this.name
         this.commodity = commodity
     }
 

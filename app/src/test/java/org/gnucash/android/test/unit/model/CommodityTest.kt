@@ -26,7 +26,7 @@ import org.junit.Test
 class CommodityTest : GnuCashTest() {
     @Test
     fun setSmallestFraction_shouldNotUseDigits() {
-        val commodity = Commodity("Test", "USD", 100)
+        val commodity = Commodity("Test", "USD")
         assertThat(commodity.smallestFraction).isEqualTo(100)
 
         commodity.smallestFraction = 1000
@@ -35,7 +35,7 @@ class CommodityTest : GnuCashTest() {
 
     @Test
     fun testSmallestFractionDigits() {
-        val commodity = Commodity("Test", "USD", 100)
+        val commodity = Commodity("Test", "USD")
         assertThat(commodity.smallestFractionDigits).isEqualTo(2)
 
         commodity.smallestFraction = 10

@@ -37,7 +37,7 @@ class ScheduledAction    //all actions are enabled by default
     /**
      * Type of event being scheduled
      */
-    var actionType: ActionType
+    var actionType: ActionType = ActionType.TRANSACTION
 ) : BaseModel() {
 
     private var _startDate: Long = 0

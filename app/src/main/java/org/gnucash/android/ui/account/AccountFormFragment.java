@@ -153,7 +153,7 @@ public class AccountFormFragment extends MenuFragment implements FragmentResultL
         mUseDoubleEntry = GnuCashApplication.isDoubleEntryEnabled(context);
         String accountUID = getArguments().getString(UxArgument.SELECTED_ACCOUNT_UID);
         mParentAccountUID = getArguments().getString(UxArgument.PARENT_ACCOUNT_UID);
-        mRootAccountUID = mAccountsDbAdapter.getOrCreateGnuCashRootAccountUID();
+        mRootAccountUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
 
         mAccountsDbAdapter = AccountsDbAdapter.getInstance();
         accountNameAdapter = new QualifiedAccountNameAdapter(context, null, null, mAccountsDbAdapter);

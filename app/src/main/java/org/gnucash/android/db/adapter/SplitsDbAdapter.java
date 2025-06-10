@@ -165,8 +165,9 @@ public class SplitsDbAdapter extends DatabaseAdapter<Split> {
         split.setType(TransactionType.valueOf(typeName));
         split.setMemo(memo);
         split.setReconcileState(reconcileState.charAt(0));
-        if (reconcileDate != null && !reconcileDate.isEmpty())
+        if (reconcileDate != null && !reconcileDate.isEmpty()) {
             split.setReconcileDate(TimestampHelper.getTimestampFromUtcString(reconcileDate));
+        }
 
         return split;
     }
@@ -276,7 +277,7 @@ public class SplitsDbAdapter extends DatabaseAdapter<Split> {
         Timber.v("Fetching all splits for transaction UID %s", transactionUID);
         String where = SplitEntry.COLUMN_TRANSACTION_UID + " = ?";
         String[] whereArgs = new String[]{transactionUID};
-        String orderBy = SplitEntry.COLUMN_TYPE + " ASC";
+        String orderBy = SplitEntry.COLUMN_ID + " ASC";
         return mDb.query(mTableName, null, where, whereArgs, null, null, orderBy);
     }
 

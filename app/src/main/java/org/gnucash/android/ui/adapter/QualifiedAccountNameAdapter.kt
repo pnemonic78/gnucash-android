@@ -158,7 +158,7 @@ class QualifiedAccountNameAdapter @JvmOverloads constructor(
         val where = where ?: WHERE_NO_ROOT
         val orderBy =
             AccountEntry.COLUMN_FAVORITE + " DESC, " + AccountEntry.COLUMN_FULL_NAME + " ASC"
-        return adapter.getSimpleAccountList(where, whereArgs, orderBy)
+        return adapter.getSimpleAccounts(where, whereArgs, orderBy)
     }
 
     data class Label(val account: Account) {
