@@ -24,10 +24,10 @@ import javax.xml.parsers.SAXParser
 import javax.xml.parsers.SAXParserFactory
 
 abstract class BookHelperTest : GnuCashTest() {
-    private var importedHolder: DatabaseHolder? = null
+    protected var importedHolder: DatabaseHolder? = null
     protected lateinit var booksDbAdapter: BooksDbAdapter
 
-        protected lateinit var transactionsDbAdapter: TransactionsDbAdapter
+    protected lateinit var transactionsDbAdapter: TransactionsDbAdapter
     protected lateinit var accountsDbAdapter: AccountsDbAdapter
     protected lateinit var scheduledActionDbAdapter: ScheduledActionDbAdapter
     protected lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
