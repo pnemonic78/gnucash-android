@@ -40,7 +40,6 @@ import org.gnucash.android.export.Exporter;
 import org.gnucash.android.gnc.GncProgressListener;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.AccountType;
-import org.gnucash.android.model.BaseModel;
 import org.gnucash.android.model.Book;
 import org.gnucash.android.model.Budget;
 import org.gnucash.android.model.BudgetAmount;
@@ -48,7 +47,6 @@ import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
 import org.gnucash.android.model.PeriodType;
 import org.gnucash.android.model.Price;
-import org.gnucash.android.model.PriceType;
 import org.gnucash.android.model.Recurrence;
 import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.model.Slot;
@@ -65,7 +63,6 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -85,7 +82,6 @@ public class GncXmlExporter extends Exporter {
      * Root account for template accounts
      */
     private Account mRootTemplateAccount;
-    private final Map<String, Account> mTransactionToTemplateAccountMap = new TreeMap<>();
     @Nullable
     private final GncProgressListener listener;
 
@@ -194,22 +190,21 @@ public class GncXmlExporter extends Exporter {
 
     private void writeAccounts(XmlSerializer xmlSerializer, boolean isTemplate) throws IOException {
         Timber.i("export accounts. template: %s", isTemplate);
-        final String rootUID;
         if (isTemplate) {
             Account account = getRootTemplateAccount();
             if (account == null) {
                 Timber.i("No template root account found!");
                 return;
             }
-            rootUID = account.getUID();
+            writeAccount(xmlSerializer, account);
         } else {
-            rootUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
+            final String rootUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
             if (TextUtils.isEmpty(rootUID)) {
                 throw new ExporterException(mExportParams, "No root account found!");
             }
+            Account account = mAccountsDbAdapter.getSimpleRecord(rootUID);
+            writeAccount(xmlSerializer, account);
         }
-        Account account = mAccountsDbAdapter.getSimpleRecord(rootUID);
-        writeAccount(xmlSerializer, account);
     }
 
     private void writeAccount(XmlSerializer xmlSerializer, @NonNull Account account) throws IOException {
@@ -353,26 +348,6 @@ public class GncXmlExporter extends Exporter {
             return;
         }
 
-        if (isTemplates) {
-            mRootTemplateAccount = new Account(TEMPLATE_ACCOUNT_NAME, Commodity.template);
-            mRootTemplateAccount.setAccountType(AccountType.ROOT);
-            mTransactionToTemplateAccountMap.put("", mRootTemplateAccount);
-
-            //FIXME: Retrieve the template account GUIDs from the scheduled action table and create accounts with that
-            //this will allow use to maintain the template account GUID when we import from the desktop and also use the same for the splits
-            do {
-                String txUID = cursor.getString(cursor.getColumnIndexOrThrow("trans_uid"));
-                Account account = new Account(BaseModel.generateUID(), Commodity.template);
-                account.setAccountType(AccountType.BANK);
-                account.setParentUID(mRootTemplateAccount.getUID());
-                mTransactionToTemplateAccountMap.put(txUID, account);
-            } while (cursor.moveToNext());
-
-            writeTemplateAccounts(xmlSerializer, mTransactionToTemplateAccountMap.values());
-            //push cursor back to before the beginning
-            cursor.moveToFirst();
-        }
-
         //// FIXME: 12.10.2015 export split reconciled_state and reconciled_date to the export
         String lastTrxUID = "";
         Commodity trnCommodity = null;
@@ -500,12 +475,6 @@ public class GncXmlExporter extends Exporter {
             xmlSerializer.startTag(null, TAG_SPLIT_ACCOUNT);
             xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID);
             String splitAccountUID = cursor.getString(cursor.getColumnIndexOrThrow("split_acct_uid"));
-            if (isTemplates) {
-                //get the UID of the template account
-                splitAccountUID = mTransactionToTemplateAccountMap.get(curTrxUID).getUID();
-            } else {
-                splitAccountUID = cursor.getString(cursor.getColumnIndexOrThrow("split_acct_uid"));
-            }
             xmlSerializer.text(splitAccountUID);
             xmlSerializer.endTag(null, TAG_SPLIT_ACCOUNT);
 
@@ -546,16 +515,10 @@ public class GncXmlExporter extends Exporter {
         cursor.close();
     }
 
-    private void writeTemplateAccounts(XmlSerializer xmlSerializer, Collection<Account> accounts) throws IOException {
-        for (Account account : accounts) {
-            writeAccount(xmlSerializer, account);
-        }
-    }
-
     private void writeTemplateTransactions(XmlSerializer xmlSerializer) throws IOException {
         if (mTransactionsDbAdapter.getTemplateTransactionsCount() > 0) {
             xmlSerializer.startTag(null, TAG_TEMPLATE_TRANSACTIONS);
-            //TODO writeAccounts(xmlSerializer, true);
+            writeAccounts(xmlSerializer, true);
             writeTransactions(xmlSerializer, true);
             xmlSerializer.endTag(null, TAG_TEMPLATE_TRANSACTIONS);
         }
@@ -587,8 +550,12 @@ public class GncXmlExporter extends Exporter {
             }
         }
         if (account == null) {
-            account = mTransactionToTemplateAccountMap.get(actionUID);
-            uid = account.getName();
+            String where = AccountEntry.COLUMN_NAME + "=?";
+            String[] whereArgs = new String[]{uid};
+            List<Account> accounts = mAccountsDbAdapter.getSimpleAccounts(where, whereArgs, null);
+            if (!accounts.isEmpty()) {
+                account = accounts.get(0);
+            }
         }
         if (account == null) { //if the action UID does not belong to a transaction we've seen before, skip it
             return;
@@ -604,7 +571,7 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.text(uid);
         xmlSerializer.endTag(null, TAG_SX_ID);
 
-        String name = null;
+        String name = scheduledAction.getName();
         if (name == null) {
             if (actionType == ScheduledAction.ActionType.TRANSACTION) {
                 String transactionUID = actionUID;
@@ -621,21 +588,20 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.text(scheduledAction.isEnabled() ? "y" : "n");
         xmlSerializer.endTag(null, TAG_SX_ENABLED);
         xmlSerializer.startTag(null, TAG_SX_AUTO_CREATE);
-        xmlSerializer.text(scheduledAction.shouldAutoCreate() ? "y" : "n");
+        xmlSerializer.text(scheduledAction.isAutoCreate() ? "y" : "n");
         xmlSerializer.endTag(null, TAG_SX_AUTO_CREATE);
         xmlSerializer.startTag(null, TAG_SX_AUTO_CREATE_NOTIFY);
-        xmlSerializer.text(scheduledAction.shouldAutoNotify() ? "y" : "n");
+        xmlSerializer.text(scheduledAction.isAutoCreateNotify() ? "y" : "n");
         xmlSerializer.endTag(null, TAG_SX_AUTO_CREATE_NOTIFY);
         xmlSerializer.startTag(null, TAG_SX_ADVANCE_CREATE_DAYS);
         xmlSerializer.text(Integer.toString(scheduledAction.getAdvanceCreateDays()));
         xmlSerializer.endTag(null, TAG_SX_ADVANCE_CREATE_DAYS);
         xmlSerializer.startTag(null, TAG_SX_ADVANCE_REMIND_DAYS);
-        xmlSerializer.text(Integer.toString(scheduledAction.getAdvanceNotifyDays()));
+        xmlSerializer.text(Integer.toString(scheduledAction.getAdvanceRemindDays()));
         xmlSerializer.endTag(null, TAG_SX_ADVANCE_REMIND_DAYS);
         xmlSerializer.startTag(null, TAG_SX_INSTANCE_COUNT);
         String scheduledActionUID = scheduledAction.getUID();
-        long instanceCount = mScheduledActionDbAdapter.getActionInstanceCount(scheduledActionUID);
-        xmlSerializer.text(Long.toString(instanceCount));
+        xmlSerializer.text(Integer.toString(scheduledAction.getInstanceCount()));
         xmlSerializer.endTag(null, TAG_SX_INSTANCE_COUNT);
 
         //start date
@@ -647,24 +613,24 @@ public class GncXmlExporter extends Exporter {
             writeDate(xmlSerializer, TAG_SX_LAST, lastRunTime);
         }
 
-        long endTime = scheduledAction.getEndTime();
+        long endTime = scheduledAction.getEndDate();
         if (endTime > 0) {
             //end date
             writeDate(xmlSerializer, TAG_SX_END, endTime);
-        } else { //add number of occurrences
-            int totalFrequency = scheduledAction.getTotalPlannedExecutionCount();
-            if (totalFrequency > 0) {
+        } else {
+            //add total number of occurrences
+            int totalPlannedCount = scheduledAction.getTotalPlannedExecutionCount();
+            if (totalPlannedCount > 0) {
                 xmlSerializer.startTag(null, TAG_SX_NUM_OCCUR);
-                xmlSerializer.text(Integer.toString(totalFrequency));
+                xmlSerializer.text(Integer.toString(totalPlannedCount));
                 xmlSerializer.endTag(null, TAG_SX_NUM_OCCUR);
             }
 
             //remaining occurrences
-            int executionCount = scheduledAction.getExecutionCount();
-            int remaining = totalFrequency - executionCount;
-            if (remaining > 0) {
+            int remainingCount = totalPlannedCount - scheduledAction.getInstanceCount();
+            if (remainingCount > 0) {
                 xmlSerializer.startTag(null, TAG_SX_REM_OCCUR);
-                xmlSerializer.text(Integer.toString(remaining));
+                xmlSerializer.text(Integer.toString(remainingCount));
                 xmlSerializer.endTag(null, TAG_SX_REM_OCCUR);
             }
         }
@@ -829,8 +795,8 @@ public class GncXmlExporter extends Exporter {
             xmlSerializer.endTag(null, TAG_PRICE_SOURCE);
         }
         // type, optional
-        PriceType type = price.getType();
-        if (type != PriceType.Unknown) {
+        Price.Type type = price.getType();
+        if (type != Price.Type.Unknown) {
             xmlSerializer.startTag(null, TAG_PRICE_TYPE);
             xmlSerializer.text(type.getValue());
             xmlSerializer.endTag(null, TAG_PRICE_TYPE);
@@ -1089,19 +1055,24 @@ public class GncXmlExporter extends Exporter {
         if (account != null) {
             return account;
         }
-        Commodity commodity = mCommoditiesDbAdapter.getCommodity(TEMPLATE);
-        final String where;
-        final String[] whereArgs;
-        if (commodity != null) {
-            where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_COMMODITY_UID + "=?";
-            whereArgs = new String[]{AccountType.ROOT.name(), commodity.getUID()};
-        } else {
-            where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_NAME + "=?";
-            whereArgs = new String[]{AccountType.ROOT.name(), TEMPLATE_ACCOUNT_NAME};
-        }
+        String where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_TEMPLATE + "=1";
+        String[] whereArgs = new String[]{AccountType.ROOT.name()};
         List<Account> accounts = mAccountsDbAdapter.getSimpleAccounts(where, whereArgs, null);
         if (accounts.isEmpty()) {
-            return null;
+            Commodity commodity = mCommoditiesDbAdapter.getCommodity(TEMPLATE);
+            if (commodity != null) {
+                where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_COMMODITY_UID + "=?";
+                whereArgs = new String[]{AccountType.ROOT.name(), commodity.getUID()};
+            } else {
+                where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_NAME + "=?";
+                whereArgs = new String[]{AccountType.ROOT.name(), TEMPLATE_ACCOUNT_NAME};
+            }
+            accounts = mAccountsDbAdapter.getSimpleAccounts(where, whereArgs, null);
+            if (accounts.isEmpty()) {
+                mRootTemplateAccount = account = new Account(TEMPLATE_ACCOUNT_NAME, Commodity.template);
+                account.setAccountType(AccountType.ROOT);
+                return account;
+            }
         }
         mRootTemplateAccount = account = accounts.get(0);
         return account;

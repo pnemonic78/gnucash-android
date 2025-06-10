@@ -7,6 +7,7 @@ import java.math.MathContext
 import java.sql.Timestamp
 import java.text.DecimalFormat
 import java.text.NumberFormat
+import java.util.Locale
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.max
@@ -19,7 +20,7 @@ class Price : BaseModel {
     var currency: Commodity
     var date: Timestamp = TimestampHelper.getTimestampFromNow()
     var source: String? = null
-    var type: PriceType = PriceType.Unknown
+    var type: Type = Type.Unknown
 
     constructor() : this(Commodity.DEFAULT_COMMODITY, Commodity.DEFAULT_COMMODITY)
 
@@ -170,6 +171,45 @@ class Price : BaseModel {
                 && this.currency.equals(other.currency)
                 && this.valueNum.equals(other.valueNum)
                 && this.valueDenom.equals(other.valueDenom)
+    }
+
+    /**
+     * One of:
+     * Bid (the market buying price),
+     * Ask (the market selling price),
+     * Last (the last transaction price),
+     * Net Asset Value (mutual fund price per share, NAV for short),
+     * or Unknown.
+     *
+     * Stocks and currencies will usually give their quotes as one of bid, ask or last.
+     * Mutual funds are often given as net asset value.
+     * For other commodities, simply choose Unknown.
+     * This option is for informational purposes only, it is not used by GnuCash.
+     */
+    enum class Type(val value: String) {
+        /** the market buying price */
+        Bid("bid"),
+
+        /** Ask (the market selling price) */
+        Ask("ask"),
+
+        /** Last (the last transaction price) */
+        Last("last"),
+
+        /** Net Asset Value (mutual fund price per share, NAV for short) */
+        NetAssetValue("nav"),
+
+        Unknown("unknown");
+
+        companion object {
+            private val values = Type.values()
+
+            @JvmStatic
+            fun of(key: String?): Type {
+                val value = key?.uppercase(Locale.ROOT) ?: return Unknown
+                return values.firstOrNull { it.value == value } ?: Unknown
+            }
+        }
     }
 
     companion object {

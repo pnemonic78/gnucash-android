@@ -158,7 +158,7 @@ public abstract class Exporter {
         mAccountsDbAdapter = new AccountsDbAdapter(mTransactionsDbAdapter, mPricesDbAdapter);
         RecurrenceDbAdapter recurrenceDbAdapter = new RecurrenceDbAdapter(holder);
         mBudgetsDbAdapter = new BudgetsDbAdapter(recurrenceDbAdapter);
-        mScheduledActionDbAdapter = new ScheduledActionDbAdapter(recurrenceDbAdapter);
+        mScheduledActionDbAdapter = new ScheduledActionDbAdapter(recurrenceDbAdapter, mTransactionsDbAdapter);
 
         exportCacheFile = null;
         mCacheDir = new File(context.getCacheDir(), params.getExportFormat().name());

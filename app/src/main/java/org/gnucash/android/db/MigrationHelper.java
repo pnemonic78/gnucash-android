@@ -102,6 +102,9 @@ public class MigrationHelper {
         if (oldVersion < 24) {
             migrateTo24(db);
         }
+        if (oldVersion < 25) {
+            migrateTo25(db);
+        }
     }
 
     /**
@@ -299,5 +302,18 @@ public class MigrationHelper {
                 " ADD COLUMN " + SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID + " varchar(255)";
             db.execSQL(sqlAddSchedxActionAccount);
         }
+    }
+
+    /**
+     * Upgrade the database to version 25.
+     *
+     * @param db the database.
+     */
+    private static void migrateTo25(@NonNull SQLiteDatabase db) {
+        Timber.i("Upgrading database to version 25");
+
+        String sqlActionName = "ALTER TABLE " + ScheduledActionEntry.TABLE_NAME +
+            " ADD COLUMN " + ScheduledActionEntry.COLUMN_NAME + " varchar(255)";
+        db.execSQL(sqlActionName);
     }
 }

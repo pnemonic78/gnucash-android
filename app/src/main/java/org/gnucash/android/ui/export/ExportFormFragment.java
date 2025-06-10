@@ -72,7 +72,6 @@ import org.gnucash.android.export.ExportAsyncTask;
 import org.gnucash.android.export.ExportFormat;
 import org.gnucash.android.export.ExportParams;
 import org.gnucash.android.export.Exporter;
-import org.gnucash.android.model.BaseModel;
 import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.ui.common.UxArgument;
 import org.gnucash.android.ui.passcode.PasscodeHelper;
@@ -368,7 +367,7 @@ public class ExportFormFragment extends MenuFragment implements
             DatabaseAdapter.UpdateMethod updateMethod = DatabaseAdapter.UpdateMethod.replace;
             ScheduledAction scheduledAction = mScheduledAction;
             if (scheduledAction == null) {
-                scheduledAction = new ScheduledAction(ScheduledAction.ActionType.BACKUP);
+                scheduledAction = new ScheduledAction(ScheduledAction.ActionType.EXPORT);
                 scheduledAction.setActionUID(bookUID);
                 updateMethod = DatabaseAdapter.UpdateMethod.insert;
             }

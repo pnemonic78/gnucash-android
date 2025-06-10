@@ -29,8 +29,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
@@ -317,20 +315,6 @@ public abstract class GncXmlHelper {
 
         String numerator = TransactionFormFragment.stripCurrencyFormatting(amount.multiply(denom).stripTrailingZeros().toPlainString());
         return numerator + "/" + denomString;
-    }
-
-    /**
-     * Format the amount in template transaction splits.
-     * <p>GnuCash desktop always formats with a locale dependent format, and that varies per user.<br>
-     * So we will use the device locale here and hope that the user has the same locale on the desktop GnuCash</p>
-     *
-     * @param amount Amount to be formatted
-     * @return String representation of amount
-     */
-    @Deprecated
-    public static String formatTemplateSplitAmount(BigDecimal amount) {
-        //TODO: If we ever implement an application-specific locale setting, use it here as well
-        return NumberFormat.getNumberInstance().format(amount);
     }
 
     public static String formatFormula(BigDecimal amount, Commodity commodity) {

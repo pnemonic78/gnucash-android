@@ -240,7 +240,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         child = accountsDbAdapter.getRecord(child.uid)
         parent = accountsDbAdapter.getRecord(parent.uid)
 
-        assertThat(accountsDbAdapter.getSubAccountCount(parent.uid)).isEqualTo(1)
+        assertThat(accountsDbAdapter.getSubAccountCount(parent.uid)).isOne()
         assertThat(parent.uid).isEqualTo(child.parentUID)
 
         assertThat(child.fullName).isEqualTo("Test:Child")
@@ -277,7 +277,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         accountsDbAdapter.addRecord(account)
         accountsDbAdapter.addRecord(account2)
 
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.BACKUP)
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
         scheduledAction.actionUID = "Test-uid"
         scheduledAction.setRecurrence(Recurrence(PeriodType.WEEK))
         val scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance()

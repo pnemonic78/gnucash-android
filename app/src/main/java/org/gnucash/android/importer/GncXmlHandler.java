@@ -51,7 +51,6 @@ import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
 import org.gnucash.android.model.PeriodType;
 import org.gnucash.android.model.Price;
-import org.gnucash.android.model.PriceType;
 import org.gnucash.android.model.Recurrence;
 import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.model.Slot;
@@ -269,7 +268,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
         mTransactionsDbAdapter = new TransactionsDbAdapter(mCommoditiesDbAdapter);
         mAccountsDbAdapter = new AccountsDbAdapter(mTransactionsDbAdapter, mPricesDbAdapter);
         RecurrenceDbAdapter recurrenceDbAdapter = new RecurrenceDbAdapter(holder);
-        mScheduledActionsDbAdapter = new ScheduledActionDbAdapter(recurrenceDbAdapter);
+        mScheduledActionsDbAdapter = new ScheduledActionDbAdapter(recurrenceDbAdapter, mTransactionsDbAdapter);
         mBudgetsDbAdapter = new BudgetsDbAdapter(recurrenceDbAdapter);
 
         Timber.d("before clean up db");
@@ -735,10 +734,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 mScheduledAction.setUID(characterString);
                 break;
             case TAG_SX_NAME:
-                if (characterString.equals(ScheduledAction.ActionType.BACKUP.name()))
-                    mScheduledAction.setActionType(ScheduledAction.ActionType.BACKUP);
-                else
-                    mScheduledAction.setActionType(ScheduledAction.ActionType.TRANSACTION);
+                mScheduledAction.setName(characterString);
                 break;
             case TAG_SX_ENABLED:
                 mScheduledAction.setEnabled(characterString.equals("y"));
@@ -747,16 +743,16 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 mScheduledAction.setAutoCreate(characterString.equals("y"));
                 break;
             case TAG_SX_AUTO_CREATE_NOTIFY:
-                mScheduledAction.setAutoNotify(characterString.equals("y"));
+                mScheduledAction.setAutoCreateNotify(characterString.equals("y"));
                 break;
             case TAG_SX_ADVANCE_CREATE_DAYS:
                 mScheduledAction.setAdvanceCreateDays(Integer.parseInt(characterString));
                 break;
             case TAG_SX_ADVANCE_REMIND_DAYS:
-                mScheduledAction.setAdvanceNotifyDays(Integer.parseInt(characterString));
+                mScheduledAction.setAdvanceRemindDays(Integer.parseInt(characterString));
                 break;
             case TAG_SX_INSTANCE_COUNT:
-                mScheduledAction.setExecutionCount(Integer.parseInt(characterString));
+                mScheduledAction.setInstanceCount(Integer.parseInt(characterString));
                 break;
             //todo: export auto_notify, advance_create, advance_notify
             case TAG_SX_NUM_OCCUR:
@@ -793,7 +789,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                     }
 
                     if (mIsScheduledEnd && mScheduledAction != null) {
-                        mScheduledAction.setEndTime(date);
+                        mScheduledAction.setEndDate(date);
                         mIsScheduledEnd = false;
                     }
 
@@ -870,7 +866,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 break;
             case TAG_PRICE_TYPE:
                 if (mPrice != null) {
-                    mPrice.setType(PriceType.of(characterString));
+                    mPrice.setType(Price.Type.of(characterString));
                 }
                 break;
             case TAG_PRICE:
@@ -1132,7 +1128,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
      */
     private void setMinimalScheduledActionByDays() {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(mScheduledAction.getStartTime());
+        calendar.setTimeInMillis(mScheduledAction.getStartDate());
         mScheduledAction.getRecurrence().setByDays(
             Collections.singletonList(calendar.get(Calendar.DAY_OF_WEEK)));
     }

@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Price;
-import org.gnucash.android.model.PriceType;
 import org.gnucash.android.util.TimestampHelper;
 
 import java.io.IOException;
@@ -89,7 +88,7 @@ public class PricesDbAdapter extends DatabaseAdapter<Price> {
         populateBaseModelAttributes(cursor, price);
         price.setDate(TimestampHelper.getTimestampFromUtcString(dateString));
         price.setSource(source);
-        price.setType(PriceType.of(type));
+        price.setType(Price.Type.of(type));
         price.setValueNum(valueNum);
         price.setValueDenom(valueDenom);
 
