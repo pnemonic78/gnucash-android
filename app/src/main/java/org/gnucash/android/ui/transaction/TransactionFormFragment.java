@@ -288,7 +288,7 @@ public class TransactionFormFragment extends MenuFragment implements
         scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance();
         accountNameAdapter = new QualifiedAccountNameAdapter(context, mAccountsDbAdapter);
 
-        rootAccountUID = mAccountsDbAdapter.getOrCreateGnuCashRootAccountUID();
+        rootAccountUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
         String accountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID, rootAccountUID);
         assert !TextUtils.isEmpty(accountUID);
         try {
@@ -394,7 +394,7 @@ public class TransactionFormFragment extends MenuFragment implements
                 if (isSplitPair) {
                     mSplitsList.clear();
                     if (!amountEntered) //if user already entered an amount
-                        binding.inputTransactionAmount.setValue(splitList.get(0).getValue().asBigDecimal());
+                        binding.inputTransactionAmount.setValue(splitList.get(0).getValue().toBigDecimal());
                 } else {
                     if (amountEntered) { //if user entered own amount, clear loaded splits and use the user value
                         mSplitsList.clear();
@@ -427,7 +427,7 @@ public class TransactionFormFragment extends MenuFragment implements
         binding.inputTransactionType.setChecked(transactionType);
 
         //when autocompleting, only change the amount if the user has not manually changed it already
-        binding.inputTransactionAmount.setValue(transaction.getBalance(account).asBigDecimal(), !binding.inputTransactionAmount.isInputModified());
+        binding.inputTransactionAmount.setValue(transaction.getBalance(account).toBigDecimal(), !binding.inputTransactionAmount.isInputModified());
         binding.currencySymbol.setText(transaction.getCommodity().getSymbol());
         binding.notes.setText(transaction.getNote());
         binding.inputDate.setText(DATE_FORMATTER.print(transaction.getTimeMillis()));
@@ -576,7 +576,7 @@ public class TransactionFormFragment extends MenuFragment implements
         } else {
             Money biggestAmount = Money.createZeroInstance(mTransaction.getCurrencyCode());
             for (Split split : mTransaction.getSplits()) {
-                if (split.getValue().asBigDecimal().compareTo(biggestAmount.asBigDecimal()) > 0)
+                if (split.getValue().toBigDecimal().compareTo(biggestAmount.toBigDecimal()) > 0)
                     biggestAmount = split.getValue();
             }
             baseAmountString = biggestAmount.toPlainString();
@@ -1002,8 +1002,7 @@ public class TransactionFormFragment extends MenuFragment implements
     private void setSplits(FragmentTransactionFormBinding binding, List<Split> splitList) {
         mSplitsList = splitList;
         Money balance = Transaction.computeBalance(account, splitList);
-
-        binding.inputTransactionAmount.setValue(balance.asBigDecimal());
+        binding.inputTransactionAmount.setValue(balance.toBigDecimal());
         binding.inputTransactionType.setChecked(balance.isNegative());
     }
 

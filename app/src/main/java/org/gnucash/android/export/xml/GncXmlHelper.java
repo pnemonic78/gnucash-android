@@ -20,6 +20,7 @@ package org.gnucash.android.export.xml;
 import static org.gnucash.android.math.MathExtKt.toBigDecimal;
 
 import org.gnucash.android.model.Commodity;
+import org.gnucash.android.model.Money;
 import org.gnucash.android.ui.transaction.TransactionFormFragment;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
@@ -28,6 +29,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -328,5 +330,27 @@ public abstract class GncXmlHelper {
     public static String formatTemplateSplitAmount(BigDecimal amount) {
         //TODO: If we ever implement an application-specific locale setting, use it here as well
         return NumberFormat.getNumberInstance().format(amount);
+    }
+
+    public static String formatNumeric(long numerator, long denominator) {
+        if (denominator == 0) return "1/0";
+        if (numerator == 0) return "0/1";
+        long n = numerator;
+        long d = denominator;
+        if ((n >= 10) && (d >= 10)) {
+            long n10 = n % 10L;
+            long d10 = d % 10L;
+            while ((n10 == 0) && (d10 == 0) && (n >= 10) && (d >= 10)) {
+                n /= 10;
+                d /= 10;
+                n10 = n % 10L;
+                d10 = d % 10L;
+            }
+        }
+        return n + "/" + d;
+    }
+
+    public static String formatNumeric(Money money) {
+        return formatNumeric(money.getNumerator(), money.getDenominator());
     }
 }

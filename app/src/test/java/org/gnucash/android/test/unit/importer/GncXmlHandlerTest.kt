@@ -106,7 +106,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         // Check splits
         assertThat(transaction.splits.size).isEqualTo(2)
 
-        val split1 = transaction.splits[1]
+        val split1 = transaction.splits[0]
         assertThat(split1.uid).isEqualTo("ad2cbc774fc4e71885d17e6932448e8e")
         assertThat(split1.accountUID).isEqualTo("6a7cf8267314992bdddcee56d71a3908")
         assertThat(split1.transactionUID).isEqualTo("b33c8a6160494417558fd143731fc26a")
@@ -116,7 +116,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(split1.quantity).isEqualTo(Money("10", "USD"))
         assertThat(split1.reconcileState).isEqualTo('n')
 
-        val split2 = transaction.splits[0]
+        val split2 = transaction.splits[1]
         assertThat(split2.uid).isEqualTo("61d4d604bc00a59cabff4e8875d00bee")
         assertThat(split2.accountUID).isEqualTo("dae686a1636addc0dae1ae670701aa4a")
         assertThat(split2.transactionUID).isEqualTo("b33c8a6160494417558fd143731fc26a")
@@ -148,7 +148,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         // Check splits
         assertThat(transaction.splits.size).isEqualTo(3)
 
-        val splitExpense = transaction.splits[2]
+        val splitExpense = transaction.splits[0]
         assertThat(splitExpense.uid).isEqualTo("c50cce06e2bf9085730821c82d0b36ca")
         assertThat(splitExpense.accountUID).isEqualTo("6a7cf8267314992bdddcee56d71a3908")
         assertThat(splitExpense.transactionUID).isEqualTo("042ff745a80e94e6237fb0549f6d32ae")
@@ -157,7 +157,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitExpense.value).isEqualTo(Money("50", "USD"))
         assertThat(splitExpense.quantity).isEqualTo(Money("50", "USD"))
 
-        val splitAsset1 = transaction.splits[0]
+        val splitAsset1 = transaction.splits[1]
         assertThat(splitAsset1.uid).isEqualTo("4930f412665a705eedba39789b6c3a35")
         assertThat(splitAsset1.accountUID).isEqualTo("dae686a1636addc0dae1ae670701aa4a")
         assertThat(splitAsset1.transactionUID).isEqualTo("042ff745a80e94e6237fb0549f6d32ae")
@@ -167,7 +167,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitAsset1.quantity).isEqualTo(Money("5", "USD"))
         assertThat(splitAsset1.isPairOf(splitExpense)).isFalse()
 
-        val splitAsset2 = transaction.splits[1]
+        val splitAsset2 = transaction.splits[2]
         assertThat(splitAsset2.uid).isEqualTo("b97cd9bbaa17f181d0a5b39b260dabda")
         assertThat(splitAsset2.accountUID).isEqualTo("ee139a5658a0d37507dc26284798e347")
         assertThat(splitAsset2.transactionUID).isEqualTo("042ff745a80e94e6237fb0549f6d32ae")
@@ -200,7 +200,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         // Check splits
         assertThat(transaction.splits.size).isEqualTo(2)
 
-        val splitDebit = transaction.splits[1]
+        val splitDebit = transaction.splits[0]
         assertThat(splitDebit.uid).isEqualTo("88bbbbac7689a8657b04427f8117a783")
         assertThat(splitDebit.accountUID).isEqualTo("6a7cf8267314992bdddcee56d71a3908")
         assertThat(splitDebit.transactionUID).isEqualTo("ded49386f8ea319ccaee043ba062b3e1")
@@ -212,7 +212,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitDebit.quantity.denominator).isEqualTo(100)
         assertThat(splitDebit.quantity).isEqualTo(Money("20", "USD"))
 
-        val splitCredit = transaction.splits[0]
+        val splitCredit = transaction.splits[1]
         assertThat(splitCredit.uid).isEqualTo("e0dd885065bfe3c9ef63552fe84c6d23")
         assertThat(splitCredit.accountUID).isEqualTo("0469e915a22ba7846aca0e69f9f9b683")
         assertThat(splitCredit.transactionUID).isEqualTo("ded49386f8ea319ccaee043ba062b3e1")

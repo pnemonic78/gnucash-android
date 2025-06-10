@@ -40,7 +40,7 @@ public class CommoditiesXmlHandler extends DefaultHandler {
     public static final String ATTR_EXCHANGE_CODE = "exchange-code";
     public static final String ATTR_SMALLEST_FRACTION = "smallest-fraction";
     public static final String ATTR_LOCAL_SYMBOL = "local-symbol";
-    private static final String SOURCE_CURRENCY = "currency";
+    public static final String SOURCE_CURRENCY = "currency";
     /**
      * List of commodities parsed from the XML file.
      * They will be all added to db at once at the end of the document
@@ -71,8 +71,7 @@ public class CommoditiesXmlHandler extends DefaultHandler {
             String smallestFraction = attributes.getValue(ATTR_SMALLEST_FRACTION);
             String localSymbol = attributes.getValue(ATTR_LOCAL_SYMBOL);
 
-            Commodity commodity = new Commodity(fullname, isoCode, Integer.parseInt(smallestFraction));
-            commodity.setNamespace(namespace);
+            Commodity commodity = new Commodity(fullname, isoCode, namespace, Integer.parseInt(smallestFraction));
             commodity.setCusip(cusip);
             commodity.setLocalSymbol(localSymbol);
             commodity.setQuoteSource(SOURCE_CURRENCY);

@@ -386,7 +386,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         assertThat(accountsDbAdapter.isHiddenAccount(imbalanceAcctUID))
             .isTrue() //imbalance account should be hidden in single entry mode
 
-        assertThat(transaction.splits).extracting("mAccountUID")
+        assertThat(transaction.splits).extracting("accountUID", String::class.java)
             .contains(imbalanceAcctUID)
     }
 
@@ -462,7 +462,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         assertThat(accountsDbAdapter.isHiddenAccount(imbalanceAcctUID)).isFalse()
 
         //at least one split will belong to the imbalance account
-        assertThat(transaction.splits).extracting("accountUID")
+        assertThat(transaction.splits).extracting("accountUID", String::class.java)
             .contains(imbalanceAcctUID)
 
         val imbalanceSplits = splitsDbAdapter.getSplitsForTransactionInAccount(
@@ -472,7 +472,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         assertThat(imbalanceSplits).hasSize(1)
 
         val split = imbalanceSplits[0]
-        assertThat(split.value.asBigDecimal()).isEqualTo(BigDecimal("99.00"))
+        assertThat(split.value.toBigDecimal()).isEqualTo(BigDecimal("99.00"))
         assertThat(split.type).isEqualTo(TransactionType.CREDIT)
     }
 
@@ -887,8 +887,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transactionsDbAdapter.addRecord(multiTransaction)
 
         val savedTransaction = transactionsDbAdapter.getRecord(multiTransaction.uid)
-        assertThat(savedTransaction.splits).extracting("quantity").contains(expectedQty)
-        assertThat(savedTransaction.splits).extracting("value").contains(expectedValue)
+        assertThat(savedTransaction.splits).extracting("quantity", Money::class.java).contains(expectedQty)
+        assertThat(savedTransaction.splits).extracting("value", Money::class.java).contains(expectedValue)
 
         refreshTransactionsList()
         onView(withText(trnDescription))

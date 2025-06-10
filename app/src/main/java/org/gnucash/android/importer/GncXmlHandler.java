@@ -148,7 +148,6 @@ import org.gnucash.android.model.Split;
 import org.gnucash.android.model.Transaction;
 import org.gnucash.android.model.TransactionType;
 import org.gnucash.android.model.WeekendAdjust;
-import org.gnucash.android.service.ScheduledActionService;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -462,7 +461,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 slotTypes.push(attributes.getValue(ATTR_KEY_TYPE));
                 break;
             case TAG_COMMODITY:
-                mCommodity = new Commodity("", "", 100);
+                mCommodity = new Commodity("", "");
                 break;
             case TAG_COUNT_DATA:
                 countDataType = attributes.getValue(ATTR_KEY_CD_TYPE);
@@ -495,12 +494,16 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
             case TAG_ACCT_TYPE:
                 AccountType accountType = AccountType.valueOf(characterString);
                 mAccount.setAccountType(accountType);
-                mAccount.setHidden(accountType == AccountType.ROOT); //flag root account as hidden
                 break;
             case TAG_BOOK:
             case TAG_ROOT:
             case AccountsTemplate.TAG_ROOT:
-                booksDbAdapter.addRecord(mBook, DatabaseAdapter.UpdateMethod.replace);
+                if (mBook.id == 0L) {
+                    //if all of the import went smoothly, then add the book to the book db
+                    booksDbAdapter.addRecord(mBook, DatabaseAdapter.UpdateMethod.insert);
+                } else {
+                    booksDbAdapter.addRecord(mBook, DatabaseAdapter.UpdateMethod.replace);
+                }
                 if (listener != null) listener.onBook(mBook);
                 break;
             case TAG_BOOK_ID:
@@ -543,7 +546,6 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                         mPrice.setCurrency(commodity);
                         mPriceCurrency = false;
                     }
-                    if (listener != null) listener.onPrice(mPrice);
                 }
                 break;
             case TAG_COMMODITY_FRACTION:
@@ -727,9 +729,10 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                         case ATTR_VALUE_STRING:
                             if (mIsNote && (budgetAccount != null) && (budgetPeriod != null)) {
                                 BudgetAmount budgetAmount = mBudget.getBudgetAmount(budgetAccount, budgetPeriod);
-                                if (budgetAmount != null) {
-                                    budgetAmount.setNotes(characterString);
+                                if (budgetAmount == null) {
+                                    budgetAmount = mBudget.addAmount(budgetAccount, budgetPeriod, BigDecimal.ZERO);
                                 }
+                                budgetAmount.setNotes(characterString);
                             }
                             budgetPeriod = null;
                             break;
@@ -875,6 +878,9 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
             case TAG_SX_NUM_OCCUR:
                 mScheduledAction.setTotalPlannedExecutionCount(Integer.parseInt(characterString));
                 break;
+            case TAG_RX_START:
+                mIsRecurrenceStart = false;
+                break;
             case TAG_RX_MULT:
                 mRecurrence.setMultiplier(Integer.parseInt(characterString));
                 break;
@@ -909,7 +915,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                         mIsLastRun = false;
                     }
 
-                    if (mIsRecurrenceStart && mScheduledAction != null) {
+                    if (mIsRecurrenceStart && mRecurrence != null) {
                         mRecurrence.setPeriodStart(date);
                         mIsRecurrenceStart = false;
                     }
@@ -979,7 +985,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
                 }
                 break;
             case TAG_BUDGET:
-                if (!mBudget.getBudgetAmounts().isEmpty()) { //ignore if no budget amounts exist for the budget
+                if (mBudget != null && !mBudget.getBudgetAmounts().isEmpty()) { //ignore if no budget amounts exist for the budget
                     //// TODO: 01.06.2016 Re-enable import of Budget stuff when the UI is complete
                     mBudgetsDbAdapter.addRecord(mBudget, DatabaseAdapter.UpdateMethod.insert);
                     if (listener != null) listener.onBudget(mBudget);
@@ -1079,6 +1085,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
         for (Split split : mAutoBalanceSplits) {
             // XXX: yes, getAccountUID() returns a currency UID in this case (see Transaction.createAutoBalanceSplit())
             String currencyUID = split.getAccountUID();
+            if (currencyUID == null) continue;
             Account imbAccount = imbalanceAccounts.get(currencyUID);
             if (imbAccount == null) {
                 Commodity commodity = mCommoditiesDbAdapter.getRecord(currencyUID);
