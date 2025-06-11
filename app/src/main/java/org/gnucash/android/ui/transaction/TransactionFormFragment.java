@@ -160,6 +160,7 @@ public class TransactionFormFragment extends MenuFragment implements
     private RecurrenceViewClickListener mRecurrenceViewClickListener;
     private String mRecurrenceRule;
     private final EventRecurrence mEventRecurrence = new EventRecurrence();
+    private ScheduledAction scheduledAction;
 
     private String rootAccountUID;
 
@@ -213,11 +214,11 @@ public class TransactionFormFragment extends MenuFragment implements
         updateTransferAccountsList(binding);
         initializeViews(binding);
 
-        if (mTransaction == null) {
-            initTransactionNameAutocomplete(binding);
-        } else {
-            initializeViewsWithTransaction(binding, mTransaction);
+        Transaction transaction = mTransaction;
+        if (transaction == null) {
+            transaction = new Transaction("");
         }
+        bindView(binding, transaction);
     }
 
     /**
@@ -296,19 +297,21 @@ public class TransactionFormFragment extends MenuFragment implements
             return;
         }
 
-        mEditMode = false;
-
         String transactionUID = args.getString(UxArgument.SELECTED_TRANSACTION_UID);
         mTransactionsDbAdapter = TransactionsDbAdapter.getInstance();
         Transaction transaction = null;
         if (!TextUtils.isEmpty(transactionUID)) {
             transaction = mTransactionsDbAdapter.getRecord(transactionUID);
-            if (transaction != null) {
-                String scheduledActionUID = args.getString(UxArgument.SCHEDULED_ACTION_UID);
-                if (!TextUtils.isEmpty(scheduledActionUID)) {
-                    transaction.setScheduledActionUID(scheduledActionUID);
-                }
-            }
+//            if (TextUtils.isEmpty(transaction.getScheduledActionUID())) {
+//                String where = ScheduledActionEntry.COLUMN_ACTION_UID + "=?"
+//                    + " AND " + ScheduledActionEntry.COLUMN_TYPE + "=?";
+//                String[] whereArgs = new String[]{transactionUID, ScheduledAction.ActionType.TRANSACTION.value};
+//                List<ScheduledAction> scheduledActions = scheduledActionDbAdapter.getAllRecords(where, whereArgs);
+//                if (!scheduledActions.isEmpty()) {
+//                    ScheduledAction scheduledAction = scheduledActions.get(0);
+//                    transaction.setScheduledActionUID(scheduledAction.getUID());
+//                }
+//            }
         }
         mEditMode = transaction != null;
         mTransaction = transaction;
@@ -350,13 +353,13 @@ public class TransactionFormFragment extends MenuFragment implements
     /**
      * Initializes the transaction name field for autocompletion with existing transaction names in the database
      */
-    private void initTransactionNameAutocomplete(final FragmentTransactionFormBinding binding) {
+    private void bindAutocomplete(final FragmentTransactionFormBinding binding) {
         final String[] from = new String[]{TransactionEntry.COLUMN_DESCRIPTION};
         final int[] to = new int[]{R.id.primary_text};
 
-        Context context = binding.inputTransactionName.getContext();
-        SimpleCursorAdapter adapter = new DropDownCursorAdapter(
-            context, R.layout.dropdown_item_2lines, null, from, to);
+        final String accountUID = account.getUID();
+        final Context context = binding.getRoot().getContext();
+        final SimpleCursorAdapter adapter = new DropDownCursorAdapter(context, R.layout.dropdown_item_2lines, null, from, to);
 
         adapter.setCursorToStringConverter(new SimpleCursorAdapter.CursorToStringConverter() {
             @Override
@@ -369,7 +372,6 @@ public class TransactionFormFragment extends MenuFragment implements
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             @Override
             public Cursor runQuery(CharSequence name) {
-                String accountUID = account.getUID();
                 return mTransactionsDbAdapter.fetchTransactionSuggestions(name == null ? "" : name.toString(), accountUID);
             }
         });
@@ -377,26 +379,16 @@ public class TransactionFormFragment extends MenuFragment implements
         binding.inputTransactionName.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Transaction transaction = new Transaction(mTransactionsDbAdapter.getRecord(id), true);
+                Cursor cursor = (Cursor) adapter.getItem(position);
+                Transaction item = mTransactionsDbAdapter.buildModelInstance(cursor);
+                Transaction transaction = new Transaction(item);
                 transaction.setTime(System.currentTimeMillis());
                 //we check here because next method will modify it and we want to catch user-modification
                 boolean amountEntered = binding.inputTransactionAmount.isInputModified();
-                initializeViewsWithTransaction(binding, transaction);
-                List<Split> splitList = transaction.getSplits();
-                boolean isSplitPair = splitList.size() == 2 && splitList.get(0).isPairOf(splitList.get(1));
-                if (isSplitPair) {
-                    mSplitsList.clear();
-                    if (!amountEntered) //if user already entered an amount
-                        binding.inputTransactionAmount.setValue(splitList.get(0).getValue().toBigDecimal());
-                } else {
-                    if (amountEntered) { //if user entered own amount, clear loaded splits and use the user value
-                        mSplitsList.clear();
-                        setDoubleEntryViewsVisibility(binding, View.VISIBLE);
-                    } else {
-                        if (mUseDoubleEntry) { //don't hide the view in single entry mode
-                            setDoubleEntryViewsVisibility(binding, View.GONE);
-                        }
-                    }
+                BigDecimal amount = amountEntered ? binding.inputTransactionAmount.getValue() : null;
+                bindView(binding, transaction);
+                if (amountEntered) {
+                    binding.inputTransactionAmount.setValue(amount);
                 }
                 mTransaction = null; //we are creating a new transaction after all
             }
@@ -404,21 +396,26 @@ public class TransactionFormFragment extends MenuFragment implements
 
         binding.inputTransactionName.setAdapter(adapter);
         mRecurrenceRule = null;
+        scheduledAction = null;
     }
 
     /**
      * Initialize views in the fragment with information from a transaction.
      * This method is called if the fragment is used for editing a transaction
      */
-    private void initializeViewsWithTransaction(@NonNull final FragmentTransactionFormBinding binding, @NonNull Transaction transaction) {
-        final Context context = binding.getRoot().getContext();
+    private void bindView(@NonNull final FragmentTransactionFormBinding binding, @NonNull Transaction transaction) {
         final Account account = this.account;
         final String accountUID = account.getUID();
-        setTextToEnd(binding.inputTransactionName, transaction.getDescription());
+        final boolean isNew = transaction.id == 0;
 
-        TransactionType transactionType = GnuCashApplication.getDefaultTransactionType(context);
+        String description = transaction.getDescription();
+        setTextToEnd(binding.inputTransactionName, description);
+        if (isNew || TextUtils.isEmpty(description)) {
+            bindAutocomplete(binding);
+        }
+
         binding.inputTransactionType.setAccountType(account.getAccountType());
-        binding.inputTransactionType.setChecked(transactionType);
+        TransactionType transactionType = binding.inputTransactionType.getTransactionType();
 
         //when autocompleting, only change the amount if the user has not manually changed it already
         binding.inputTransactionAmount.setValue(transaction.getBalance(account).toBigDecimal(), !binding.inputTransactionAmount.isInputModified());
@@ -449,7 +446,9 @@ public class TransactionFormFragment extends MenuFragment implements
         }
         //if there are more than two splits (which is the default for one entry), then
         //disable editing of the transfer account. User should open editor
-        if (mSplitsList.size() == 2 && mSplitsList.get(0).isPairOf(mSplitsList.get(1))) {
+        if (isNew) {
+            setDoubleEntryViewsVisibility(binding, mUseDoubleEntry);
+        } else if (mSplitsList.size() == 2 && mSplitsList.get(0).isPairOf(mSplitsList.get(1))) {
             for (Split split : transaction.getSplits()) {
                 //two splits, one belongs to this account and the other to another account
                 if (mUseDoubleEntry && !split.getAccountUID().equals(accountUID)) {
@@ -457,7 +456,7 @@ public class TransactionFormFragment extends MenuFragment implements
                 }
             }
         } else {
-            setDoubleEntryViewsVisibility(binding, View.GONE);
+            setDoubleEntryViewsVisibility(binding, false);
             if (mSplitValue != null) {
                 transactionType = mSplitValue.isNegative() ? TransactionType.CREDIT : TransactionType.DEBIT;
             }
@@ -468,15 +467,25 @@ public class TransactionFormFragment extends MenuFragment implements
         binding.inputTransactionAmount.setCommodity(accountCommodity);
         binding.inputTransactionType.setChecked(transactionType);
 
-        binding.checkboxSaveTemplate.setChecked(transaction.isTemplate());
+        mRecurrenceRule = null;
+        scheduledAction = null;
+        String scheduledActionUID = transaction.getScheduledActionUID();
+        if (transaction.isTemplate() || !TextUtils.isEmpty(scheduledActionUID)) {
+            bindTemplateView(binding, transaction);
+        }
+    }
+
+    private void bindTemplateView(@NonNull final FragmentTransactionFormBinding binding, @NonNull Transaction transaction) {
         String scheduledActionUID = transaction.getScheduledActionUID();
         if (!TextUtils.isEmpty(scheduledActionUID)) {
             ScheduledAction scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID);
+            this.scheduledAction = scheduledAction;
             onRecurrenceSet(scheduledAction.getRuleString());
         }
     }
 
-    private void setDoubleEntryViewsVisibility(FragmentTransactionFormBinding binding, int visibility) {
+    private void setDoubleEntryViewsVisibility(FragmentTransactionFormBinding binding, boolean isVisible) {
+        int visibility = isVisible ? View.VISIBLE : View.GONE;
         binding.layoutDoubleEntry.setVisibility(visibility);
         binding.inputTransactionType.setVisibility(visibility);
         binding.btnSplitEditor.setVisibility(visibility);
@@ -524,11 +533,9 @@ public class TransactionFormFragment extends MenuFragment implements
             }
         });
 
+        setDoubleEntryViewsVisibility(binding, mUseDoubleEntry);
         if (mUseDoubleEntry) {
             setSelectedTransferAccount(binding, account.getDefaultTransferAccountUID());
-        } else {
-            binding.layoutDoubleEntry.setVisibility(View.GONE);
-            binding.btnSplitEditor.setVisibility(View.GONE);
         }
     }
 
@@ -828,7 +835,7 @@ public class TransactionFormFragment extends MenuFragment implements
      * Collects information from the fragment views and uses it to create
      * and save a transaction
      */
-    private void saveNewTransaction(FragmentTransactionFormBinding binding) {
+    private void saveTransaction(FragmentTransactionFormBinding binding) {
         binding.inputTransactionAmount.setError(null);
 
         //determine whether we need to do currency conversion
@@ -838,7 +845,6 @@ public class TransactionFormFragment extends MenuFragment implements
             return;
         }
 
-        boolean isTemplate = binding.checkboxSaveTemplate.isChecked();
         Transaction transactionOld = mTransaction;
         Transaction transaction = extractTransactionFromView(binding);
         String scheduledActionUID = null;
@@ -855,7 +861,8 @@ public class TransactionFormFragment extends MenuFragment implements
         try {
             mTransactionsDbAdapter.beginTransaction();
 
-            if (isTemplate) { //template is automatically checked when a transaction is scheduled
+            final boolean isTemplate = transaction.isTemplate();
+            if (isTemplate) {
                 if (mEditMode && wasScheduled) {
                     transaction.setScheduledActionUID(scheduledActionUID);
                     scheduleRecurringTransaction(transaction);
@@ -892,7 +899,7 @@ public class TransactionFormFragment extends MenuFragment implements
     /**
      * Schedules a recurring transaction (if necessary) after the transaction has been saved
      *
-     * @see #saveNewTransaction(FragmentTransactionFormBinding)
+     * @see #saveTransaction(FragmentTransactionFormBinding)
      */
     private void scheduleRecurringTransaction(@NonNull Transaction transaction) {
         String transactionUID = transaction.getUID();
@@ -954,7 +961,7 @@ public class TransactionFormFragment extends MenuFragment implements
 
             case R.id.menu_save:
                 if (canSave(binding)) {
-                    saveNewTransaction(binding);
+                    saveTransaction(binding);
                 } else {
                     if (binding.inputTransactionAmount.getValue() == null) {
                         Snackbar.make(view, R.string.toast_transaction_amount_required, Snackbar.LENGTH_LONG).show();
@@ -1070,7 +1077,7 @@ public class TransactionFormFragment extends MenuFragment implements
         if (onSaveAttempt) {
             final FragmentTransactionFormBinding binding = mBinding;
             if (binding == null) return;
-            saveNewTransaction(binding);
+            saveTransaction(binding);
         }
         onSaveAttempt = false;
     }
@@ -1090,13 +1097,6 @@ public class TransactionFormFragment extends MenuFragment implements
                 Timber.e(e, "Bad recurrence for [%s]", rrule);
                 return;
             }
-
-            //when recurrence is set, we will definitely be saving a template
-            binding.checkboxSaveTemplate.setChecked(true);
-            binding.checkboxSaveTemplate.setEnabled(false);
-        } else {
-            binding.checkboxSaveTemplate.setEnabled(true);
-            binding.checkboxSaveTemplate.setChecked(false);
         }
         if (TextUtils.isEmpty(repeatString)) {
             repeatString = context.getString(R.string.label_tap_to_create_schedule);
@@ -1119,7 +1119,7 @@ public class TransactionFormFragment extends MenuFragment implements
 
             //once split editor has been used and saved, only allow editing through it
             toggleAmountInputEntryMode(binding, false);
-            setDoubleEntryViewsVisibility(binding, View.GONE);
+            setDoubleEntryViewsVisibility(binding, false);
             binding.btnSplitEditor.setVisibility(View.VISIBLE);
         }
     }

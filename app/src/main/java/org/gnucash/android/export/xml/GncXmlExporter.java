@@ -24,6 +24,7 @@ import static org.gnucash.android.db.adapter.AccountsDbAdapter.TEMPLATE_ACCOUNT_
 import static org.gnucash.android.export.xml.GncXmlHelper.*;
 import static org.gnucash.android.importer.CommoditiesXmlHandler.SOURCE_CURRENCY;
 import static org.gnucash.android.math.MathExtKt.toBigDecimal;
+import static org.gnucash.android.model.Commodity.TEMPLATE;
 import static org.gnucash.android.util.ColorExtKt.formatRGB;
 
 import android.content.Context;
@@ -39,7 +40,6 @@ import org.gnucash.android.export.Exporter;
 import org.gnucash.android.gnc.GncProgressListener;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.AccountType;
-import org.gnucash.android.model.BaseModel;
 import org.gnucash.android.model.Book;
 import org.gnucash.android.model.Budget;
 import org.gnucash.android.model.BudgetAmount;
@@ -63,11 +63,8 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
-import java.util.TreeMap;
 
 import timber.log.Timber;
 
@@ -351,26 +348,6 @@ public class GncXmlExporter extends Exporter {
             return;
         }
 
-        if (isTemplates) {
-            mRootTemplateAccount = new Account(TEMPLATE_ACCOUNT_NAME, Commodity.template);
-            mRootTemplateAccount.setAccountType(AccountType.ROOT);
-            mTransactionToTemplateAccountMap.put("", mRootTemplateAccount);
-
-            //FIXME: Retrieve the template account GUIDs from the scheduled action table and create accounts with that
-            //this will allow use to maintain the template account GUID when we import from the desktop and also use the same for the splits
-            do {
-                String txUID = cursor.getString(cursor.getColumnIndexOrThrow("trans_uid"));
-                Account account = new Account(BaseModel.generateUID(), Commodity.template);
-                account.setAccountType(AccountType.BANK);
-                account.setParentUID(mRootTemplateAccount.getUID());
-                mTransactionToTemplateAccountMap.put(txUID, account);
-            } while (cursor.moveToNext());
-
-            writeTemplateAccounts(xmlSerializer, mTransactionToTemplateAccountMap.values());
-            //push cursor back to before the beginning
-            cursor.moveToFirst();
-        }
-
         //// FIXME: 12.10.2015 export split reconciled_state and reconciled_date to the export
         String lastTrxUID = "";
         Commodity trnCommodity = null;
@@ -553,7 +530,7 @@ public class GncXmlExporter extends Exporter {
     private void writeTemplateTransactions(XmlSerializer xmlSerializer) throws IOException {
         if (mTransactionsDbAdapter.getTemplateTransactionsCount() > 0) {
             xmlSerializer.startTag(null, TAG_TEMPLATE_TRANSACTIONS);
-            //TODO writeAccounts(xmlSerializer, true);
+            writeAccounts(xmlSerializer, true);
             writeTransactions(xmlSerializer, true);
             xmlSerializer.endTag(null, TAG_TEMPLATE_TRANSACTIONS);
         }
@@ -588,6 +565,14 @@ public class GncXmlExporter extends Exporter {
             account = mTransactionToTemplateAccountMap.get(actionUID);
             uid = account.getName();
         }
+        if (account == null) {
+            String where = AccountEntry.COLUMN_NAME + "=?";
+            String[] whereArgs = new String[]{uid};
+            List<Account> accounts = mAccountsDbAdapter.getSimpleAccounts(where, whereArgs, null);
+            if (!accounts.isEmpty()) {
+                account = accounts.get(0);
+            }
+        }
         if (account == null) { //if the action UID does not belong to a transaction we've seen before, skip it
             return;
         }
@@ -602,7 +587,7 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.text(uid);
         xmlSerializer.endTag(null, TAG_SX_ID);
 
-        String name = null;
+        String name = scheduledAction.getName();
         if (name == null) {
             if (actionType == ScheduledAction.ActionType.TRANSACTION) {
                 String transactionUID = actionUID;
@@ -619,21 +604,20 @@ public class GncXmlExporter extends Exporter {
         xmlSerializer.text(scheduledAction.isEnabled() ? "y" : "n");
         xmlSerializer.endTag(null, TAG_SX_ENABLED);
         xmlSerializer.startTag(null, TAG_SX_AUTO_CREATE);
-        xmlSerializer.text(scheduledAction.shouldAutoCreate() ? "y" : "n");
+        xmlSerializer.text(scheduledAction.isAutoCreate() ? "y" : "n");
         xmlSerializer.endTag(null, TAG_SX_AUTO_CREATE);
         xmlSerializer.startTag(null, TAG_SX_AUTO_CREATE_NOTIFY);
-        xmlSerializer.text(scheduledAction.shouldAutoNotify() ? "y" : "n");
+        xmlSerializer.text(scheduledAction.isAutoCreateNotify() ? "y" : "n");
         xmlSerializer.endTag(null, TAG_SX_AUTO_CREATE_NOTIFY);
         xmlSerializer.startTag(null, TAG_SX_ADVANCE_CREATE_DAYS);
         xmlSerializer.text(Integer.toString(scheduledAction.getAdvanceCreateDays()));
         xmlSerializer.endTag(null, TAG_SX_ADVANCE_CREATE_DAYS);
         xmlSerializer.startTag(null, TAG_SX_ADVANCE_REMIND_DAYS);
-        xmlSerializer.text(Integer.toString(scheduledAction.getAdvanceNotifyDays()));
+        xmlSerializer.text(Integer.toString(scheduledAction.getAdvanceRemindDays()));
         xmlSerializer.endTag(null, TAG_SX_ADVANCE_REMIND_DAYS);
         xmlSerializer.startTag(null, TAG_SX_INSTANCE_COUNT);
         String scheduledActionUID = scheduledAction.getUID();
-        long instanceCount = mScheduledActionDbAdapter.getActionInstanceCount(scheduledActionUID);
-        xmlSerializer.text(Long.toString(instanceCount));
+        xmlSerializer.text(Integer.toString(scheduledAction.getInstanceCount()));
         xmlSerializer.endTag(null, TAG_SX_INSTANCE_COUNT);
 
         //start date
@@ -645,24 +629,24 @@ public class GncXmlExporter extends Exporter {
             writeDate(xmlSerializer, TAG_SX_LAST, lastRunTime);
         }
 
-        long endTime = scheduledAction.getEndTime();
+        long endTime = scheduledAction.getEndDate();
         if (endTime > 0) {
             //end date
             writeDate(xmlSerializer, TAG_SX_END, endTime);
-        } else { //add number of occurrences
-            int totalFrequency = scheduledAction.getTotalPlannedExecutionCount();
-            if (totalFrequency > 0) {
+        } else {
+            //add total number of occurrences
+            int totalPlannedCount = scheduledAction.getTotalPlannedExecutionCount();
+            if (totalPlannedCount > 0) {
                 xmlSerializer.startTag(null, TAG_SX_NUM_OCCUR);
-                xmlSerializer.text(Integer.toString(totalFrequency));
+                xmlSerializer.text(Integer.toString(totalPlannedCount));
                 xmlSerializer.endTag(null, TAG_SX_NUM_OCCUR);
             }
 
             //remaining occurrences
-            int executionCount = scheduledAction.getExecutionCount();
-            int remaining = totalFrequency - executionCount;
-            if (remaining > 0) {
+            int remainingCount = totalPlannedCount - scheduledAction.getInstanceCount();
+            if (remainingCount > 0) {
                 xmlSerializer.startTag(null, TAG_SX_REM_OCCUR);
-                xmlSerializer.text(Integer.toString(remaining));
+                xmlSerializer.text(Integer.toString(remainingCount));
                 xmlSerializer.endTag(null, TAG_SX_REM_OCCUR);
             }
         }
@@ -676,7 +660,7 @@ public class GncXmlExporter extends Exporter {
 
         xmlSerializer.startTag(null, TAG_SX_TEMPL_ACCOUNT);
         xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID);
-        xmlSerializer.text(account.getUID());
+        xmlSerializer.text(accountUID);
         xmlSerializer.endTag(null, TAG_SX_TEMPL_ACCOUNT);
 
         //// FIXME: 11.10.2015 Retrieve the information for this section from the recurrence table

@@ -47,14 +47,22 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
 
     @NonNull
     final RecurrenceDbAdapter recurrenceDbAdapter;
+    @NonNull
+    private final TransactionsDbAdapter transactionsDbAdapter;
+    @NonNull
+    private final BooksDbAdapter booksDbAdapter;
 
     public ScheduledActionDbAdapter(@NonNull RecurrenceDbAdapter recurrenceDbAdapter) {
+        this(recurrenceDbAdapter, new TransactionsDbAdapter(recurrenceDbAdapter.mDb));
+    }
+
+    public ScheduledActionDbAdapter(@NonNull RecurrenceDbAdapter recurrenceDbAdapter, @NonNull TransactionsDbAdapter transactionsDbAdapter) {
         super(recurrenceDbAdapter.mDb, ScheduledActionEntry.TABLE_NAME, new String[]{
             ScheduledActionEntry.COLUMN_ACTION_UID,
             ScheduledActionEntry.COLUMN_TYPE,
-            ScheduledActionEntry.COLUMN_START_TIME,
-            ScheduledActionEntry.COLUMN_END_TIME,
-            ScheduledActionEntry.COLUMN_LAST_RUN,
+            ScheduledActionEntry.COLUMN_START_DATE,
+            ScheduledActionEntry.COLUMN_END_DATE,
+            ScheduledActionEntry.COLUMN_LAST_OCCUR,
             ScheduledActionEntry.COLUMN_ENABLED,
             ScheduledActionEntry.COLUMN_CREATED_AT,
             ScheduledActionEntry.COLUMN_TAG,
@@ -65,9 +73,12 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
             ScheduledActionEntry.COLUMN_ADVANCE_CREATION,
             ScheduledActionEntry.COLUMN_ADVANCE_NOTIFY,
             ScheduledActionEntry.COLUMN_TEMPLATE_ACCT_UID,
-            ScheduledActionEntry.COLUMN_EXECUTION_COUNT
+            ScheduledActionEntry.COLUMN_INSTANCE_COUNT,
+            ScheduledActionEntry.COLUMN_NAME
         });
         this.recurrenceDbAdapter = recurrenceDbAdapter;
+        this.transactionsDbAdapter = transactionsDbAdapter;
+        this.booksDbAdapter = BooksDbAdapter.getInstance();
     }
 
     /**
@@ -83,6 +94,7 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
     public void close() throws IOException {
         super.close();
         recurrenceDbAdapter.close();
+        transactionsDbAdapter.close();
     }
 
     @Override
@@ -126,8 +138,8 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
 
         ContentValues contentValues = new ContentValues();
         extractBaseModelAttributes(contentValues, scheduledAction);
-        contentValues.put(ScheduledActionEntry.COLUMN_START_TIME, scheduledAction.getStartTime());
-        contentValues.put(ScheduledActionEntry.COLUMN_END_TIME, scheduledAction.getEndTime());
+        contentValues.put(ScheduledActionEntry.COLUMN_START_DATE, scheduledAction.getStartDate());
+        contentValues.put(ScheduledActionEntry.COLUMN_END_DATE, scheduledAction.getEndDate());
         contentValues.put(ScheduledActionEntry.COLUMN_TAG, scheduledAction.getTag());
         contentValues.put(ScheduledActionEntry.COLUMN_TOTAL_FREQUENCY, scheduledAction.getTotalPlannedExecutionCount());
 
@@ -142,8 +154,8 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
         bindBaseModel(stmt, schedxAction);
         stmt.bindString(1, schedxAction.getActionUID());
         stmt.bindString(2, schedxAction.getActionType().value);
-        stmt.bindLong(3, schedxAction.getStartTime());
-        stmt.bindLong(4, schedxAction.getEndTime());
+        stmt.bindLong(3, schedxAction.getStartDate());
+        stmt.bindLong(4, schedxAction.getEndDate());
         stmt.bindLong(5, schedxAction.getLastRunTime());
         stmt.bindLong(6, schedxAction.isEnabled() ? 1 : 0);
         stmt.bindString(7, TimestampHelper.getUtcStringFromTimestamp(schedxAction.getCreatedTimestamp()));
@@ -152,12 +164,15 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
         }
         stmt.bindLong(9, schedxAction.getTotalPlannedExecutionCount());
         stmt.bindString(10, schedxAction.getRecurrence().getUID());
-        stmt.bindLong(11, schedxAction.shouldAutoCreate() ? 1 : 0);
-        stmt.bindLong(12, schedxAction.shouldAutoNotify() ? 1 : 0);
+        stmt.bindLong(11, schedxAction.isAutoCreate() ? 1 : 0);
+        stmt.bindLong(12, schedxAction.isAutoCreateNotify() ? 1 : 0);
         stmt.bindLong(13, schedxAction.getAdvanceCreateDays());
-        stmt.bindLong(14, schedxAction.getAdvanceNotifyDays());
+        stmt.bindLong(14, schedxAction.getAdvanceRemindDays());
         stmt.bindString(15, schedxAction.getTemplateAccountUID());
-        stmt.bindLong(16, schedxAction.getExecutionCount());
+        stmt.bindLong(16, schedxAction.getInstanceCount());
+        if (schedxAction.getName() != null) {
+            stmt.bindString(17, schedxAction.getName());
+        }
 
         return stmt;
     }
@@ -172,39 +187,53 @@ public class ScheduledActionDbAdapter extends DatabaseAdapter<ScheduledAction> {
     @Override
     public ScheduledAction buildModelInstance(@NonNull final Cursor cursor) {
         String actionUID = cursor.getString(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_ACTION_UID));
-        long startTime = cursor.getLong(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_START_TIME));
-        long endTime = cursor.getLong(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_END_TIME));
-        long lastRun = cursor.getLong(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_LAST_RUN));
+        long startTime = cursor.getLong(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_START_DATE));
+        long endTime = cursor.getLong(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_END_DATE));
+        long lastRun = cursor.getLong(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_LAST_OCCUR));
         String typeString = cursor.getString(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_TYPE));
         String tag = cursor.getString(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_TAG));
         boolean enabled = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_ENABLED)) > 0;
         int numOccurrences = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_TOTAL_FREQUENCY));
-        int execCount = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_EXECUTION_COUNT));
+        int execCount = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_INSTANCE_COUNT));
         int autoCreate = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_AUTO_CREATE));
         int autoNotify = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_AUTO_NOTIFY));
         int advanceCreate = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_ADVANCE_CREATION));
         int advanceNotify = cursor.getInt(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_ADVANCE_NOTIFY));
         String recurrenceUID = cursor.getString(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_RECURRENCE_UID));
         String templateAccountUID = cursor.getString(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_TEMPLATE_ACCT_UID));
+        String name = cursor.getString(cursor.getColumnIndexOrThrow(ScheduledActionEntry.COLUMN_NAME));
 
         ScheduledAction.ActionType actionType = ScheduledAction.ActionType.of(typeString);
+        if (TextUtils.isEmpty(name)) {
+            if (actionType == ScheduledAction.ActionType.TRANSACTION) {
+                name = transactionsDbAdapter.getAttribute(actionUID, DatabaseSchema.TransactionEntry.COLUMN_DESCRIPTION);
+            } else {
+                try {
+                    name = booksDbAdapter.getAttribute(actionUID, DatabaseSchema.BookEntry.COLUMN_DISPLAY_NAME);
+                } catch (IllegalArgumentException iae) {
+                    name = actionType.name();
+                }
+            }
+        }
+
         ScheduledAction event = new ScheduledAction(actionType);
         populateBaseModelAttributes(cursor, event);
-        event.setStartTime(startTime);
-        event.setEndTime(endTime);
+        event.setStartDate(startTime);
+        event.setEndDate(endTime);
         event.setActionUID(actionUID);
         event.setLastRunTime(lastRun);
         event.setTag(tag);
         event.setEnabled(enabled);
         event.setTotalPlannedExecutionCount(numOccurrences);
-        event.setExecutionCount(execCount);
+        event.setInstanceCount(execCount);
         event.setAutoCreate(autoCreate != 0);
-        event.setAutoNotify(autoNotify != 0);
+        event.setAutoCreateNotify(autoNotify != 0);
         event.setAdvanceCreateDays(advanceCreate);
-        event.setAdvanceNotifyDays(advanceNotify);
+        event.setAdvanceRemindDays(advanceNotify);
         //TODO: optimize by doing overriding fetchRecord(String) and join the two tables
         event.setRecurrence(recurrenceDbAdapter.getRecord(recurrenceUID));
         event.setTemplateAccountUID(templateAccountUID);
+        event.setName(name);
 
         return event;
     }

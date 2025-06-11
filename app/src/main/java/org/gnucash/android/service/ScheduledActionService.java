@@ -149,13 +149,13 @@ public class ScheduledActionService {
     static void processScheduledAction(@NonNull Context context, @NonNull ScheduledAction scheduledAction, SQLiteDatabase db) {
         long now = System.currentTimeMillis();
         int totalPlannedExecutions = scheduledAction.getTotalPlannedExecutionCount();
-        int executionCount = scheduledAction.getExecutionCount();
+        int instanceCount = scheduledAction.getInstanceCount();
 
         //the end time of the ScheduledAction is not handled here because
         //it is handled differently for transactions and backups. See the individual methods.
-        if (scheduledAction.getStartTime() > now    //if schedule begins in the future
+        if (scheduledAction.getStartDate() > now    //if schedule begins in the future
             || !scheduledAction.isEnabled()     // of if schedule is disabled
-            || (totalPlannedExecutions > 0 && executionCount >= totalPlannedExecutions)) { //limit was set and we reached or exceeded it
+            || (totalPlannedExecutions > 0 && instanceCount >= totalPlannedExecutions)) { //limit was set and we reached or exceeded it
             Timber.i("Skipping scheduled action: %s", scheduledAction.toString());
             return;
         }
@@ -171,30 +171,30 @@ public class ScheduledActionService {
      */
     private static void executeScheduledEvent(@NonNull Context context, ScheduledAction scheduledAction, SQLiteDatabase db) {
         Timber.i("Executing scheduled action: %s", scheduledAction.toString());
-        int executionCount = 0;
+        int instanceCount = 0;
 
         switch (scheduledAction.getActionType()) {
             case TRANSACTION:
-                executionCount += executeTransactions(scheduledAction, db);
+                instanceCount += executeTransactions(scheduledAction, db);
                 break;
 
-            case BACKUP:
-                executionCount += executeBackup(context, scheduledAction, GnuCashApplication.getActiveBookUID());
+            case EXPORT:
+                instanceCount += executeBackup(context, scheduledAction, GnuCashApplication.getActiveBookUID());
                 break;
         }
 
-        if (executionCount > 0) {
+        if (instanceCount > 0) {
             scheduledAction.setLastRunTime(System.currentTimeMillis());
             // Set the execution count in the object because it will be checked
             // for the next iteration in the calling loop.
             // This call is important, do not remove!!
-            scheduledAction.setExecutionCount(scheduledAction.getExecutionCount() + executionCount);
+            scheduledAction.setInstanceCount(scheduledAction.getInstanceCount() + instanceCount);
             // Update the last run time and execution count
             ContentValues contentValues = new ContentValues();
-            contentValues.put(DatabaseSchema.ScheduledActionEntry.COLUMN_LAST_RUN,
+            contentValues.put(DatabaseSchema.ScheduledActionEntry.COLUMN_LAST_OCCUR,
                 scheduledAction.getLastRunTime());
-            contentValues.put(DatabaseSchema.ScheduledActionEntry.COLUMN_EXECUTION_COUNT,
-                scheduledAction.getExecutionCount());
+            contentValues.put(DatabaseSchema.ScheduledActionEntry.COLUMN_INSTANCE_COUNT,
+                scheduledAction.getInstanceCount());
             db.update(DatabaseSchema.ScheduledActionEntry.TABLE_NAME, contentValues,
                 DatabaseSchema.ScheduledActionEntry.COLUMN_UID + "=?", new String[]{scheduledAction.getUID()});
         }
@@ -240,7 +240,7 @@ public class ScheduledActionService {
     @SuppressWarnings("RedundantIfStatement")
     private static boolean shouldExecuteScheduledBackup(ScheduledAction scheduledAction) {
         long now = System.currentTimeMillis();
-        long endTime = scheduledAction.getEndTime();
+        long endTime = scheduledAction.getEndDate();
 
         if (endTime > 0 && endTime < now)
             return false;
@@ -261,11 +261,11 @@ public class ScheduledActionService {
      * @return Number of transactions created as a result of this action
      */
     private static int executeTransactions(@NonNull ScheduledAction scheduledAction, @NonNull SQLiteDatabase db) {
-        int executionCount = 0;
+        int instanceCount = 0;
         String actionUID = scheduledAction.getActionUID();
         if (TextUtils.isEmpty(actionUID)) {
             Timber.w("Scheduled transaction without action");
-            return executionCount;
+            return instanceCount;
         }
         TransactionsDbAdapter transactionsDbAdapter = new TransactionsDbAdapter(db);
         Transaction trxnTemplate;
@@ -273,36 +273,36 @@ public class ScheduledActionService {
             trxnTemplate = transactionsDbAdapter.getRecord(actionUID);
         } catch (IllegalArgumentException ex) { //if the record could not be found, abort
             Timber.e(ex, "Scheduled transaction with action " + actionUID + " could not be found in the db with path " + db.getPath());
-            return executionCount;
+            return instanceCount;
         }
 
         long now = System.currentTimeMillis();
         //if there is an end time in the past, we execute all schedules up to the end time.
         //if the end time is in the future, we execute all schedules until now (current time)
         //if there is no end time, we execute all schedules until now
-        long endTime = scheduledAction.getEndTime() > 0 ? Math.min(scheduledAction.getEndTime(), now) : now;
+        long endTime = scheduledAction.getEndDate() > 0 ? Math.min(scheduledAction.getEndDate(), now) : now;
         int totalPlannedExecutions = scheduledAction.getTotalPlannedExecutionCount();
         List<Transaction> transactions = new ArrayList<>();
 
-        int previousExecutionCount = scheduledAction.getExecutionCount(); // We'll modify it
+        int previousExecutionCount = scheduledAction.getInstanceCount(); // We'll modify it
         //we may be executing scheduled action significantly after scheduled time (depending on when Android fires the alarm)
         //so compute the actual transaction time from pre-known values
         long transactionTime = scheduledAction.computeNextCountBasedScheduledExecutionTime();
         while (transactionTime <= endTime) {
-            Transaction recurringTrxn = new Transaction(trxnTemplate, true);
+            Transaction recurringTrxn = new Transaction(trxnTemplate);
             recurringTrxn.setTime(transactionTime);
             transactions.add(recurringTrxn);
             recurringTrxn.setScheduledActionUID(scheduledAction.getUID());
-            scheduledAction.setExecutionCount(++executionCount); //required for computingNextScheduledExecutionTime
+            scheduledAction.setInstanceCount(++instanceCount); //required for computingNextScheduledExecutionTime
 
-            if (totalPlannedExecutions > 0 && executionCount >= totalPlannedExecutions)
+            if (totalPlannedExecutions > 0 && instanceCount >= totalPlannedExecutions)
                 break; //if we hit the total planned executions set, then abort
             transactionTime = scheduledAction.computeNextCountBasedScheduledExecutionTime();
         }
 
         transactionsDbAdapter.bulkAddRecords(transactions, DatabaseAdapter.UpdateMethod.insert);
         // Be nice and restore the parameter's original state to avoid confusing the callers
-        scheduledAction.setExecutionCount(previousExecutionCount);
-        return executionCount;
+        scheduledAction.setInstanceCount(previousExecutionCount);
+        return instanceCount;
     }
 }
