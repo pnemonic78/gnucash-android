@@ -57,7 +57,7 @@ abstract class BookHelperTest : GnuCashTest() {
         transactionsDbAdapter = TransactionsDbAdapter(commoditiesDbAdapter)
         accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter)
         val recurrenceDbAdapter = RecurrenceDbAdapter(mainDb)
-        scheduledActionDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter)
+        scheduledActionDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
         budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
         importedDb = mainDb
     }

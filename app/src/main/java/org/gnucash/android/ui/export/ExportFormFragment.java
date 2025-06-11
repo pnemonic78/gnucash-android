@@ -72,7 +72,6 @@ import org.gnucash.android.export.ExportAsyncTask;
 import org.gnucash.android.export.ExportFormat;
 import org.gnucash.android.export.ExportParams;
 import org.gnucash.android.export.Exporter;
-import org.gnucash.android.model.BaseModel;
 import org.gnucash.android.model.ScheduledAction;
 import org.gnucash.android.ui.common.UxArgument;
 import org.gnucash.android.ui.passcode.PasscodeHelper;
@@ -361,14 +360,15 @@ public class ExportFormFragment extends MenuFragment implements
         }
 
         Timber.i("Commencing async export of transactions");
-        new ExportAsyncTask(activity, GnuCashApplication.getActiveBookUID()).execute(exportParameters);
+        final String bookUID = GnuCashApplication.getActiveBookUID();
+        new ExportAsyncTask(activity, bookUID).execute(exportParameters);
 
         if (mRecurrenceRule != null) {
             DatabaseAdapter.UpdateMethod updateMethod = DatabaseAdapter.UpdateMethod.replace;
             ScheduledAction scheduledAction = mScheduledAction;
             if (scheduledAction == null) {
-                scheduledAction = new ScheduledAction(ScheduledAction.ActionType.BACKUP);
-                scheduledAction.setActionUID(BaseModel.generateUID());
+                scheduledAction = new ScheduledAction(ScheduledAction.ActionType.EXPORT);
+                scheduledAction.setActionUID(bookUID);
                 updateMethod = DatabaseAdapter.UpdateMethod.insert;
             }
             scheduledAction.setRecurrence(RecurrenceParser.parse(mEventRecurrence));

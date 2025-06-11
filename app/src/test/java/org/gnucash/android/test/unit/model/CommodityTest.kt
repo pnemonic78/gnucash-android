@@ -39,9 +39,9 @@ class CommodityTest : GnuCashTest() {
         assertThat(commodity.smallestFractionDigits).isEqualTo(2)
 
         commodity.smallestFraction = 10
-        assertThat(commodity.smallestFractionDigits).isEqualTo(1)
+        assertThat(commodity.smallestFractionDigits).isOne()
 
         commodity.smallestFraction = 1
-        assertThat(commodity.smallestFractionDigits).isEqualTo(0)
+        assertThat(commodity.smallestFractionDigits).isZero()
     }
 }

@@ -40,7 +40,7 @@ public class DatabaseSchema {
      * Version number of database containing accounts and transactions info.
      * With any change to the database schema, this number must increase
      */
-    public static final int DATABASE_VERSION = 21;
+    public static final int DATABASE_VERSION = 22;
 
     //no instances are to be instantiated
     private DatabaseSchema() {
@@ -108,6 +108,8 @@ public class DatabaseSchema {
         public static final String COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID = "default_transfer_account_uid";
         @Column(Cursor.FIELD_TYPE_STRING)
         public static final String COLUMN_NOTES = "notes";
+        @Column(Cursor.FIELD_TYPE_INTEGER)
+        public static final String COLUMN_TEMPLATE = "is_template";
 
         /* cached parameters */
         @Column(Cursor.FIELD_TYPE_INTEGER)
@@ -192,6 +194,8 @@ public class DatabaseSchema {
         public static final String COLUMN_RECONCILE_STATE = "reconcile_state";
         @Column(Cursor.FIELD_TYPE_STRING)
         public static final String COLUMN_RECONCILE_DATE = "reconcile_date";
+        @Column(Cursor.FIELD_TYPE_STRING)
+        public static final String COLUMN_SCHEDX_ACTION_ACCOUNT_UID = "sched_account_uid";
 
         public static final String INDEX_UID = "split_uid_index";
     }
@@ -202,13 +206,15 @@ public class DatabaseSchema {
         @Column(Cursor.FIELD_TYPE_STRING)
         public static final String COLUMN_TYPE = "type";
         @Column(Cursor.FIELD_TYPE_STRING)
+        public static final String COLUMN_NAME = "name";
+        @Column(Cursor.FIELD_TYPE_STRING)
         public static final String COLUMN_ACTION_UID = "action_uid";
         @Column(Cursor.FIELD_TYPE_INTEGER)
-        public static final String COLUMN_START_TIME = "start_time";
+        public static final String COLUMN_START_DATE = "start_time";
         @Column(Cursor.FIELD_TYPE_INTEGER)
-        public static final String COLUMN_END_TIME = "end_time";
+        public static final String COLUMN_END_DATE = "end_time";
         @Column(Cursor.FIELD_TYPE_INTEGER)
-        public static final String COLUMN_LAST_RUN = "last_run";
+        public static final String COLUMN_LAST_OCCUR = "last_run";
 
         /**
          * Tag for scheduledAction-specific information e.g. backup parameters for backup
@@ -219,12 +225,8 @@ public class DatabaseSchema {
         public static final String COLUMN_ENABLED = "is_enabled";
         @Column(Cursor.FIELD_TYPE_INTEGER)
         public static final String COLUMN_TOTAL_FREQUENCY = "total_frequency";
-
-        /**
-         * Number of times this scheduledAction has been run. Analogous to instance_count in GnuCash desktop SQL
-         */
-        public static final String COLUMN_EXECUTION_COUNT = "execution_count";
-
+        @Column(Cursor.FIELD_TYPE_INTEGER)
+        public static final String COLUMN_INSTANCE_COUNT = "execution_count";
         @Column(Cursor.FIELD_TYPE_STRING)
         public static final String COLUMN_RECURRENCE_UID = "recurrence_uid";
         @Column(Cursor.FIELD_TYPE_INTEGER)

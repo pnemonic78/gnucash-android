@@ -118,7 +118,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transaction.addSplit(split.createPair(TRANSFER_ACCOUNT_UID))
 
         transactionsDbAdapter.addRecord(transaction, DatabaseAdapter.UpdateMethod.insert)
-        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(1)
+        assertThat(transactionsDbAdapter.recordsCount).isOne()
 
         val intent = Intent(Intent.ACTION_VIEW)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, TRANSACTIONS_ACCOUNT_UID)
@@ -357,7 +357,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         setDoubleEntryEnabled(false)
         transactionsDbAdapter.deleteAllRecords()
 
-        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(0)
+        assertThat(transactionsDbAdapter.recordsCount).isZero()
         var imbalanceAcctUID = accountsDbAdapter.getImbalanceAccountUID(context, COMMODITY)
         assertThat(imbalanceAcctUID).isNull()
 
@@ -377,7 +377,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         onView(withId(R.id.menu_save))
             .perform(ViewActions.click())
 
-        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(1)
+        assertThat(transactionsDbAdapter.recordsCount).isOne()
         val transaction = transactionsDbAdapter.allTransactions[0]
         assertThat(transaction.splits).hasSize(2)
         imbalanceAcctUID = accountsDbAdapter.getImbalanceAccountUID(context, COMMODITY)
@@ -684,11 +684,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         onView(withId(R.id.menu_save))
             .perform(ViewActions.click())
 
-        assertThat(
-            transactionsDbAdapter.getTransactionsCount(
-                TRANSACTIONS_ACCOUNT_UID
-            )
-        ).isEqualTo(1)
+        assertThat(transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)).isOne()
 
         sleep(500)
         onView(withText("Test Split")).perform(ViewActions.click())

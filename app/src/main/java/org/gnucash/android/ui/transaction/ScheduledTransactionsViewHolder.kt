@@ -38,7 +38,7 @@ internal class ScheduledTransactionsViewHolder(
         }
         val splits = transaction.splits
 
-        primaryTextView.text = transaction.description
+        primaryTextView.text = scheduledAction.name ?: transaction.description
         descriptionTextView.text = formatSchedule(scheduledAction)
 
         var text = ""
@@ -78,7 +78,7 @@ internal class ScheduledTransactionsViewHolder(
     @SuppressLint("NotifyDataSetChanged")
     override fun deleteSchedule(scheduledAction: ScheduledAction) {
         Timber.i("Removing scheduled transaction")
-        val transactionUID = scheduledAction.actionUID!!
+        val transactionUID = scheduledAction.actionUID ?: return
         scheduledActionDbAdapter.deleteRecord(scheduledAction)
         if (transactionsDbAdapter.deleteRecord(transactionUID)) {
             val context = itemView.context
