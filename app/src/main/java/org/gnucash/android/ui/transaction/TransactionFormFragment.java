@@ -18,8 +18,6 @@ package org.gnucash.android.ui.transaction;
 
 import static org.gnucash.android.ui.util.widget.ViewExtKt.setTextToEnd;
 
-import static java.lang.Math.max;
-
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -60,7 +58,8 @@ import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
 import org.gnucash.android.app.MenuFragment;
 import org.gnucash.android.databinding.FragmentTransactionFormBinding;
-import org.gnucash.android.db.DatabaseSchema;
+import org.gnucash.android.db.DatabaseSchema.AccountEntry;
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry;
 import org.gnucash.android.db.adapter.AccountsDbAdapter;
 import org.gnucash.android.db.adapter.DatabaseAdapter;
 import org.gnucash.android.db.adapter.PricesDbAdapter;
@@ -342,10 +341,10 @@ public class TransactionFormFragment extends MenuFragment implements
         public void bindView(View view, Context context, Cursor cursor) {
             super.bindView(view, context, cursor);
             String accountUID = account.getUID();
-            String transactionUID = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseSchema.TransactionEntry.COLUMN_UID));
+            String transactionUID = cursor.getString(cursor.getColumnIndexOrThrow(TransactionEntry.COLUMN_UID));
             Money balance = mTransactionsDbAdapter.getBalance(transactionUID, accountUID);
 
-            long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseSchema.TransactionEntry.COLUMN_TIMESTAMP));
+            long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(TransactionEntry.COLUMN_TIMESTAMP));
             String dateString = DateUtils.formatDateTime(view.getContext(), timestamp,
                 DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR);
 
@@ -359,7 +358,7 @@ public class TransactionFormFragment extends MenuFragment implements
      */
     private void initTransactionNameAutocomplete(final FragmentTransactionFormBinding binding) {
         final int[] to = new int[]{R.id.primary_text};
-        final String[] from = new String[]{DatabaseSchema.TransactionEntry.COLUMN_DESCRIPTION};
+        final String[] from = new String[]{TransactionEntry.COLUMN_DESCRIPTION};
 
         Context context = binding.inputTransactionName.getContext();
         SimpleCursorAdapter adapter = new DropDownCursorAdapter(
@@ -368,7 +367,7 @@ public class TransactionFormFragment extends MenuFragment implements
         adapter.setCursorToStringConverter(new SimpleCursorAdapter.CursorToStringConverter() {
             @Override
             public CharSequence convertToString(Cursor cursor) {
-                final int colIndex = cursor.getColumnIndexOrThrow(DatabaseSchema.TransactionEntry.COLUMN_DESCRIPTION);
+                final int colIndex = cursor.getColumnIndexOrThrow(TransactionEntry.COLUMN_DESCRIPTION);
                 return cursor.getString(colIndex);
             }
         });
@@ -542,9 +541,10 @@ public class TransactionFormFragment extends MenuFragment implements
      */
     private void updateTransferAccountsList(FragmentTransactionFormBinding binding) {
         final String accountUID = account.getUID();
-        String conditions = DatabaseSchema.AccountEntry.COLUMN_UID + " != ?"
-            + " AND " + DatabaseSchema.AccountEntry.COLUMN_TYPE + " != ?"
-            + " AND " + DatabaseSchema.AccountEntry.COLUMN_PLACEHOLDER + " = 0";
+        String conditions = AccountEntry.COLUMN_UID + " != ?"
+            + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
+            + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0"
+            + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0";
 
         accountTransferNameAdapter = new QualifiedAccountNameAdapter(
             binding.getRoot().getContext(),

@@ -21,6 +21,8 @@ import static org.gnucash.android.db.DatabaseHelper.createResetBalancesTriggers;
 import static org.gnucash.android.db.DatabaseSchema.AccountEntry;
 import static org.gnucash.android.db.DatabaseSchema.BudgetAmountEntry;
 import static org.gnucash.android.db.DatabaseSchema.CommodityEntry;
+import static org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry;
+import static org.gnucash.android.db.DatabaseSchema.SplitEntry;
 import static org.gnucash.android.db.DatabaseSchema.TransactionEntry;
 
 import android.database.Cursor;
@@ -91,6 +93,9 @@ public class MigrationHelper {
         }
         if ((oldVersion >= 19) && (oldVersion < 21)) {
             migrateTo21(db);
+        }
+        if (oldVersion < 23) {
+            migrateTo23(db);
         }
     }
 
@@ -247,5 +252,26 @@ public class MigrationHelper {
         } catch (SQLException e) {
             Timber.e(e);
         }
+    }
+
+    /**
+     * Upgrade the database to version 23.
+     *
+     * @param db the database.
+     */
+    private static void migrateTo23(SQLiteDatabase db) {
+        Timber.i("Upgrading database to version 23");
+
+        String sqlAccountTemplate = "ALTER TABLE " + AccountEntry.TABLE_NAME +
+            " ADD COLUMN " + AccountEntry.COLUMN_TEMPLATE + " tinyint default 0";
+        db.execSQL(sqlAccountTemplate);
+
+        String sqlActionName = "ALTER TABLE " + ScheduledActionEntry.TABLE_NAME +
+            " ADD COLUMN " + ScheduledActionEntry.COLUMN_NAME + " varchar(255)";
+        db.execSQL(sqlActionName);
+
+        String sqlAddSchedxActionAccount = "ALTER TABLE " + SplitEntry.TABLE_NAME +
+            " ADD COLUMN " + SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID + " varchar(255)";
+        db.execSQL(sqlAddSchedxActionAccount);
     }
 }

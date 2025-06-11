@@ -26,6 +26,7 @@ import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import java.sql.Timestamp
 import java.util.Calendar
+import java.util.Locale
 
 /**
  * Represents a scheduled event which is stored in the database and run at regular period
@@ -39,6 +40,9 @@ class ScheduledAction    //all actions are enabled by default
      */
     var actionType: ActionType = ActionType.TRANSACTION
 ) : BaseModel() {
+
+    /** "Scheduled Transaction Name" */
+    var name: String? = null
 
     private var _startDate: Long = 0
 
@@ -59,11 +63,20 @@ class ScheduledAction    //all actions are enabled by default
     /**
      * Types of events which can be scheduled
      */
-    enum class ActionType(@JvmField @StringRes val labelId: Int) {
-        TRANSACTION(R.string.action_transaction),
+    enum class ActionType(@JvmField val value: String, @JvmField @StringRes val labelId: Int) {
+        TRANSACTION("TRANSACTION", R.string.action_transaction),
 
-        // TODO rename `BACKUP` to `EXPORT`
-        BACKUP(R.string.action_backup)
+        EXPORT("BACKUP", R.string.action_backup);
+
+        companion object {
+            private val _values = values()
+
+            @JvmStatic
+            fun of(value: String): ActionType {
+                val valueLower = value.uppercase(Locale.ROOT)
+                return _values.firstOrNull { it.value == valueLower } ?: TRANSACTION
+            }
+        }
     }
 
     /**
@@ -78,39 +91,45 @@ class ScheduledAction    //all actions are enabled by default
     var actionUID: String? = null
 
     /**
-     * Flag indicating if this event is enabled or not
+     * "TRUE if the scheduled transaction is enabled."
      */
     var isEnabled = true
 
     /**
-     * Number of times this event is planned to be executed
+     * "Total number of occurrences for this scheduled transaction."
      */
     var totalPlannedExecutionCount = 0
 
     /**
-     * How many times this action has already been executed
+     * "Number of instances of this scheduled transaction."
      */
-    var executionCount = 0
+    var instanceCount = 0
 
     /**
-     * Flag for whether the scheduled transaction should be auto-created
+     * "TRUE if the transaction will be automatically created when its time comes."
      */
-    private var _autoCreate = true
-    private var _autoNotify = false
+    var isAutoCreate = false
 
     /**
-     * Number of days in advance to create the transaction
+     * "TRUE if the the user will be notified when the transaction is automatically created."
+     *
+     * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
+     */
+    var isAutoCreateNotify = false
+
+    /**
+     * "Number of days in advance to create this scheduled transaction."
      *
      * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
      */
     var advanceCreateDays = 0
 
     /**
-     * The number of days in advance to notify of scheduled transactions
+     * "Number of days in advance to remind about this scheduled transaction."
      *
      * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
      */
-    var advanceNotifyDays = 0
+    var advanceRemindDays = 0
 
     /**
      * Returns the time when the last schedule in the sequence of planned executions was executed.
@@ -123,7 +142,7 @@ class ScheduledAction    //all actions are enabled by default
      */
     val timeOfLastSchedule: Long
         get() {
-            val count = executionCount
+            val count = instanceCount
             if (count <= 0) return -1
             recurrence?.let { recurrence ->
                 var startDate = LocalDateTime(_startDate)
@@ -253,11 +272,8 @@ class ScheduledAction    //all actions are enabled by default
     val period: Long
         get() = recurrence!!.period
 
-    /**
-     * The time of first execution of the scheduled action, represented as a timestamp in
-     * milliseconds since Epoch
-     */
-    var startTime: Long
+    /** "Date for the first occurrence for the scheduled transaction." */
+    var startDate: Long
         get() = _startDate
         set(startDate) {
             _startDate = startDate
@@ -265,80 +281,35 @@ class ScheduledAction    //all actions are enabled by default
         }
 
     /**
-     * The end time of the scheduled action, represented as a timestamp in milliseconds since Epoch.
+     * "Date for the scheduled transaction to end."
      */
-    var endTime: Long
+    var endDate: Long
         get() = _endDate
         set(endDate) {
             _endDate = endDate
             recurrence?.setPeriodEnd(Timestamp(_endDate))
         }
 
-    /**
-     * Returns flag if transactions should be automatically created or not
-     *
-     * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
-     *
-     * @return `true` if the transaction should be auto-created, `false` otherwise
-     */
-    fun shouldAutoCreate(): Boolean {
-        return _autoCreate
-    }
-
-    /**
-     * Set flag for automatically creating transaction based on this scheduled action
-     *
-     * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
-     *
-     * @param autoCreate Flag for auto creating transactions
-     */
-    fun setAutoCreate(autoCreate: Boolean) {
-        _autoCreate = autoCreate
-    }
-
-    /**
-     * Check if user will be notified of creation of scheduled transactions
-     *
-     * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
-     *
-     * @return `true` if user will be notified, `false` otherwise
-     */
-    fun shouldAutoNotify(): Boolean {
-        return _autoNotify
-    }
-
-    /**
-     * Sets whether to notify the user that scheduled transactions have been created
-     *
-     * This flag is currently unused in the app. It is only included here for compatibility with GnuCash desktop XML
-     *
-     * @param autoNotify Boolean flag
-     */
-    fun setAutoNotify(autoNotify: Boolean) {
-        _autoNotify = autoNotify
-    }
-
-    /** Backing field for @{link ScheduledAction#templateAccountUID} */
     private var _templateAccountUID: String? = null
-    var templateAccountUID: String?
-        /**
-         * Return the template account GUID for this scheduled action
-         *
-         * If no GUID was set, a new one is going to be generated and returned.
-         *
-         * @return String GUID of template account
-         */
-        get() = if (_templateAccountUID == null) generateUID().also {
-            _templateAccountUID = it
-        } else _templateAccountUID
-        /**
-         * Set the template account GUID
-         *
-         * @param templateAccountUID String GUID of template account
-         */
-        set(templateAccountUID) {
-            _templateAccountUID = templateAccountUID
+
+    /**
+     * "Account which holds the template transactions."
+     *
+     * If no GUID was set, a new one is going to be generated and returned.
+     */
+    val templateAccountUID: String
+        get() {
+            var value = _templateAccountUID
+            if (value == null) {
+                value = generateUID()
+                _templateAccountUID = value
+            }
+            return value
         }
+
+    fun setTemplateAccountUID(uid: String?) {
+        _templateAccountUID = uid
+    }
 
     /**
      * Returns the event schedule (start, end and recurrence)

@@ -19,6 +19,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.within
 import org.gnucash.android.model.Commodity
+import org.gnucash.android.model.Commodity.Companion.USD
 import org.gnucash.android.model.Commodity.Companion.getInstance
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Money.Companion.createZeroInstance
@@ -254,26 +255,26 @@ class MoneyTest : GnuCashTest() {
     @Test
     fun scale_1() {
         var money = Money(123.0, Commodity.JPY)
-        assertThat(money.commodity.smallestFraction).isEqualTo(1)
-        assertThat(money.commodity.smallestFractionDigits).isEqualTo(0)
+        assertThat(money.commodity.smallestFraction).isOne()
+        assertThat(money.commodity.smallestFractionDigits).isZero()
         assertThat(money.numerator).isEqualTo(123L)
         assertThat(money.denominator).isEqualTo(1L)
 
         money = Money(123.4, Commodity.JPY)
-        assertThat(money.commodity.smallestFraction).isEqualTo(1)
-        assertThat(money.commodity.smallestFractionDigits).isEqualTo(0)
+        assertThat(money.commodity.smallestFraction).isOne()
+        assertThat(money.commodity.smallestFractionDigits).isZero()
         assertThat(money.numerator).isEqualTo(123L)
         assertThat(money.denominator).isEqualTo(1L)
 
         money = Money(123.45, Commodity.JPY)
-        assertThat(money.commodity.smallestFraction).isEqualTo(1)
-        assertThat(money.commodity.smallestFractionDigits).isEqualTo(0)
+        assertThat(money.commodity.smallestFraction).isOne()
+        assertThat(money.commodity.smallestFractionDigits).isZero()
         assertThat(money.numerator).isEqualTo(123L)
         assertThat(money.denominator).isEqualTo(1L)
 
         money = Money(123.456, Commodity.JPY)
-        assertThat(money.commodity.smallestFraction).isEqualTo(1)
-        assertThat(money.commodity.smallestFractionDigits).isEqualTo(0)
+        assertThat(money.commodity.smallestFraction).isOne()
+        assertThat(money.commodity.smallestFractionDigits).isZero()
         assertThat(money.numerator).isEqualTo(123L)
         assertThat(money.denominator).isEqualTo(1L)
     }
@@ -283,7 +284,7 @@ class MoneyTest : GnuCashTest() {
         val commodity = Commodity("scale-10", "S10", smallestFraction = 10)
         val money = Money(123.456, commodity)
         assertThat(money.commodity.smallestFraction).isEqualTo(10)
-        assertThat(money.commodity.smallestFractionDigits).isEqualTo(1)
+        assertThat(money.commodity.smallestFractionDigits).isOne()
         assertThat(money.numerator).isEqualTo(1235L)
         assertThat(money.denominator).isEqualTo(10L)
     }
@@ -291,8 +292,8 @@ class MoneyTest : GnuCashTest() {
     @Test
     fun scale_10_template() {
         val money = Money(999, 10, Commodity.template)
-        assertThat(money.commodity.smallestFraction).isEqualTo(1)
-        assertThat(money.commodity.smallestFractionDigits).isEqualTo(0)
+        assertThat(money.commodity.smallestFraction).isOne()
+        assertThat(money.commodity.smallestFractionDigits).isZero()
         assertThat(money.numerator).isEqualTo(999L)
         assertThat(money.denominator).isEqualTo(10L)
     }
@@ -311,6 +312,20 @@ class MoneyTest : GnuCashTest() {
         val money = Money(123456L, 1000L, Commodity.template)
         assertThat(money.numerator).isEqualTo(123456L)
         assertThat(money.denominator).isEqualTo(1000L)
+    }
+
+    @Test
+    fun money_BigDecimal() {
+        val money1 = Money(123.45, USD)
+        val money2 = Money("123.45", USD)
+        val money3 = Money(12345, 100, USD)
+        assertThat(money1).isEqualTo(money2)
+        assertThat(money1).isEqualTo(money3)
+        assertThat(money2).isEqualTo(money3)
+
+        val money4 = Money(123, 1, USD)
+        val money5 = Money("123", USD)
+        assertThat(money4).isEqualTo(money5)
     }
 
     companion object {

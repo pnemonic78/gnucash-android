@@ -548,10 +548,9 @@ class Money(
 
     @Throws(CurrencyMismatchException::class)
     override fun compareTo(other: Money): Int {
-        if (commodity != other.commodity) throw CurrencyMismatchException(
-            commodity,
-            other.commodity
-        )
+        if (commodity != other.commodity) {
+            throw CurrencyMismatchException(commodity, other.commodity)
+        }
         return compareTo(other.amount)
     }
 
@@ -593,8 +592,6 @@ class Money(
     override fun describeContents(): Int = 0
 
     inner class CurrencyMismatchException(s: String) : IllegalArgumentException(s) {
-        constructor() : this("Cannot perform operation on Money instances with different currencies")
-
         constructor(
             commodity1: Commodity,
             commodity2: Commodity

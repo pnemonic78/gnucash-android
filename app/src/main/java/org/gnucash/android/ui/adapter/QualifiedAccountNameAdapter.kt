@@ -156,8 +156,7 @@ class QualifiedAccountNameAdapter @JvmOverloads constructor(
 
     private fun loadData(adapter: AccountsDbAdapter): List<Account> {
         val where = where ?: WHERE_NO_ROOT
-        val orderBy =
-            AccountEntry.COLUMN_FAVORITE + " DESC, " + AccountEntry.COLUMN_FULL_NAME + " ASC"
+        val orderBy = ORDER_BY_FAVORITE_THEN_FULL_NAME
         return adapter.getSimpleAccounts(where, whereArgs, orderBy)
     }
 
@@ -168,7 +167,12 @@ class QualifiedAccountNameAdapter @JvmOverloads constructor(
     }
 
     companion object {
-        private val WHERE_NO_ROOT = AccountEntry.COLUMN_TYPE + " != " + sqlEscapeString(AccountType.ROOT.name)
+        private val WHERE_NO_ROOT =
+            AccountEntry.COLUMN_TYPE + " != " + sqlEscapeString(AccountType.ROOT.name) +
+                    " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0"
+
+        private const val ORDER_BY_FAVORITE_THEN_FULL_NAME =
+            AccountEntry.COLUMN_FAVORITE + " DESC, " + AccountEntry.COLUMN_FULL_NAME + " ASC"
 
         @JvmStatic
         @JvmOverloads

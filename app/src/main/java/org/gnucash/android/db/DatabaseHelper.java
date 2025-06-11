@@ -33,8 +33,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import androidx.annotation.NonNull;
-
 import org.gnucash.android.model.Commodity;
 import org.xml.sax.SAXException;
 
@@ -75,6 +73,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + AccountEntry.COLUMN_CLEARED_BALANCE + " varchar(255), "
         + AccountEntry.COLUMN_NOCLOSING_BALANCE + " varchar(255), "
         + AccountEntry.COLUMN_RECONCILED_BALANCE + " varchar(255), "
+        + AccountEntry.COLUMN_TEMPLATE + " tinyint default 0, "
         + AccountEntry.COLUMN_CREATED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         + AccountEntry.COLUMN_MODIFIED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         + "FOREIGN KEY (" + AccountEntry.COLUMN_COMMODITY_UID + ") REFERENCES " + CommodityEntry.TABLE_NAME + " (" + CommodityEntry.COLUMN_UID + ") "
@@ -118,6 +117,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + SplitEntry.COLUMN_TRANSACTION_UID + " varchar(255) not null, "
         + SplitEntry.COLUMN_RECONCILE_STATE + " varchar(1) not null default 'n', "
         + SplitEntry.COLUMN_RECONCILE_DATE + " timestamp not null default current_timestamp, "
+        + SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID + " varchar(255), "
         + SplitEntry.COLUMN_CREATED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         + SplitEntry.COLUMN_MODIFIED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         + "FOREIGN KEY (" + SplitEntry.COLUMN_ACCOUNT_UID + ") REFERENCES " + AccountEntry.TABLE_NAME + " (" + AccountEntry.COLUMN_UID + ") ON DELETE CASCADE, "
@@ -129,13 +129,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String SCHEDULED_ACTIONS_TABLE_CREATE = "CREATE TABLE " + ScheduledActionEntry.TABLE_NAME + " ("
         + ScheduledActionEntry._ID + " integer primary key autoincrement, "
         + ScheduledActionEntry.COLUMN_UID + " varchar(255) not null UNIQUE, "
+        + ScheduledActionEntry.COLUMN_NAME + " varchar(255), "
         + ScheduledActionEntry.COLUMN_ACTION_UID + " varchar(255) not null, "
         + ScheduledActionEntry.COLUMN_TYPE + " varchar(255) not null, "
         + ScheduledActionEntry.COLUMN_RECURRENCE_UID + " varchar(255) not null, "
         + ScheduledActionEntry.COLUMN_TEMPLATE_ACCT_UID + " varchar(255) not null, "
-        + ScheduledActionEntry.COLUMN_LAST_RUN + " integer default 0, "
-        + ScheduledActionEntry.COLUMN_START_TIME + " integer not null, "
-        + ScheduledActionEntry.COLUMN_END_TIME + " integer default 0, "
+        + ScheduledActionEntry.COLUMN_LAST_OCCUR + " integer default 0, "
+        + ScheduledActionEntry.COLUMN_START_DATE + " integer not null, "
+        + ScheduledActionEntry.COLUMN_END_DATE + " integer default 0, "
         + ScheduledActionEntry.COLUMN_TAG + " text, "
         + ScheduledActionEntry.COLUMN_ENABLED + " tinyint default 1, " //enabled by default
         + ScheduledActionEntry.COLUMN_AUTO_CREATE + " tinyint default 1, "
@@ -143,7 +144,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + ScheduledActionEntry.COLUMN_ADVANCE_CREATION + " integer default 0, "
         + ScheduledActionEntry.COLUMN_ADVANCE_NOTIFY + " integer default 0, "
         + ScheduledActionEntry.COLUMN_TOTAL_FREQUENCY + " integer default 0, "
-        + ScheduledActionEntry.COLUMN_EXECUTION_COUNT + " integer default 0, "
+        + ScheduledActionEntry.COLUMN_INSTANCE_COUNT + " integer default 0, "
         + ScheduledActionEntry.COLUMN_CREATED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         + ScheduledActionEntry.COLUMN_MODIFIED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         + "FOREIGN KEY (" + ScheduledActionEntry.COLUMN_RECURRENCE_UID + ") REFERENCES " + RecurrenceEntry.TABLE_NAME + " (" + RecurrenceEntry.COLUMN_UID + ") "

@@ -22,6 +22,7 @@ import static org.gnucash.android.db.DatabaseHelper.sqlEscapeLike;
 import static org.gnucash.android.db.DatabaseSchema.AccountEntry;
 import static org.gnucash.android.db.DatabaseSchema.BudgetAmountEntry;
 import static org.gnucash.android.db.DatabaseSchema.BudgetEntry;
+import static org.gnucash.android.db.DatabaseSchema.CommodityEntry;
 import static org.gnucash.android.db.DatabaseSchema.PriceEntry;
 import static org.gnucash.android.db.DatabaseSchema.RecurrenceEntry;
 import static org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry;
@@ -44,6 +45,7 @@ import androidx.core.content.ContextCompat;
 
 import org.gnucash.android.R;
 import org.gnucash.android.app.GnuCashApplication;
+import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.AccountType;
 import org.gnucash.android.model.Commodity;
@@ -133,7 +135,8 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             AccountEntry.COLUMN_COMMODITY_UID,
             AccountEntry.COLUMN_PARENT_ACCOUNT_UID,
             AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID,
-            AccountEntry.COLUMN_NOTES
+            AccountEntry.COLUMN_NOTES,
+            AccountEntry.COLUMN_TEMPLATE
         }, true);
         this.transactionsDbAdapter = transactionsDbAdapter;
         this.commoditiesDbAdapter = transactionsDbAdapter.commoditiesDbAdapter;
@@ -263,6 +266,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         if (account.getNote() != null) {
             stmt.bindString(14, account.getNote());
         }
+        stmt.bindLong(15, account.isTemplate() ? 1 : 0);
 
         return stmt;
     }
@@ -482,6 +486,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             account.setHidden(false);
         }
         account.setNote(c.getString(c.getColumnIndexOrThrow(AccountEntry.COLUMN_NOTES)));
+        account.setTemplate(c.getInt(c.getColumnIndexOrThrow(AccountEntry.COLUMN_TEMPLATE)) != 0);
         if (account.isRoot()) {
             account.setHidden(false);
             account.setPlaceholder(false);
@@ -1459,7 +1464,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
         } finally {
             cursor.close();
         }
-        List<Commodity> commodities= new ArrayList<>(accountCommodities);
+        List<Commodity> commodities = new ArrayList<>(accountCommodities);
         Collections.sort(commodities, new Comparator<Commodity>() {
             @Override
             public int compare(Commodity o1, Commodity o2) {
@@ -1470,7 +1475,13 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     }
 
     public long getCommoditiesInUseCount() {
-        return DatabaseUtils.longForQuery(mDb, "select count(distinct " + AccountEntry.COLUMN_COMMODITY_UID + ") from " + mTableName, null);
+        String sql = "SELECT COUNT(DISTINCT " + AccountEntry.COLUMN_COMMODITY_UID + ")"
+            + " FROM " + mTableName + " a"
+            + ", " + CommodityEntry.TABLE_NAME + " c"
+            + " WHERE a." + AccountEntry.COLUMN_COMMODITY_UID + " = c." + CommodityEntry.COLUMN_UID
+            + " AND c." + CommodityEntry.COLUMN_NAMESPACE + " != ?";
+        String[] sqlArgs = new String[]{Commodity.TEMPLATE};
+        return DatabaseUtils.longForQuery(mDb, sql, sqlArgs);
     }
 
     /**

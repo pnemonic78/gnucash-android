@@ -178,7 +178,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         assertThat(secondAccount).isNotNull()
         assertThat(secondAccount.uid).isEqualTo(account2.uid)
 
-        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(1)
+        assertThat(transactionsDbAdapter.recordsCount).isOne()
     }
 
     /**
@@ -204,7 +204,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         accountsDbAdapter.deleteRecord(ALPHA_ACCOUNT_NAME)
 
         val trxn = transactionsDbAdapter.getRecord(transaction.uid)
-        assertThat(trxn.splits.size).isEqualTo(1)
+        assertThat(trxn.splits.size).isOne()
         assertThat(trxn.splits[0].accountUID).isEqualTo(BRAVO_ACCOUNT_NAME)
     }
 
@@ -240,7 +240,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         child = accountsDbAdapter.getRecord(child.uid)
         parent = accountsDbAdapter.getRecord(parent.uid)
 
-        assertThat(accountsDbAdapter.getSubAccountCount(parent.uid)).isEqualTo(1)
+        assertThat(accountsDbAdapter.getSubAccountCount(parent.uid)).isOne()
         assertThat(parent.uid).isEqualTo(child.parentUID)
 
         assertThat(child.fullName).isEqualTo("Test:Child")
@@ -260,7 +260,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
 
         accountsDbAdapter.addRecord(account1)
 
-        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(1)
+        assertThat(transactionsDbAdapter.recordsCount).isOne()
         assertThat(splitsDbAdapter.recordsCount).isEqualTo(2)
         assertThat(accountsDbAdapter.recordsCount).isEqualTo(3) //ROOT account automatically added
     }
@@ -277,7 +277,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         accountsDbAdapter.addRecord(account)
         accountsDbAdapter.addRecord(account2)
 
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.BACKUP)
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
         scheduledAction.actionUID = "Test-uid"
         scheduledAction.setRecurrence(Recurrence(PeriodType.WEEK))
         val scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance()
@@ -401,13 +401,13 @@ class AccountsDbAdapterTest : GnuCashTest() {
         accountsDbAdapter.addRecord(account2)
 
         assertThat(accountsDbAdapter.recordsCount).isEqualTo(3)
-        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(1)
+        assertThat(transactionsDbAdapter.recordsCount).isOne()
         assertThat(splitsDbAdapter.recordsCount).isEqualTo(2)
 
         val result = accountsDbAdapter.recursiveDeleteAccount(account.uid)
         assertThat(result).isTrue()
 
-        assertThat(accountsDbAdapter.recordsCount).isEqualTo(1) //the root account
+        assertThat(accountsDbAdapter.recordsCount).isOne() //the root account
         assertThat(transactionsDbAdapter.recordsCount).isZero()
         assertThat(splitsDbAdapter.recordsCount).isZero()
     }

@@ -319,17 +319,13 @@ public abstract class GncXmlHelper {
         return numerator + "/" + denomString;
     }
 
-    /**
-     * Format the amount in template transaction splits.
-     * <p>GnuCash desktop always formats with a locale dependent format, and that varies per user.<br>
-     * So we will use the device locale here and hope that the user has the same locale on the desktop GnuCash</p>
-     *
-     * @param amount Amount to be formatted
-     * @return String representation of amount
-     */
-    public static String formatTemplateSplitAmount(BigDecimal amount) {
-        //TODO: If we ever implement an application-specific locale setting, use it here as well
-        return NumberFormat.getNumberInstance().format(amount);
+    public static String formatFormula(BigDecimal amount, Commodity commodity) {
+        Money money = new Money(amount, commodity);
+        return formatFormula(money);
+    }
+
+    public static String formatFormula(Money money) {
+        return money.formattedStringWithoutSymbol();
     }
 
     public static String formatNumeric(long numerator, long denominator) {
