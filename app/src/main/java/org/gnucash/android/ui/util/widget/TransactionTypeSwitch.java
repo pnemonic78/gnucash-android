@@ -58,17 +58,32 @@ public class TransactionTypeSwitch extends SwitchCompat {
 
     public TransactionTypeSwitch(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        setAccountType(AccountType.BANK);
+        init();
     }
 
     public TransactionTypeSwitch(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setAccountType(AccountType.BANK);
+        init();
     }
 
     public TransactionTypeSwitch(Context context) {
         super(context);
+        init();
+    }
+
+    private void init() {
         setAccountType(AccountType.BANK);
+
+        // Force red/green colors.
+        final boolean isChecked = isChecked();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                setChecked(!isChecked);
+                setChecked(isChecked);
+
+            }
+        });
     }
 
     public void setAccountType(AccountType accountType) {
@@ -268,7 +283,6 @@ public class TransactionTypeSwitch extends SwitchCompat {
                     || (!isChecked && amount.signum() < 0)) { //credit but amount is -ve
                     mAmountEditText.setValue(amount.negate());
                 }
-
             }
 
             for (OnCheckedChangeListener listener : mOnCheckedChangeListeners) {
