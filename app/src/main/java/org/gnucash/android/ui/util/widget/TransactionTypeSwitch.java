@@ -218,8 +218,13 @@ public class TransactionTypeSwitch extends SwitchCompat {
      *
      * @param transactionType {@link org.gnucash.android.model.TransactionType} of the split
      */
-    public void setChecked(TransactionType transactionType) {
-        setChecked(shouldDecreaseBalance(mAccountType, transactionType));
+    public void setChecked(final TransactionType transactionType) {
+        post(new Runnable() {
+            @Override
+            public void run() {
+                setChecked(shouldDecreaseBalance(mAccountType, transactionType));
+            }
+        });
     }
 
     /**
