@@ -426,7 +426,7 @@ public class AccountsActivity extends BaseDrawerActivity implements
             }
         };
 
-        new ImportAsyncTask(activity, delegate).execute(uri);
+        new ImportAsyncTask(activity, delegate, false).execute(uri);
     }
 
     /**
