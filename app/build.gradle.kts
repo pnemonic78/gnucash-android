@@ -32,7 +32,7 @@ android {
         applicationId = "org.gnucash.pocket.pnemonic"
         minSdk = 21
         targetSdk = 34
-        versionCode = versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
+        versionCode = (((((versionMajor * 100) + versionMinor) * 1000) + versionPatch) * 1000) + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
         resValue("string", "app_name", "GnuCash")
         resValue("string", "app_playstore_url", "market://details?id=${applicationId}")
