@@ -159,6 +159,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + CommodityEntry.COLUMN_LOCAL_SYMBOL + " varchar(255) not null default '', "
         + CommodityEntry.COLUMN_CUSIP + " varchar(255), "
         + CommodityEntry.COLUMN_SMALLEST_FRACTION + " integer not null, "
+        + CommodityEntry.COLUMN_QUOTE_FLAG + " tinyint not null default 0, "
         + CommodityEntry.COLUMN_QUOTE_SOURCE + " varchar(255), "
         + CommodityEntry.COLUMN_QUOTE_TZ + " varchar(100), "
         + CommodityEntry.COLUMN_CREATED_AT + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "

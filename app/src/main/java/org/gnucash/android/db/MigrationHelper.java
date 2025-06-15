@@ -93,8 +93,8 @@ public class MigrationHelper {
         if ((oldVersion >= 19) && (oldVersion < 21)) {
             migrateTo21(db);
         }
-        if (oldVersion < 22) {
-            migrateTo22(context, db);
+        if (oldVersion < 23) {
+            migrateTo23(context, db);
         }
     }
 
@@ -254,13 +254,42 @@ public class MigrationHelper {
     }
 
     /**
-     * Upgrade the database to version 22.
+     * Upgrade the database to version 23.
      *
      * @param context the context.
      * @param db      the database.
      */
-    private static void migrateTo22(@NonNull Context context, @NonNull SQLiteDatabase db) {
-        Timber.i("Upgrading database to version 22");
+    private static void migrateTo23(@NonNull Context context, @NonNull SQLiteDatabase db) {
+        Timber.i("Upgrading database to version 23");
+
+        boolean hasColumnQuoteFlag = false;
+        Cursor cursor = db.rawQuery("PRAGMA table_info(" + CommodityEntry.TABLE_NAME + ")", null);
+        try {
+            if (cursor.moveToFirst()) {
+                final int indexName = cursor.getColumnIndex("name");
+                do {
+                    String name = cursor.getString(indexName);
+                    if (CommodityEntry.COLUMN_QUOTE_FLAG.equals(name)) {
+                        hasColumnQuoteFlag = true;
+                        break;
+                    }
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            cursor.close();
+        }
+
+        if (!hasColumnQuoteFlag) {
+            // Restore the currency code column that was deleted in v19.
+            String sqlCommodityFlag = "ALTER TABLE " + CommodityEntry.TABLE_NAME
+                + " ADD COLUMN " + CommodityEntry.COLUMN_QUOTE_FLAG + " tinyint default 0";
+            try {
+                db.execSQL(sqlCommodityFlag);
+            } catch (SQLException e) {
+                Timber.e(e);
+            }
+        }
+
         try {
             importCommodities(context, db);
         } catch (SAXException | ParserConfigurationException | IOException e) {
