@@ -668,7 +668,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      */
     public String createAccountHierarchy(String fullName, AccountType accountType) {
         if (TextUtils.isEmpty(fullName)) {
-            throw new IllegalArgumentException("fullName cannot be empty");
+            throw new IllegalArgumentException("Full name required");
         }
         String[] tokens = fullName.trim().split(ACCOUNT_NAME_SEPARATOR);
         String uid = getOrCreateRootAccountUID();
@@ -1229,7 +1229,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     public Commodity getCommodity(@NonNull String accountUID) {
         Account account = getSimpleRecord(accountUID);
         if (account != null) return account.getCommodity();
-        throw new IllegalArgumentException("Account " + accountUID + " does not exist");
+        throw new IllegalArgumentException("Account not found");
     }
 
     /**
@@ -1237,7 +1237,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
      *
      * @param accountUID Unique identifier of the account
      * @return Name of the account as String
-     * @throws java.lang.IllegalArgumentException if accountUID does not exist
+     * @throws java.lang.IllegalArgumentException if accountUID not found
      * @see #getFullyQualifiedAccountName(String)
      */
     public String getAccountName(String accountUID) {
@@ -1325,7 +1325,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     public String getAccountFullName(String accountUID) {
         Account account = getSimpleRecord(accountUID);
         if (account != null) return account.getFullName();
-        throw new IllegalArgumentException("account UID: " + accountUID + " does not exist");
+        throw new IllegalArgumentException("Account not found");
     }
 
 
@@ -1576,7 +1576,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
                 if (isCached) cache.put(uid, account);
                 return account;
             } else {
-                throw new IllegalArgumentException("Record with " + uid + " does not exist");
+                throw new IllegalArgumentException("Account not found");
             }
         } finally {
             cursor.close();
@@ -1597,7 +1597,7 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
     public AccountType getAccountType(@NonNull String accountUID) {
         Account account = getSimpleRecord(accountUID);
         if (account != null) return account.getAccountType();
-        throw new IllegalArgumentException("account " + accountUID + " does not exist in DB");
+        throw new IllegalArgumentException("Account not found");
     }
 
     @NonNull
