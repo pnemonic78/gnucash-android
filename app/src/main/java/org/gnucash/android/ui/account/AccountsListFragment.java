@@ -485,8 +485,8 @@ public class AccountsListFragment extends MenuFragment implements
 
     public void setShowHiddenAccounts(boolean isVisible) {
         boolean wasVisible = isShowHiddenAccounts;
-        isShowHiddenAccounts = isVisible;
         if (wasVisible != isVisible) {
+            isShowHiddenAccounts = isVisible;
             refresh();
         }
     }
