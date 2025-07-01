@@ -450,6 +450,7 @@ public class AccountFormFragment extends MenuFragment implements FragmentResultL
         if (TextUtils.isEmpty(defaultTransferAccountUID)) {
             return;
         }
+        setDefaultTransferAccountInputsVisible(binding, enableTransferAccount);
         binding.checkboxDefaultTransferAccount.setChecked(enableTransferAccount);
         binding.inputDefaultTransferAccount.setEnabled(enableTransferAccount);
 
@@ -538,12 +539,12 @@ public class AccountFormFragment extends MenuFragment implements FragmentResultL
         defaultAccountNameAdapter.load(new Function0<Unit>() {
             @Override
             public Unit invoke() {
-                setDefaultTransferAccountInputsVisible(binding, mUseDoubleEntry && (defaultAccountNameAdapter.getCount() > 0));
+                setDefaultTransferAccountSelection(binding, account.getDefaultTransferAccountUID(), mUseDoubleEntry && (defaultAccountNameAdapter.getCount() > 0));
                 return null;
             }
         });
         binding.inputDefaultTransferAccount.setAdapter(defaultAccountNameAdapter);
-        setDefaultTransferAccountInputsVisible(binding, mUseDoubleEntry && (defaultAccountNameAdapter.getCount() > 0));
+        setDefaultTransferAccountInputsVisible(binding, mUseDoubleEntry);
     }
 
     /**
