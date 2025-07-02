@@ -539,7 +539,8 @@ public class AccountFormFragment extends MenuFragment implements FragmentResultL
         defaultAccountNameAdapter.load(new Function0<Unit>() {
             @Override
             public Unit invoke() {
-                setDefaultTransferAccountSelection(binding, account.getDefaultTransferAccountUID(), mUseDoubleEntry && (defaultAccountNameAdapter.getCount() > 0));
+                String accountUID = (account != null) ? account.getDefaultTransferAccountUID() : null;
+                setDefaultTransferAccountSelection(binding, accountUID, mUseDoubleEntry && (defaultAccountNameAdapter.getCount() > 0));
                 return null;
             }
         });
