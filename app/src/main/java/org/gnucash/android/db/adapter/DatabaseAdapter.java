@@ -251,7 +251,7 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
     /**
      * Persist the model object to the database as records using the {@code updateMethod}
      *
-     * @param models    List of records
+     * @param models       List of records
      * @param updateMethod Method to use when persisting them
      * @return Number of rows affected in the database
      */
@@ -475,7 +475,7 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
     public Model getRecord(@NonNull String uid) throws IllegalArgumentException {
         Model model = getRecordOrNull(uid);
         if (model == null) {
-            throw new IllegalArgumentException("Record not found");
+            throw new IllegalArgumentException("Record not found for " + mTableName);
         }
         return model;
     }
@@ -654,7 +654,7 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
             if (cursor.moveToFirst()) {
                 result = cursor.getLong(0);
             } else {
-                throw new IllegalArgumentException(mTableName + " with GUID " + uid + " does not exist in the db");
+                throw new IllegalArgumentException("Record not found for " + mTableName);
             }
         } finally {
             cursor.close();
@@ -686,7 +686,7 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
             if (cursor.moveToFirst()) {
                 return cursor.getString(0);
             } else {
-                throw new IllegalArgumentException(mTableName + " Record ID " + id + " does not exist in the db");
+                throw new IllegalArgumentException("Record not found for " + mTableName);
             }
         } finally {
             cursor.close();
@@ -841,11 +841,10 @@ public abstract class DatabaseAdapter<Model extends BaseModel> implements Closea
             new String[]{recordUID}, null, null, null);
 
         try {
-            if (cursor.moveToFirst())
-                return cursor.getString(cursor.getColumnIndexOrThrow(columnName));
-            else {
-                throw new IllegalArgumentException(String.format("Record with GUID %s does not exist in the db", recordUID));
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
             }
+            throw new IllegalArgumentException("Record not found for " + mTableName);
         } finally {
             cursor.close();
         }

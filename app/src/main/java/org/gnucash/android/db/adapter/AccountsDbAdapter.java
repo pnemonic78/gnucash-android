@@ -513,14 +513,12 @@ public class AccountsDbAdapter extends DatabaseAdapter<Account> {
             null, null, null, null);
         try {
             if (cursor.moveToFirst()) {
-                Timber.v("Found parent account UID, returning value");
-                return cursor.getString(cursor.getColumnIndexOrThrow(AccountEntry.COLUMN_PARENT_ACCOUNT_UID));
-            } else {
-                return null;
+                return cursor.getString(0);
             }
         } finally {
             cursor.close();
         }
+        return null;
     }
 
     /**

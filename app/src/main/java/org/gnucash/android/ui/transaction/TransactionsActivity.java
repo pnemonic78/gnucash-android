@@ -603,6 +603,7 @@ public class TransactionsActivity extends BaseDrawerActivity implements
             String accountUID = account.getUID();
             //update the intent in case the account gets rotated
             getIntent().putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID);
+            mPagerAdapter.notifyDataSetChanged();
             if (account.isPlaceholder()) {
                 if (binding.tabLayout.getTabCount() > 1) {
                     binding.tabLayout.removeTabAt(INDEX_TRANSACTIONS_FRAGMENT);
@@ -612,7 +613,6 @@ public class TransactionsActivity extends BaseDrawerActivity implements
                     binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.section_header_transactions));
                 }
             }
-            mPagerAdapter.notifyDataSetChanged();
 
             //if there are no transactions, and there are sub-accounts, show the sub-accounts
             long txCount = transactionsDbAdapter.getTransactionsCount(accountUID);
