@@ -21,7 +21,6 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.StateSet;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -41,16 +40,19 @@ import com.github.mikephil.charting.data.PieEntry;
 
 import org.gnucash.android.R;
 import org.gnucash.android.databinding.FragmentReportSummaryBinding;
-import org.gnucash.android.db.DatabaseSchema;
+import org.gnucash.android.db.DatabaseSchema.AccountEntry;
 import org.gnucash.android.model.Account;
 import org.gnucash.android.model.AccountType;
+import org.gnucash.android.model.Commodity;
 import org.gnucash.android.model.Money;
 import org.gnucash.android.model.Price;
 import org.gnucash.android.ui.report.piechart.PieChartFragment;
+import org.gnucash.android.util.DateExtKt;
 import org.joda.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Shows a summary of reports
@@ -110,14 +112,10 @@ public class ReportsOverviewFragment extends BaseReportFragment {
         legend.setWordWrapEnabled(true);
         legend.setTextColor(textColorPrimary);
 
-        ColorStateList csl = new ColorStateList(new int[][]{StateSet.WILD_CARD}, new int[]{ContextCompat.getColor(context, R.color.account_green)});
-        setButtonTint(mBinding.btnPieChart, csl);
-        csl = new ColorStateList(new int[][]{StateSet.WILD_CARD}, new int[]{ContextCompat.getColor(context, R.color.account_red)});
-        setButtonTint(mBinding.btnBarChart, csl);
-        csl = new ColorStateList(new int[][]{StateSet.WILD_CARD}, new int[]{ContextCompat.getColor(context, R.color.account_blue)});
-        setButtonTint(mBinding.btnLineChart, csl);
-        csl = new ColorStateList(new int[][]{StateSet.WILD_CARD}, new int[]{ContextCompat.getColor(context, R.color.account_purple)});
-        setButtonTint(mBinding.btnBalanceSheet, csl);
+        setButtonTint(mBinding.btnPieChart, ContextCompat.getColor(context, ReportType.PIE_CHART.colorId));
+        setButtonTint(mBinding.btnBarChart, ContextCompat.getColor(context, ReportType.BAR_CHART.colorId));
+        setButtonTint(mBinding.btnLineChart, ContextCompat.getColor(context, ReportType.LINE_CHART.colorId));
+        setButtonTint(mBinding.btnBalanceSheet, ContextCompat.getColor(context, ReportType.SHEET.colorId));
     }
 
     @Override
@@ -132,9 +130,7 @@ public class ReportsOverviewFragment extends BaseReportFragment {
         if (pieData.getDataSetCount() > 0 && pieData.getDataSet().getEntryCount() > 0) {
             mBinding.pieChart.setData(pieData);
             float sum = mBinding.pieChart.getData().getYValueSum();
-            String total = context.getString(R.string.label_chart_total);
-            String currencySymbol = mCommodity.getSymbol();
-            mBinding.pieChart.setCenterText(String.format(PieChartFragment.TOTAL_VALUE_LABEL_PATTERN, total, sum, currencySymbol));
+            mBinding.pieChart.setCenterText(formatTotalValue(sum));
             mChartHasData = true;
         } else {
             mBinding.pieChart.setData(getEmptyData(context));
@@ -164,16 +160,22 @@ public class ReportsOverviewFragment extends BaseReportFragment {
         PieDataSet dataSet = new PieDataSet(null, "");
         List<Integer> colors = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
-        long start = now.minusMonths(2).dayOfMonth().withMinimumValue().toDateTime().getMillis();
-        long end = now.toDateTime().getMillis();
+        long startTime = DateExtKt.toMillis(now.minusMonths(3));
+        long endTime = DateExtKt.toMillis(now);
+        final Commodity commodity = mCommodity;
 
-        String where = DatabaseSchema.AccountEntry.COLUMN_PLACEHOLDER + "=0 AND " + DatabaseSchema.AccountEntry.COLUMN_TYPE + "=?";
+        String where = AccountEntry.COLUMN_TYPE + "=?"
+            + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
+            + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0";
         String[] whereArgs = new String[]{mAccountType.name()};
-        List<Account> accounts = mAccountsDbAdapter.getSimpleAccounts(where, whereArgs, DatabaseSchema.AccountEntry.COLUMN_FULL_NAME + " ASC");
+        String orderBy = AccountEntry.COLUMN_FULL_NAME + " ASC";
+        List<Account> accounts = mAccountsDbAdapter.getSimpleAccounts(where, whereArgs, orderBy);
+        Map<String, Money> balances = mAccountsDbAdapter.getAccountsBalances(accounts, startTime, endTime);
+
         for (Account account : accounts) {
-            Money balance = mAccountsDbAdapter.getAccountBalance(account.getUID(), start, end, false);
-            if (balance.isAmountZero()) continue;
-            Price price = pricesDbAdapter.getPrice(balance.getCommodity(), mCommodity);
+            Money balance = balances.get(account.getUID());
+            if ((balance == null) || balance.isAmountZero()) continue;
+            Price price = pricesDbAdapter.getPrice(balance.getCommodity(), commodity);
             if (price == null) continue;
             balance = balance.times(price);
             float value = balance.toFloat();
@@ -192,7 +194,7 @@ public class ReportsOverviewFragment extends BaseReportFragment {
     @Override
     protected void displayReport() {
         if (mChartHasData) {
-            mBinding.pieChart.animateXY(1800, 1800);
+            mBinding.pieChart.animateXY(1500, 1500);
             mBinding.pieChart.setTouchEnabled(true);
         } else {
             mBinding.pieChart.setTouchEnabled(false);
@@ -200,9 +202,12 @@ public class ReportsOverviewFragment extends BaseReportFragment {
         mBinding.pieChart.highlightValues(null);
         mBinding.pieChart.invalidate();
 
-        displayBalance(mBinding.totalAssets, mAssetsBalance, colorBalanceZero);
-        displayBalance(mBinding.totalLiabilities, mLiabilitiesBalance, colorBalanceZero);
-        displayBalance(mBinding.netWorth, mAssetsBalance.minus(mLiabilitiesBalance), colorBalanceZero);
+        Money totalAssets = mAssetsBalance;
+        Money totalLiabilities = (mLiabilitiesBalance != null) ? mLiabilitiesBalance.unaryMinus() : null;
+        Money netWorth = (totalAssets != null) ? totalAssets.plus(totalLiabilities) : null;
+        displayBalance(mBinding.totalAssets, totalAssets, colorBalanceZero);
+        displayBalance(mBinding.totalLiabilities, totalLiabilities, colorBalanceZero);
+        displayBalance(mBinding.netWorth, netWorth, colorBalanceZero);
     }
 
     /**
@@ -246,4 +251,7 @@ public class ReportsOverviewFragment extends BaseReportFragment {
         button.setTextColor(Color.WHITE);
     }
 
+    public void setButtonTint(Button button, @ColorInt int tintColor) {
+        setButtonTint(button, ColorStateList.valueOf(tintColor));
+    }
 }

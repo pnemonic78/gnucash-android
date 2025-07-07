@@ -6,12 +6,15 @@ import androidx.annotation.LayoutRes
 import org.gnucash.android.R
 import org.gnucash.android.model.AccountType
 
-class AccountTypesAdapter(context: Context) :
-    ArrayAdapter<AccountTypesAdapter.Label>(context, android.R.layout.simple_spinner_item) {
+class AccountTypesAdapter @JvmOverloads constructor(
+    context: Context,
+    @LayoutRes resource: Int = android.R.layout.simple_spinner_item,
+    types: List<AccountType> = AccountType.entries
+) : ArrayAdapter<AccountTypesAdapter.Label>(context, resource) {
 
     init {
         setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        val records = AccountType.entries.filter { it != AccountType.ROOT }
+        val records = types.filter { it != AccountType.ROOT }
         val labels = context.resources.getStringArray(R.array.account_type_entry_values)
         val items = records.map { type -> Label(type, labels[type.labelIndex]) }
             .sortedBy { it.label }
@@ -38,7 +41,17 @@ class AccountTypesAdapter(context: Context) :
         return -1
     }
 
-    data class Label(val value: AccountType, val label: String) {
+    data class Label(@JvmField val value: AccountType, @JvmField val label: String) {
         override fun toString(): String = label
+    }
+
+    companion object {
+        @JvmStatic
+        fun expenseAndIncome(context: Context): AccountTypesAdapter {
+            return AccountTypesAdapter(
+                context = context,
+                types = listOf(AccountType.EXPENSE, AccountType.INCOME)
+            )
+        }
     }
 }
