@@ -43,9 +43,8 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
-import org.gnucash.android.ui.report.BaseReportFragment
 import org.gnucash.android.ui.report.ReportsActivity
-import org.gnucash.android.ui.report.piechart.PieChartFragment
+import org.gnucash.android.ui.report.piechart.PieChartFragment.SELECTED_VALUE_PATTERN
 import org.gnucash.android.util.BookUtils
 import org.joda.time.LocalDateTime
 import org.junit.After
@@ -139,7 +138,7 @@ class PieChartReportTest : GnuAndroidTest() {
             ((TRANSACTION_AMOUNT * 100) / (TRANSACTION_AMOUNT + TRANSACTION2_AMOUNT)).toFloat()
         val selectedText = String.format(
             Locale.US,
-            BaseReportFragment.SELECTED_VALUE_PATTERN,
+            SELECTED_VALUE_PATTERN,
             DINING_EXPENSE_ACCOUNT_NAME,
             TRANSACTION_AMOUNT,
             percent
@@ -170,7 +169,7 @@ class PieChartReportTest : GnuAndroidTest() {
         onView(withId(R.id.pie_chart))
             .perform(clickXY(Position.BEGIN, Position.MIDDLE))
         val selectedText = String.format(
-            PieChartFragment.SELECTED_VALUE_PATTERN,
+            SELECTED_VALUE_PATTERN,
             GIFTS_RECEIVED_INCOME_ACCOUNT_NAME,
             TRANSACTION3_AMOUNT,
             100f

@@ -36,6 +36,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -125,7 +126,8 @@ public abstract class BaseReportFragment extends MenuFragment implements
     /**
      * Pattern to use to display selected chart values
      */
-    private static final String SELECTED_VALUE_PATTERN = "%s — %s %s (%.2f%%)";
+    @VisibleForTesting
+    public static final String SELECTED_VALUE_PATTERN = "%s — %s %s (%.2f%%)";
     private static final String TOTAL_VALUE_LABEL_PATTERN = "%s\n%s %s";
 
     protected ReportsActivity mReportsActivity;
