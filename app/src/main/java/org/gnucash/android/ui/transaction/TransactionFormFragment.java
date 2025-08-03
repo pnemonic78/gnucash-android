@@ -212,7 +212,7 @@ public class TransactionFormFragment extends MenuFragment implements
         FragmentTransactionFormBinding binding = mBinding;
         setListeners(binding);
 
-        final Account account = this.account;
+        final Account account = requireAccount();
         updateTransferAccountsList(binding, account);
         initializeViews(binding, account);
 
@@ -227,7 +227,7 @@ public class TransactionFormFragment extends MenuFragment implements
      * Starts the transfer of funds from one currency to another
      */
     private void startTransferFunds(FragmentTransactionFormBinding binding) {
-        Account accountFrom = this.account;
+        final Account accountFrom = requireAccount();
         Commodity fromCommodity = accountFrom.getCommodity();
         int position = binding.inputTransferAccountSpinner.getSelectedItemPosition();
         Account accountTarget = accountTransferNameAdapter.getAccount(position);
@@ -284,14 +284,7 @@ public class TransactionFormFragment extends MenuFragment implements
         scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance();
 
         rootAccountUID = mAccountsDbAdapter.getOrCreateRootAccountUID();
-        String accountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID, rootAccountUID);
-        assert !TextUtils.isEmpty(accountUID);
-        try {
-            account = mAccountsDbAdapter.getSimpleRecord(accountUID);
-        } catch (IllegalArgumentException e) {
-            Timber.e(e);
-            account = null;
-        }
+        this.account = requireAccount();
         if (account == null) {
             Timber.e("Account not found");
             finish(Activity.RESULT_CANCELED);
@@ -336,6 +329,7 @@ public class TransactionFormFragment extends MenuFragment implements
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
             super.bindView(view, context, cursor);
+            final Account account = requireAccount();
             String accountUID = account.getUID();
             String transactionUID = cursor.getString(cursor.getColumnIndexOrThrow(TransactionEntry.COLUMN_UID));
             Money balance = mTransactionsDbAdapter.getBalance(transactionUID, accountUID);
@@ -371,6 +365,7 @@ public class TransactionFormFragment extends MenuFragment implements
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             @Override
             public Cursor runQuery(CharSequence name) {
+                final Account account = requireAccount();
                 String accountUID = account.getUID();
                 return mTransactionsDbAdapter.fetchTransactionSuggestions(name == null ? "" : name.toString(), accountUID);
             }
@@ -414,7 +409,7 @@ public class TransactionFormFragment extends MenuFragment implements
      */
     private void initializeViewsWithTransaction(@NonNull final FragmentTransactionFormBinding binding, @NonNull Transaction transaction) {
         final Context context = binding.getRoot().getContext();
-        final Account account = this.account;
+        final Account account = requireAccount();
         final String accountUID = account.getUID();
         setTextToEnd(binding.inputTransactionName, transaction.getDescription());
 
@@ -599,6 +594,7 @@ public class TransactionFormFragment extends MenuFragment implements
         }
 
         Context context = binding.getRoot().getContext();
+        final Account account = requireAccount();
         final String accountUID = account.getUID();
         Intent intent = new Intent(context, FormActivity.class)
             .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.SPLIT_EDITOR.name())
@@ -659,6 +655,7 @@ public class TransactionFormFragment extends MenuFragment implements
                 final String transferAccountUID = accountTransferNameAdapter.getUID(position);
 
                 if (mSplitsList.size() == 2) { //when handling simple transfer to one account
+                    final Account account = requireAccount();
                     final String accountUID = account.getUID();
                     for (Split split : mSplitsList) {
                         if (!split.getAccountUID().equals(accountUID)) {
@@ -712,6 +709,7 @@ public class TransactionFormFragment extends MenuFragment implements
 
         BigDecimal enteredAmount = binding.inputTransactionAmount.getValue();
         if (enteredAmount == null) enteredAmount = BigDecimal.ZERO;
+        final Account account = requireAccount();
         final String accountUID = account.getUID();
         final Commodity accountCommodity = account.getCommodity();
         Money value = new Money(enteredAmount, accountCommodity);
@@ -776,6 +774,7 @@ public class TransactionFormFragment extends MenuFragment implements
             return accountTransferNameAdapter.getAccount(position);
         }
         Context context = binding.getRoot().getContext();
+        final Account account = requireAccount();
         final Commodity accountCommodity = account.getCommodity();
         return mAccountsDbAdapter.getOrCreateImbalanceAccount(context, accountCommodity);
     }
@@ -789,6 +788,7 @@ public class TransactionFormFragment extends MenuFragment implements
     private Transaction extractTransactionFromView(FragmentTransactionFormBinding binding) {
         String description = binding.inputTransactionName.getText().toString();
         String notes = binding.notes.getText().toString();
+        final Account account = requireAccount();
         final Commodity accountCommodity = account.getCommodity();
 
         List<Split> splits = extractSplitsFromView(binding);
@@ -825,6 +825,7 @@ public class TransactionFormFragment extends MenuFragment implements
         if (!mUseDoubleEntry)
             return false;
 
+        final Account account = requireAccount();
         final Commodity accountCommodity = account.getCommodity();
 
         List<Split> splits = mSplitsList;
@@ -1143,5 +1144,27 @@ public class TransactionFormFragment extends MenuFragment implements
             setDoubleEntryViewsVisibility(binding, View.GONE);
             binding.btnSplitEditor.setVisibility(View.VISIBLE);
         }
+    }
+
+    @NonNull
+    private Account requireAccount() {
+        Account account = this.account;
+        if (account != null) {
+            return account;
+        }
+        final Bundle args = getArguments();
+        final String accountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID, rootAccountUID);
+        assert !TextUtils.isEmpty(accountUID);
+        try {
+            account = mAccountsDbAdapter.getSimpleRecord(accountUID);
+            this.account = account;
+        } catch (IllegalArgumentException e) {
+            Timber.e(e);
+        }
+        if (account == null) {
+            Timber.e("Account not found");
+            finish(Activity.RESULT_CANCELED);
+        }
+        return account;
     }
 }
