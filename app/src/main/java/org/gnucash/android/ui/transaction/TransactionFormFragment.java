@@ -1152,7 +1152,7 @@ public class TransactionFormFragment extends MenuFragment implements
         final String accountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID, rootAccountUID);
         assert !TextUtils.isEmpty(accountUID);
         try {
-            account = accountNameAdapter.getAccount(accountUID);
+            account = mAccountsDbAdapter.getSimpleRecord(accountUID);
             this.account = account;
         } catch (IllegalArgumentException e) {
             Timber.e(e);
