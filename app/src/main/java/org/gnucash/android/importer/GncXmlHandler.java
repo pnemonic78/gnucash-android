@@ -117,6 +117,7 @@ import static org.gnucash.android.export.xml.GncXmlHelper.parseSplitAmount;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.os.CancellationSignal;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -292,14 +293,14 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
     @NonNull
     private DatabaseHolder holder;
     @NonNull
-    private DatabaseHelper mDatabaseHelper;
-    @NonNull
     private final Context context;
     @Nullable
     private final GncProgressListener listener;
     @Nullable
     private String countDataType;
     private boolean isValidRoot = false;
+    @NonNull
+    private final CancellationSignal cancellationSignal;
     private boolean hasBookElement = false;
     private final Stack<ElementName> elementNames = new Stack<>();
 
@@ -314,15 +315,22 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
      * Creates a handler for handling XML stream events when parsing the XML backup file
      */
     public GncXmlHandler(@NonNull Context context, @Nullable GncProgressListener listener) {
+        this(context, listener, new CancellationSignal());
+    }
+
+    /**
+     * Creates a handler for handling XML stream events when parsing the XML backup file
+     */
+    public GncXmlHandler(@NonNull Context context, @Nullable GncProgressListener listener, @NonNull CancellationSignal cancellationSignal) {
         super();
         this.context = context;
         this.listener = listener;
+        this.cancellationSignal = cancellationSignal;
         initDb(mBook.getUID());
     }
 
     private void initDb(@NonNull String bookUID) {
         DatabaseHelper databaseHelper = new DatabaseHelper(context, bookUID);
-        mDatabaseHelper = databaseHelper;
         holder = databaseHelper.getHolder();
         mCommoditiesDbAdapter = new CommoditiesDbAdapter(holder);
         mPricesDbAdapter = new PricesDbAdapter(mCommoditiesDbAdapter);
@@ -353,7 +361,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
 
     private void maybeInitDb(@Nullable String bookUIDOld, @NonNull String bookUIDNew) {
         if (bookUIDOld != null && !bookUIDOld.equals(bookUIDNew)) {
-            mDatabaseHelper.close();
+            holder.close();
             initDb(bookUIDNew);
         }
     }
@@ -361,6 +369,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
     @Override
     public void startElement(String uri, String localName,
                              String qualifiedName, Attributes attributes) throws SAXException {
+        cancellationSignal.throwIfCanceled();
         elementNames.push(new ElementName(uri, localName, qualifiedName));
         if (!isValidRoot) {
             if (TAG_ROOT.equals(localName) || AccountsTemplate.TAG_ROOT.equals(localName)) {
@@ -651,7 +660,7 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
 
     @Override
     public void close() {
-        mDatabaseHelper.close();
+        holder.close();
     }
 
     private void maybeClose() {
@@ -664,6 +673,10 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
         if (activeBookUID == null || !activeBookUID.equals(newBookUID)) {
             close();
         }
+    }
+
+    public void cancel() {
+        cancellationSignal.cancel();
     }
 
     /**

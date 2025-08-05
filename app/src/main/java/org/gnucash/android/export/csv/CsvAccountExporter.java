@@ -17,7 +17,6 @@
 package org.gnucash.android.export.csv;
 
 import static com.opencsv.ICSVWriter.RFC4180_LINE_END;
-
 import static org.gnucash.android.util.ColorExtKt.formatRGB;
 
 import android.content.Context;
@@ -32,6 +31,7 @@ import org.gnucash.android.R;
 import org.gnucash.android.db.DatabaseSchema;
 import org.gnucash.android.export.ExportParams;
 import org.gnucash.android.export.Exporter;
+import org.gnucash.android.gnc.GncProgressListener;
 import org.gnucash.android.model.Account;
 
 import java.io.IOException;
@@ -53,10 +53,29 @@ public class CsvAccountExporter extends Exporter {
      * @param params  Parameters for the export
      * @param bookUID The book UID.
      */
-    public CsvAccountExporter(@NonNull Context context,
-                              @NonNull ExportParams params,
-                              @NonNull String bookUID) {
-        super(context, params, bookUID);
+    public CsvAccountExporter(
+        @NonNull Context context,
+        @NonNull ExportParams params,
+        @NonNull String bookUID,
+        @Nullable GncProgressListener listener
+    ) {
+        super(context, params, bookUID, listener);
+    }
+
+    /**
+     * Overloaded constructor.
+     * Creates an exporter with an already open database instance.
+     *
+     * @param context The context.
+     * @param params  Parameters for the export
+     * @param bookUID The book UID.
+     */
+    public CsvAccountExporter(
+        @NonNull Context context,
+        @NonNull ExportParams params,
+        @NonNull String bookUID
+    ) {
+        this(context, params, bookUID, null);
     }
 
     @Override
@@ -77,6 +96,9 @@ public class CsvAccountExporter extends Exporter {
     public void writeExport(@NonNull ICSVWriter writer) {
         String where = DatabaseSchema.AccountEntry.COLUMN_TEMPLATE + " = 0";
         List<Account> accounts = mAccountsDbAdapter.getSimpleAccounts(where, null, null);
+        if (listener != null) {
+            listener.onAccountCount(accounts.size());
+        }
 
         String[] names = mContext.getResources().getStringArray(R.array.csv_account_headers);
         writer.writeNext(names);
@@ -85,6 +107,7 @@ public class CsvAccountExporter extends Exporter {
         for (Account account : accounts) {
             if (account.isRoot()) continue;
             if (account.isTemplate()) continue;
+            cancellationSignal.throwIfCanceled();
 
             writeAccount(fields, account);
             writer.writeNext(fields);
@@ -106,6 +129,10 @@ public class CsvAccountExporter extends Exporter {
         fields[9] = format(account.isHidden());
         fields[10] = format(false); //Tax
         fields[11] = format(account.isPlaceholder());
+
+        if (listener != null) {
+            listener.onAccount(account);
+        }
     }
 
     @NonNull
