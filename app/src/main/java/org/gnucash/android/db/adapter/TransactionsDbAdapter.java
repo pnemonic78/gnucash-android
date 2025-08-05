@@ -508,8 +508,8 @@ public class TransactionsDbAdapter extends DatabaseAdapter<Transaction> {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(
             TransactionEntry.TABLE_NAME + " t"
-            + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON "
-            + "t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID
+                + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON "
+                + "t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID
         );
         String[] projectionIn = new String[]{"t.*", "MAX(t." + TransactionEntry.COLUMN_TIMESTAMP + ")"};
         String selection = "s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
