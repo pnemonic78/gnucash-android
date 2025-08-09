@@ -1350,10 +1350,6 @@ public class GncXmlHandler extends DefaultHandler implements Closeable {
         if (NS_COMMODITY.equals(uri)) {
             if (mCommodity != null) {
                 mCommodity.setNamespace(space);
-                if (!mCommodity.isCurrency()) {
-                    // price of non-ISO4217 commodities cannot be handled
-                    mPrice = null;
-                }
             }
         }
     }
