@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.gnucash.android.db.DatabaseSchema
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.lang.VoidCallback
 import org.gnucash.android.model.Commodity
@@ -73,7 +74,10 @@ class CommoditiesAdapter @JvmOverloads constructor(
     }
 
     private fun loadData(adapter: CommoditiesDbAdapter): List<Commodity> {
-        return adapter.allRecords
+        val where = DatabaseSchema.CommodityEntry.COLUMN_MNEMONIC + " <> ?" +
+                " AND " + DatabaseSchema.CommodityEntry.COLUMN_NAMESPACE + " <> ?";
+        val whereArgs = arrayOf(Commodity.TEMPLATE, Commodity.TEMPLATE)
+        return adapter.getAllRecords(where, whereArgs)
     }
 
     data class Label(val commodity: Commodity) {
