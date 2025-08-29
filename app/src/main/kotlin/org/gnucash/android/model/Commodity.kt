@@ -248,7 +248,7 @@ class Commodity @JvmOverloads constructor(
                 "USD" -> return USD
             }
 
-            val adapter = CommoditiesDbAdapter.getInstance()
+            val adapter = CommoditiesDbAdapter.instance
             return adapter?.getCurrency(currencyCode) ?: DEFAULT_COMMODITY
         }
 

@@ -109,7 +109,7 @@ class QifExporter @JvmOverloads constructor(
         val accountsList = accountsDbAdapter.simpleAccounts
         val accounts = mutableMapOf<String, Account>()
         for (account in accountsList) {
-            accounts[account.getUID()] = account
+            accounts[account.uid] = account
         }
 
         val quantityFormatter = NumberFormat.getNumberInstance(Locale.ROOT) as DecimalFormat
@@ -173,13 +173,13 @@ class QifExporter @JvmOverloads constructor(
                 val accountDescription = account1.description
                 val accountType = account1.accountType
                 val commodity = account1.commodity
-                val commodityUID = commodity.getUID()
+                val commodityUID = commodity.uid
                 quantityFormatter.maximumFractionDigits = commodity.smallestFractionDigits
                 quantityFormatter.minimumFractionDigits = commodity.smallestFractionDigits
 
                 // Starting new transaction - finished with splits from previous transaction.
                 if (transactionUID != currentTransactionUID) {
-                    if (!currentTransactionUID.isNullOrEmpty()) {
+                    if (currentTransactionUID.isNotEmpty()) {
                         // end last transaction
                         writer.append(TOTAL_AMOUNT_PREFIX)
                             .append(quantityFormatter.format(txTotal))

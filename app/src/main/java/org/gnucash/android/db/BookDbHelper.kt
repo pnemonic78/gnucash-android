@@ -69,7 +69,7 @@ class BookDbHelper(private val context: Context) : SQLiteOpenHelper(
             this.holder = bookHolder
         }
         val book = Book()
-        val dbHelper = DatabaseHelper(context, book.getUID())
+        val dbHelper = DatabaseHelper(context, book.uid)
         val dbHolder = dbHelper.holder
         val commoditiesDbAdapter = CommoditiesDbAdapter(dbHolder)
         Commodity.DEFAULT_COMMODITY = commoditiesDbAdapter.getDefaultCommodity()

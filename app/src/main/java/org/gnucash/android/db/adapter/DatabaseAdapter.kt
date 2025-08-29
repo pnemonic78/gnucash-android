@@ -217,7 +217,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
         Timber.d(
             "Adding record to database: %s %s",
             model.javaClass.getSimpleName(),
-            model.getUID()
+            model.uid
         )
         val statement: SQLiteStatement
         when (updateMethod) {
@@ -242,7 +242,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
                 }
             }
         }
-        if (isCached) cache[model.getUID()] = model
+        if (isCached) cache[model.uid] = model
     }
 
     /**
@@ -535,7 +535,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
                     val model = buildModelInstance(cursor)
                     records.add(model)
                     if (isCached) {
-                        cache[model.getUID()] = model
+                        cache[model.uid] = model
                     }
                 } while (cursor.moveToNext())
             }
@@ -556,7 +556,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
         contentValues: ContentValues,
         model: Model
     ): ContentValues {
-        contentValues[CommonColumns.COLUMN_UID] = model.getUID()
+        contentValues[CommonColumns.COLUMN_UID] = model.uid
         contentValues[CommonColumns.COLUMN_CREATED_AT] =
             getUtcStringFromTimestamp(model.createdTimestamp)
         //there is a trigger in the database for updated the modified_at column
@@ -696,7 +696,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
         if (isCached) {
             for (model in cache.values) {
                 if (model.id == id) {
-                    return model.getUID()
+                    return model.uid
                 }
             }
         }
@@ -735,7 +735,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
             var uid: String? = null
             for (model in cache.values) {
                 if (model.id == recordId) {
-                    uid = model.getUID()
+                    uid = model.uid
                     break
                 }
             }
@@ -791,7 +791,17 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
     }
 
     @Throws(SQLException::class)
-    fun updateRecord(model: Model) {
+    fun insert(model: Model) {
+        addRecord(model, UpdateMethod.Insert)
+    }
+
+    @Throws(SQLException::class)
+    fun replace(model: Model) {
+        addRecord(model, UpdateMethod.Replace)
+    }
+
+    @Throws(SQLException::class)
+    fun update(model: Model) {
         addRecord(model, UpdateMethod.Update)
     }
 
@@ -1000,7 +1010,7 @@ abstract class DatabaseAdapter<Model : BaseModel> @JvmOverloads constructor(
     }
 
     fun getUID(model: Model): String {
-        return model.getUID()
+        return model.uid
     }
 
     /**

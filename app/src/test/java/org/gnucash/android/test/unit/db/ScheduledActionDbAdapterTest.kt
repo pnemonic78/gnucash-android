@@ -19,7 +19,7 @@ class ScheduledActionDbAdapterTest : GnuCashTest() {
 
     @Before
     fun setUp() {
-        scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance()
+        scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
     }
 
     fun shouldFetchOnlyEnabledScheduledActions() {

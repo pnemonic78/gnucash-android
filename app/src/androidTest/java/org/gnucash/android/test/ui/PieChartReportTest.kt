@@ -44,6 +44,7 @@ import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.ui.adapter.AccountTypesAdapter
+import org.gnucash.android.ui.get
 import org.gnucash.android.ui.report.BaseReportFragment
 import org.gnucash.android.ui.report.ReportsActivity
 import org.gnucash.android.util.BookUtils
@@ -97,7 +98,7 @@ class PieChartReportTest : GnuAndroidTest() {
         transaction.addSplit(split)
         transaction.addSplit(split.createPair(CASH_IN_WALLET_ASSET_ACCOUNT_UID))
 
-        transactionsDbAdapter.addRecord(transaction, DatabaseAdapter.UpdateMethod.Insert)
+        transactionsDbAdapter.insert(transaction)
     }
 
     /**
@@ -117,7 +118,7 @@ class PieChartReportTest : GnuAndroidTest() {
         transaction.addSplit(split)
         transaction.addSplit(split.createPair(CASH_IN_WALLET_ASSET_ACCOUNT_UID))
 
-        transactionsDbAdapter.addRecord(transaction, DatabaseAdapter.UpdateMethod.Insert)
+        transactionsDbAdapter.insert(transaction)
     }
 
     @Test
@@ -161,13 +162,13 @@ class PieChartReportTest : GnuAndroidTest() {
         transaction.addSplit(split)
         transaction.addSplit(split.createPair(CASH_IN_WALLET_ASSET_ACCOUNT_UID))
 
-        transactionsDbAdapter.addRecord(transaction, DatabaseAdapter.UpdateMethod.Insert)
+        transactionsDbAdapter.insert(transaction)
 
         refreshReport()
 
         onView(withId(R.id.report_account_type_spinner))
             .perform(click())
-        onView(withText(accountTypeAdapter.getItem(1)!!.label))
+        onView(withText(accountTypeAdapter[1].label))
             .perform(click())
         onView(withId(R.id.pie_chart))
             .perform(clickXY(Position.BEGIN, Position.MIDDLE))
@@ -183,7 +184,7 @@ class PieChartReportTest : GnuAndroidTest() {
 
         onView(withId(R.id.report_account_type_spinner))
             .perform(click())
-        onView(withText(accountTypeAdapter.getItem(0)!!.label))
+        onView(withText(accountTypeAdapter[0].label))
             .perform(click())
 
         onView(withId(R.id.pie_chart)).perform(click())
@@ -274,7 +275,7 @@ class PieChartReportTest : GnuAndroidTest() {
             )
 
             BookUtils.loadBook(context, testBookUID)
-            accountsDbAdapter = AccountsDbAdapter.getInstance()
+            accountsDbAdapter = AccountsDbAdapter.instance
             transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
 
             commodity = accountsDbAdapter.commoditiesDbAdapter.getCurrency("USD")!!
@@ -301,7 +302,7 @@ class PieChartReportTest : GnuAndroidTest() {
         @AfterClass
         @JvmStatic
         fun cleanup() {
-            val booksDbAdapter = BooksDbAdapter.getInstance()
+            val booksDbAdapter = BooksDbAdapter.instance
             booksDbAdapter.setActive(oldActiveBookUID)
             booksDbAdapter.deleteRecord(testBookUID)
         }

@@ -9,7 +9,6 @@ import org.gnucash.android.db.getLong
 import org.gnucash.android.db.getString
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
-import org.gnucash.android.model.Price.Type.Companion.of
 import org.gnucash.android.util.TimestampHelper.getTimestampFromUtcString
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import java.io.IOException
@@ -72,7 +71,7 @@ class PricesDbAdapter(@JvmField val commoditiesDbAdapter: CommoditiesDbAdapter) 
         populateBaseModelAttributes(cursor, price)
         price.date = getTimestampFromUtcString(dateString).getTime()
         price.source = source
-        price.type = of(type)
+        price.type = Price.Type.of(type)
         price.valueNum = valueNum
         price.valueDenom = valueDenom
 
@@ -116,8 +115,8 @@ class PricesDbAdapter(@JvmField val commoditiesDbAdapter: CommoditiesDbAdapter) 
      * @return The numerator/denominator pair for commodity / currency pair
      */
     fun getPrice(commodity: Commodity, currency: Commodity): Price? {
-        val commodityUID = commodity.getUID()
-        val currencyUID = currency.getUID()
+        val commodityUID = commodity.uid
+        val currencyUID = currency.uid
         val key = "$commodityUID/$currencyUID"
         val keyInverse = "$currencyUID/$commodityUID"
         if (isCached) {
@@ -179,8 +178,8 @@ class PricesDbAdapter(@JvmField val commoditiesDbAdapter: CommoditiesDbAdapter) 
         if (isCached) {
             val commodity = model.commodity
             val currency = model.currency
-            val commodityUID = commodity.getUID()
-            val currencyUID = currency.getUID()
+            val commodityUID = commodity.uid
+            val currencyUID = currency.uid
             val key = "$commodityUID/$currencyUID"
             val keyInverse = "$currencyUID/$commodityUID"
             val price = cachePair[key]
@@ -193,6 +192,6 @@ class PricesDbAdapter(@JvmField val commoditiesDbAdapter: CommoditiesDbAdapter) 
 
     companion object {
         @JvmStatic
-        fun getInstance(): PricesDbAdapter = GnuCashApplication.Companion.pricesDbAdapter!!
+        val instance: PricesDbAdapter get() = GnuCashApplication.pricesDbAdapter!!
     }
 }

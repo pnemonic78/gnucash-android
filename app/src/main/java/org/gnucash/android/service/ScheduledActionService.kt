@@ -67,7 +67,7 @@ class ScheduledActionService {
     }
 
     private fun processScheduledBooks(context: Context) {
-        val booksDbAdapter = BooksDbAdapter.getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         val books = booksDbAdapter.allRecords
         for (book in books) {
             processScheduledBook(context, book)
@@ -89,7 +89,7 @@ class ScheduledActionService {
         processScheduledActions(dbHolder, scheduledActions)
 
         //close all databases except the currently active database
-        if (book.getUID() != activeBookUID) {
+        if (book.uid != activeBookUID) {
             dbHelper.close()
         }
     }
@@ -318,7 +318,7 @@ class ScheduledActionService {
                 val recurringTrxn = Transaction(trxnTemplate, true)
                 recurringTrxn.time = transactionTime
                 transactions.add(recurringTrxn)
-                recurringTrxn.scheduledActionUID = scheduledAction.getUID()
+                recurringTrxn.scheduledActionUID = scheduledAction.uid
                 scheduledAction.executionCount =
                     ++executionCount //required for computingNextScheduledExecutionTime
 

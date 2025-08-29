@@ -185,7 +185,7 @@ class SplitsDbAdapter(
     fun computeSplitBalance(account: Account, startTimestamp: Long, endTimestamp: Long): Money {
         val accounts = mutableListOf<Account>(account)
         val balances = computeSplitBalances(accounts, startTimestamp, endTimestamp)
-        val balance = balances[account.getUID()]
+        val balance = balances[account.uid]
         return balance ?: createZeroInstance(account.commodity)
     }
 
@@ -197,7 +197,7 @@ class SplitsDbAdapter(
         val length = accounts.size
         val selectionArgs = arrayOfNulls<String?>(length)
         for (i in 0 until length) {
-            selectionArgs[i] = accounts[i].getUID()
+            selectionArgs[i] = accounts[i].uid
         }
         val selection = "a." + AccountEntry.COLUMN_UID + " IN " +
                 selectionArgs.joinToString("','", prefix = "('", postfix = "')")
@@ -526,6 +526,6 @@ class SplitsDbAdapter(
          * @return SplitsDbAdapter instance
          */
         @JvmStatic
-        fun getInstance(): SplitsDbAdapter = GnuCashApplication.Companion.splitsDbAdapter!!
+        val instance: SplitsDbAdapter get() = GnuCashApplication.splitsDbAdapter!!
     }
 }

@@ -101,7 +101,7 @@ abstract class Exporter protected constructor(
      */
     private val cacheDir: File
 
-    protected val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.getInstance()
+    protected val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.instance
 
     /**
      * Adapter for retrieving accounts to export

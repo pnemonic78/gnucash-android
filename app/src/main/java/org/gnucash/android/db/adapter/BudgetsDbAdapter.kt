@@ -72,7 +72,7 @@ class BudgetsDbAdapter
 
         recurrenceDbAdapter.addRecord(budget.recurrence!!, updateMethod)
         super.addRecord(budget, updateMethod)
-        budgetAmountsDbAdapter.deleteBudgetAmountsForBudget(budget.getUID())
+        budgetAmountsDbAdapter.deleteBudgetAmountsForBudget(budget.uid)
         for (budgetAmount in budget.budgetAmounts) {
             budgetAmountsDbAdapter.addRecord(budgetAmount, updateMethod)
         }
@@ -107,7 +107,7 @@ class BudgetsDbAdapter
         budget.description = description
         budget.recurrence = recurrenceDbAdapter.getRecord(recurrenceUID)
         budget.numberOfPeriods = numPeriods
-        budget.setBudgetAmounts(budgetAmountsDbAdapter.getBudgetAmountsForBudget(budget.getUID()))
+        budget.setBudgetAmounts(budgetAmountsDbAdapter.getBudgetAmountsForBudget(budget.uid))
 
         return budget
     }
@@ -118,7 +118,7 @@ class BudgetsDbAdapter
         if (budget.description != null) {
             stmt.bindString(2, budget.description)
         }
-        stmt.bindString(3, budget.recurrence!!.getUID())
+        stmt.bindString(3, budget.recurrence!!.uid)
         stmt.bindLong(4, budget.numberOfPeriods)
 
         return stmt
@@ -196,6 +196,6 @@ class BudgetsDbAdapter
          * @return BudgetsDbAdapter instance
          */
         @JvmStatic
-        fun getInstance(): BudgetsDbAdapter = GnuCashApplication.Companion.budgetDbAdapter!!
+        val instance: BudgetsDbAdapter get() = GnuCashApplication.budgetDbAdapter!!
     }
 }

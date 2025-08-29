@@ -42,9 +42,9 @@ class TransactionsDbAdapterTest : GnuCashTest() {
 
     @Before
     fun setUp() {
-        splitsDbAdapter = SplitsDbAdapter.getInstance()
-        transactionsDbAdapter = TransactionsDbAdapter.getInstance()
-        accountsDbAdapter = AccountsDbAdapter.getInstance()
+        splitsDbAdapter = SplitsDbAdapter.instance
+        transactionsDbAdapter = TransactionsDbAdapter.instance
+        accountsDbAdapter = AccountsDbAdapter.instance
 
         alphaAccount = Account(ALPHA_ACCOUNT_NAME)
         bravoAccount = Account(BRAVO_ACCOUNT_NAME)

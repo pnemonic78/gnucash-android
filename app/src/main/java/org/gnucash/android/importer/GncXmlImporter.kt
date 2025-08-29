@@ -61,10 +61,9 @@ class GncXmlImporter(
         Timber.d("%d ns spent on importing the file", endTime - startTime)
 
         val book = handler.importedBook
-        val bookUID = book.getUID()
         setLastExportTime(
-            TransactionsDbAdapter.getInstance().timestampOfLastModification,
-            bookUID
+            TransactionsDbAdapter.instance.timestampOfLastModification,
+            book.uid
         )
 
         return book
@@ -87,7 +86,7 @@ class GncXmlImporter(
          */
         @Throws(ParserConfigurationException::class, SAXException::class, IOException::class)
         fun parse(context: Context, gncXmlInputStream: InputStream): String {
-            return parseBook(context, gncXmlInputStream, null).getUID()
+            return parseBook(context, gncXmlInputStream, null).uid
         }
 
         /**

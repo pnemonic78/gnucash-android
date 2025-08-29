@@ -66,7 +66,7 @@ object BackupManager {
     @WorkerThread
     fun backupAllBooks(context: Context): Boolean {
         Timber.i("Doing backup of all books.")
-        val booksDbAdapter = BooksDbAdapter.getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         val bookUIDs = booksDbAdapter.allBookUIDs
 
         for (bookUID in bookUIDs) {
@@ -206,7 +206,7 @@ object BackupManager {
 
     @JvmStatic
     fun backupBookAsync(activity: Activity?, bookUID: String, after: BooleanCallback) {
-        object : AsyncTask<Any?, Void?, Boolean>() {
+        object : AsyncTask<Any, Void, Boolean>() {
             private var progressDialog: ProgressDialog? = null
 
             override fun onPreExecute() {
@@ -214,7 +214,7 @@ object BackupManager {
                     progressDialog = GnucashProgressDialog(activity).apply {
                         setTitle(R.string.title_create_backup_pref)
                         setCancelable(true)
-                        setOnCancelListener(DialogInterface.OnCancelListener { dialogInterface: DialogInterface? ->
+                        setOnCancelListener(DialogInterface.OnCancelListener { dialogInterface: DialogInterface ->
                             cancel(true)
                         })
                         show()
@@ -231,7 +231,7 @@ object BackupManager {
                     if (progressDialog != null && progressDialog!!.isShowing) {
                         progressDialog!!.dismiss()
                     }
-                } catch (ex: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     //TODO: This is a hack to catch "View not attached to window" exceptions
                     //FIXME by moving the creation and display of the progress dialog to the Fragment
                 } finally {

@@ -298,7 +298,7 @@ class OfxExporter(
      * @param accountUID Unique Identifier of the account which called the method.  @return Element in DOM corresponding to transaction
      */
     private fun toOFX(transaction: Transaction, doc: Document, accountUID: String): Element {
-        val acctDbAdapter = AccountsDbAdapter.getInstance()
+        val acctDbAdapter = AccountsDbAdapter.instance
         val balance = transaction.getBalance(accountUID)
         val transactionType = if (balance.isNegative) {
             TransactionType.DEBIT

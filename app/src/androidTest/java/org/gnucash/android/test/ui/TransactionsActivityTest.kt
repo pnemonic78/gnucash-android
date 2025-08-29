@@ -49,7 +49,6 @@ import org.gnucash.android.db.adapter.SplitsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Commodity
-import org.gnucash.android.model.Commodity.Companion.getInstance
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
@@ -101,11 +100,11 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         baseAccount = Account(TRANSACTIONS_ACCOUNT_NAME, COMMODITY)
         baseAccount.setUID(TRANSACTIONS_ACCOUNT_UID)
-        accountsDbAdapter.addRecord(baseAccount, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(baseAccount)
 
         transferAccount = Account(TRANSFER_ACCOUNT_NAME, COMMODITY)
         transferAccount.setUID(TRANSFER_ACCOUNT_UID)
-        accountsDbAdapter.addRecord(transferAccount, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(transferAccount)
 
         assertThat(accountsDbAdapter.recordsCount)
             .isEqualTo(3) //including ROOT account
@@ -121,7 +120,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transaction.addSplit(split)
         transaction.addSplit(split.createPair(TRANSFER_ACCOUNT_UID))
 
-        transactionsDbAdapter.addRecord(transaction, DatabaseAdapter.UpdateMethod.Insert)
+        transactionsDbAdapter.insert(transaction)
         assertThat(transactionsDbAdapter.recordsCount).isOne()
 
         val intent = Intent(Intent.ACTION_VIEW)
@@ -265,7 +264,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     fun testAddMultiCurrencyTransaction() {
         transactionsDbAdapter.deleteTransactionsForAccount(TRANSACTIONS_ACCOUNT_UID)
 
-        val euro = getInstance("EUR")
+        val euro = Commodity.getInstance("EUR")
         val euroAccount = Account("Euro Konto", euro)
         accountsDbAdapter.addRecord(euroAccount)
 
@@ -516,21 +515,18 @@ class TransactionsActivityTest : GnuAndroidTest() {
     //FIXME: Improve on this test
     fun childAccountsShouldUseParentTransferAccountSetting() {
         val transferAccount = Account("New Transfer Acct")
-        accountsDbAdapter.addRecord(transferAccount, DatabaseAdapter.UpdateMethod.Insert)
-        accountsDbAdapter.addRecord(
-            Account("Higher account"),
-            DatabaseAdapter.UpdateMethod.Insert
-        )
+        accountsDbAdapter.insert(transferAccount)
+        accountsDbAdapter.insert(Account("Higher account"))
 
         val childAccount = Account("Child Account")
         childAccount.parentUID = TRANSACTIONS_ACCOUNT_UID
-        accountsDbAdapter.addRecord(childAccount, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(childAccount)
         val contentValues = ContentValues()
         contentValues[AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID] = transferAccount.uid
         accountsDbAdapter.updateRecord(TRANSACTIONS_ACCOUNT_UID, contentValues)
 
         val intent = Intent(transactionsActivity, TransactionsActivity::class.java)
-            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             .setAction(Intent.ACTION_INSERT_OR_EDIT)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, childAccount.uid)
         transactionsActivity.startActivity(intent)
@@ -629,7 +625,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     @Test
     fun testMoveTransaction() {
         val account = Account("Move account", COMMODITY)
-        accountsDbAdapter.addRecord(account, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(account)
 
         assertThat(transactionsDbAdapter.getAllTransactionsForAccount(account.uid)).isEmpty()
 
@@ -654,7 +650,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transactionsDbAdapter.deleteAllRecords()
 
         val account = Account("Z Account", COMMODITY)
-        accountsDbAdapter.addRecord(account, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(account)
 
         //create new transaction "Transaction Acct" --> "Transfer Account"
         onView(withId(R.id.fab_create_transaction))
@@ -1064,7 +1060,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         fun prepareTestCase() {
             preventFirstRunDialogs()
 
-            accountsDbAdapter = AccountsDbAdapter.getInstance()
+            accountsDbAdapter = AccountsDbAdapter.instance
             transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
             splitsDbAdapter = transactionsDbAdapter.splitsDbAdapter
             commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter

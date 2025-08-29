@@ -35,7 +35,7 @@ import org.gnucash.android.db.BookDbHelper
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.BooksDbAdapter.Companion.getInstance
+import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Book
 import org.gnucash.android.receivers.TransactionAppWidgetProvider
@@ -66,10 +66,10 @@ class WidgetConfigurationActivity : GnuCashActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = WidgetConfigurationBinding.inflate(layoutInflater)
-        setContentView(binding.getRoot())
+        setContentView(binding.root)
 
         val context: Context = this
-        val booksDbAdapter = getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         val allBooks = booksDbAdapter.allRecords
         books.clear()
         books.addAll(allBooks)
@@ -104,9 +104,9 @@ class WidgetConfigurationActivity : GnuCashActivity() {
                 if (view == null) return
                 val context = view.context
                 val book = books[position]
-                val holder = DatabaseHelper(context, book.getUID()).holder
+                val holder = DatabaseHelper(context, book.uid).holder
                 accountNameAdapter.swapAdapter(AccountsDbAdapter(holder))
-                selectedBookUID = book.getUID()
+                selectedBookUID = book.uid
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) = Unit
@@ -188,7 +188,7 @@ class WidgetConfigurationActivity : GnuCashActivity() {
         val booksCount = books.size
         for (i in 0 until booksCount) {
             val book = books[i]
-            if (book.getUID() == bookUID || book.isActive) {
+            if (book.uid == bookUID || book.isActive) {
                 bookIndex = i
                 break
             }

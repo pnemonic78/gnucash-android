@@ -32,7 +32,9 @@ class PasscodeFragment : KeyboardFragment() {
             val callerClassName = args.getString(PASSCODE_CLASS_CALLER, "")
             val intent = Intent(action)
                 .setClassName(context, callerClassName)
-                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 .putExtras(args)
             startActivity(intent)
 

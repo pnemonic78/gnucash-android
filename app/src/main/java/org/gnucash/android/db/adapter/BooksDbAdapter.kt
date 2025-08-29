@@ -186,7 +186,7 @@ class BooksDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Book>(
                 info.append(
                     String.format(
                         "%s, %s, %s\n",
-                        book.getUID(),
+                        book.uid,
                         book.createdTimestamp,
                         book.sourceUri
                     )
@@ -229,7 +229,7 @@ class BooksDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Book>(
             book.setUID(dbName)
             book.displayName = generateDefaultBookName()
             addRecord(book)
-            Timber.i("Recovered book record: %s", book.getUID())
+            Timber.i("Recovered book record: %s", book.uid)
         }
     }
 
@@ -260,8 +260,8 @@ class BooksDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Book>(
         val firstBook = books[0]
         firstBook.isActive = true
         addRecord(firstBook)
-        Timber.i("Book %s set as active.", firstBook.getUID())
-        return firstBook.getUID()
+        Timber.i("Book %s set as active.", firstBook.uid)
+        return firstBook.uid
     }
 
     /**
@@ -356,7 +356,7 @@ class BooksDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Book>(
          * @return Books database adapter
          */
         @JvmStatic
-        fun getInstance(): BooksDbAdapter = GnuCashApplication.Companion.booksDbAdapter!!
+        val instance: BooksDbAdapter get() = GnuCashApplication.booksDbAdapter!!
 
         @VisibleForTesting
         fun isBookDatabase(databaseName: String): Boolean {

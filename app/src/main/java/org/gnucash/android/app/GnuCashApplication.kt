@@ -41,7 +41,6 @@ import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Commodity.Companion.getLocaleCurrencyCode
 import org.gnucash.android.model.TransactionType
-import org.gnucash.android.model.TransactionType.Companion.of
 import org.gnucash.android.ui.settings.ThemeHelper
 import org.gnucash.android.util.CrashlyticsTree
 import org.gnucash.android.util.LogTree
@@ -154,7 +153,7 @@ class GnuCashApplication : Application() {
                 booksDbAdapter.fixBooksDatabase()
             }
             if (bookUID.isNullOrEmpty()) {
-                bookUID = bookDbHelper.insertBlankBook().getUID()
+                bookUID = bookDbHelper.insertBlankBook().uid
             }
             val dbHelper = DatabaseHelper(context, bookUID)
             Companion.dbHelper = dbHelper
@@ -431,7 +430,7 @@ class GnuCashApplication : Application() {
                 context.getString(R.string.key_default_transaction_type),
                 null
             )
-            return of(value)
+            return TransactionType.of(value)
         }
 
         /**

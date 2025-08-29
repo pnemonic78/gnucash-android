@@ -172,7 +172,6 @@ class BudgetAmountsDbAdapter(val commoditiesDbAdapter: CommoditiesDbAdapter) :
 
     companion object {
         @JvmStatic
-        fun getInstance(): BudgetAmountsDbAdapter =
-            GnuCashApplication.Companion.budgetAmountsDbAdapter!!
+        val instance: BudgetAmountsDbAdapter get() = GnuCashApplication.budgetAmountsDbAdapter!!
     }
 }

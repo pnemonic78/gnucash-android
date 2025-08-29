@@ -131,7 +131,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
     override fun addRecord(account: Account, updateMethod: UpdateMethod) {
         Timber.d("Replace account to db")
         if (account.isRoot && !account.isTemplate) {
-            rootUID = account.getUID()
+            rootUID = account.uid
         }
         //in-case the account already existed, we want to update the templates based on it as well
         super.addRecord(account, updateMethod)
@@ -143,9 +143,9 @@ class AccountsDbAdapter @JvmOverloads constructor(
                 transactionsDbAdapter.addRecord(t, updateMethod)
             }
             val scheduledTransactions =
-                transactionsDbAdapter.getScheduledTransactionsForAccount(account.getUID())
+                transactionsDbAdapter.getScheduledTransactionsForAccount(account.uid)
             for (transaction in scheduledTransactions) {
-                transactionsDbAdapter.addRecord(transaction, UpdateMethod.Update)
+                transactionsDbAdapter.update(transaction)
             }
         }
     }
@@ -172,7 +172,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         val transactions = ArrayList<Transaction>(accounts.size * 2)
         for (account in accounts) {
             transactions.addAll(account.transactions)
-            transactions.addAll(transactionsDbAdapter.getScheduledTransactionsForAccount(account.getUID()))
+            transactions.addAll(transactionsDbAdapter.getScheduledTransactionsForAccount(account.uid))
         }
         val nRow = super.bulkAddRecords(accounts, updateMethod)
 
@@ -207,7 +207,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         stmt.bindBoolean(8, account.isPlaceholder)
         stmt.bindString(9, getUtcStringFromTimestamp(account.createdTimestamp))
         stmt.bindBoolean(10, account.isHidden)
-        stmt.bindString(11, account.commodity.getUID())
+        stmt.bindString(11, account.commodity.uid)
         if (parentAccountUID != null) {
             stmt.bindString(12, parentAccountUID)
         }
@@ -300,7 +300,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         )
         val accountsByUID = mutableMapOf<String, Account>()
         for (account in descendantAccounts) {
-            accountsByUID[account.getUID()] = account
+            accountsByUID[account.uid] = account
         }
         val parentAccountFullName: String?
         if (getAccountType(newParentAccountUID) == AccountType.ROOT) {
@@ -332,7 +332,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
                 tableName,
                 contentValues,
                 AccountEntry.COLUMN_UID + " = ?",
-                arrayOf<String?>(account.getUID())
+                arrayOf<String?>(account.uid)
             )
         }
     }
@@ -409,7 +409,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
      */
     override fun buildModelInstance(cursor: Cursor): Account {
         val account = buildSimpleAccountInstance(cursor)
-        account.transactions = transactionsDbAdapter.getAllTransactionsForAccount(account.getUID())
+        account.transactions = transactionsDbAdapter.getAllTransactionsForAccount(account.uid)
         return account
     }
 
@@ -542,7 +542,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
                     val account = buildSimpleAccountInstance(cursor)
                     accounts.add(account)
                     if (isCached) {
-                        cache[account.getUID()] = account
+                        cache[account.uid] = account
                     }
                 } while (cursor.moveToNext())
             }
@@ -584,7 +584,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
      * @return String unique ID of the account
      */
     fun getOrCreateImbalanceAccountUID(context: Context, commodity: Commodity): String {
-        return getOrCreateImbalanceAccount(context, commodity)!!.getUID()
+        return getOrCreateImbalanceAccount(context, commodity)!!.uid
     }
 
     /**
@@ -602,7 +602,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
             account.accountType = AccountType.BANK
             account.parentUID = this.rootAccountUID
             account.isHidden = !isDoubleEntryEnabled(context)
-            addRecord(account, UpdateMethod.Insert)
+            insert(account)
             return account
         }
         return getSimpleRecord(uid)
@@ -652,7 +652,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
                 account.parentUID = uid //set its parent
                 account.fullName = parentName
                 accountsList.add(account)
-                uid = account.getUID()
+                uid = account.uid
             }
             parentName += ACCOUNT_NAME_SEPARATOR
         }
@@ -692,7 +692,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         if (isCached) {
             for (account in cache.values) {
                 if (account.fullName == fullName) {
-                    return account.getUID()
+                    return account.uid
                 }
             }
         }
@@ -906,7 +906,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         includeSubAccounts: Boolean
     ): Money {
         Timber.d("Computing account balance for [%s]", account)
-        val accountUID = account.getUID()
+        val accountUID = account.uid
         val columns = arrayOf<String?>(AccountEntry.COLUMN_BALANCE)
         val selection = AccountEntry.COLUMN_UID + "=?"
         val selectionArgs = arrayOf<String?>(accountUID)
@@ -1033,7 +1033,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         } else {
             val balances = getAccountsBalances(accounts, startTimestamp, endTimestamp)
             for (account in accounts) {
-                var accountBalance = balances[account.getUID()]
+                var accountBalance = balances[account.uid]
                 if ((accountBalance == null) || accountBalance.isAmountZero) continue
                 val price = pricesDbAdapter.getPrice(accountBalance.commodity, currency)
                 if (price == null) continue
@@ -1257,7 +1257,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
             rootAccount.fullName = ROOT_ACCOUNT_FULL_NAME
             rootAccount.isHidden = false
             rootAccount.isPlaceholder = false
-            uid = rootAccount.getUID()
+            uid = rootAccount.uid
             val contentValues = ContentValues()
             contentValues[AccountEntry.COLUMN_UID] = uid
             contentValues[AccountEntry.COLUMN_NAME] = rootAccount.name
@@ -1265,7 +1265,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
             contentValues[AccountEntry.COLUMN_TYPE] = rootAccount.accountType.name
             contentValues[AccountEntry.COLUMN_HIDDEN] = rootAccount.isHidden
             contentValues[AccountEntry.COLUMN_CURRENCY] = rootAccount.commodity.currencyCode
-            contentValues[AccountEntry.COLUMN_COMMODITY_UID] = rootAccount.commodity.getUID()
+            contentValues[AccountEntry.COLUMN_COMMODITY_UID] = rootAccount.commodity.uid
             contentValues[AccountEntry.COLUMN_PLACEHOLDER] = rootAccount.isPlaceholder
             Timber.i("Creating ROOT account")
             db.insert(tableName, null, contentValues)
@@ -1456,7 +1456,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
                 transaction.note = account.name
                 transaction.commodity = account.commodity
                 val transactionType = getTypeForBalance(account.accountType, balance.isNegative)
-                val split = Split(balance, account.getUID())
+                val split = Split(balance, account.uid)
                 split.type = transactionType
                 transaction.addSplit(split)
                 transaction.addSplit(split.createPair(this.orCreateOpeningBalanceAccountUID))
@@ -1661,17 +1661,17 @@ class AccountsDbAdapter @JvmOverloads constructor(
         val balances = splitsDbAdapter.computeSplitBalances(accounts, startTime, endTime)
             .toMutableMap()
         for (account in accounts) {
-            val balance = balances[account.getUID()]
+            val balance = balances[account.uid]
             if (balance == null) continue
             if (!account.accountType.hasDebitNormalBalance) {
-                balances[account.getUID()] = balance.unaryMinus()
+                balances[account.uid] = balance.unaryMinus()
             }
         }
         return balances
     }
 
     fun getDescendants(account: Account): List<Account> {
-        return getDescendants(account.getUID())
+        return getDescendants(account.uid)
     }
 
     fun getDescendants(accountUID: String): List<Account> {
@@ -1702,8 +1702,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
         const val ROOT_ACCOUNT_NAME: String = "Root Account"
         const val TEMPLATE_ACCOUNT_NAME: String = "Template Root"
 
-        @JvmField
-        val ALWAYS: Long = -1L
+        const val ALWAYS: Long = -1L
 
         /**
          * Returns an application-wide instance of this database adapter
@@ -1711,7 +1710,7 @@ class AccountsDbAdapter @JvmOverloads constructor(
          * @return Instance of Accounts db adapter
          */
         @JvmStatic
-        fun getInstance(): AccountsDbAdapter = GnuCashApplication.Companion.accountsDbAdapter!!
+        val instance: AccountsDbAdapter get() = GnuCashApplication.accountsDbAdapter!!
 
         fun getImbalanceAccountPrefix(context: Context): String {
             return context.getString(R.string.imbalance_account_name) + "-"

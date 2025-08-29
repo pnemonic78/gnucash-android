@@ -72,7 +72,7 @@ class BackupTest : GnuCashTest() {
                     context.resources.openRawResource(R.raw.default_accounts)
                 )
                 if (activate) {
-                    val booksDbAdapter = BooksDbAdapter.getInstance()
+                    val booksDbAdapter = BooksDbAdapter.instance
                     booksDbAdapter.setActive(bookUID)
                     assertThat(booksDbAdapter.activeBookUID).isEqualTo(bookUID)
                     assertThat(GnuCashApplication.activeBookUID).isEqualTo(bookUID)

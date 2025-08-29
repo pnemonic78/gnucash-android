@@ -71,7 +71,7 @@ class MultiBookTest : GnuAndroidTest() {
     fun testLoadBookFromBookManager() {
         val book = Book()
         book.displayName = "Launch Codes"
-        BooksDbAdapter.getInstance().addRecord(book)
+        BooksDbAdapter.instance.addRecord(book)
 
         shouldOpenBookManager()
         onView(withText(book.displayName)).perform(click())
@@ -159,7 +159,7 @@ class MultiBookTest : GnuAndroidTest() {
         @JvmStatic
         fun prepTestCase() {
             preventFirstRunDialogs()
-            booksDbAdapter = BooksDbAdapter.getInstance()
+            booksDbAdapter = BooksDbAdapter.instance
         }
     }
 }

@@ -30,7 +30,6 @@ import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Book
 import org.gnucash.android.model.Commodity
-import org.gnucash.android.model.Commodity.Companion.getInstance
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Money.Companion.createZeroInstance
 import org.gnucash.android.model.Split
@@ -62,7 +61,7 @@ class QifExporterTest : BookHelperTest() {
 
     @After
     override fun tearDown() {
-        val booksDbAdapter = BooksDbAdapter.getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         booksDbAdapter.deleteBook(context, bookUID!!)
         db.close()
     }
@@ -122,13 +121,13 @@ class QifExporterTest : BookHelperTest() {
         val holder = DatabaseHolder(context, db)
         val accountsDbAdapter = AccountsDbAdapter(holder)
 
-        val account = Account("Basic Account", getInstance("EUR"))
+        val account = Account("Basic Account", Commodity.getInstance("EUR"))
         val transaction = Transaction("One transaction")
         transaction.addSplit(Split(createZeroInstance("EUR"), account.uid))
         account.addTransaction(transaction)
         accountsDbAdapter.addRecord(account)
 
-        val foreignAccount = Account("US Konto", getInstance("USD"))
+        val foreignAccount = Account("US Konto", Commodity.getInstance("USD"))
         val multiCurr = Transaction("multi-currency")
         val split1 = Split(Money("12", "USD"), Money("15", "EUR"), foreignAccount.uid)
         val split2 = split1.createPair(account.uid)

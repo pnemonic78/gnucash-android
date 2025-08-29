@@ -82,7 +82,7 @@ class CommoditiesXmlHandler(holder: DatabaseHolder) : DefaultHandler() {
             commodity.cusip = cusip
             commodity.localSymbol = localSymbol
             commodity.quoteSource = SOURCE_CURRENCY
-            commoditiesDbAdapter.addRecord(commodity, DatabaseAdapter.UpdateMethod.Replace)
+            commoditiesDbAdapter.replace(commodity)
         }
     }
 

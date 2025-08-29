@@ -92,15 +92,15 @@ class ColorPickerDialog : DialogFragment(), OnColorSelectedListener {
         }
         this.palette = palette
 
-        return AlertDialog.Builder(activity)
+        return AlertDialog.Builder(activity, theme)
             .setTitle(titleResId)
             .setView(view)
             .setNeutralButton(R.string.default_color, { _, _ ->
                 onColorSelected(Account.DEFAULT_COLOR)
             })
-            .setNegativeButton(R.string.alert_dialog_cancel, { dialog, _ ->
-                dialog.dismiss()
-            })
+            .setNegativeButton(R.string.alert_dialog_cancel) { _, _ ->
+                // Dismisses itself
+            }
             .create()
     }
 

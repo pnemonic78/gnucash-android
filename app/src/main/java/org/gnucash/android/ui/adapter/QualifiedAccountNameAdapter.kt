@@ -25,7 +25,7 @@ class QualifiedAccountNameAdapter @JvmOverloads constructor(
     context: Context,
     private val where: String? = null,
     private val whereArgs: Array<String?>? = null,
-    var adapter: AccountsDbAdapter = AccountsDbAdapter.getInstance(),
+    var adapter: AccountsDbAdapter = AccountsDbAdapter.instance,
     private val scope: CoroutineScope
 ) : ArrayAdapter<QualifiedAccountNameAdapter.Label>(context, android.R.layout.simple_spinner_item) {
 
@@ -76,7 +76,7 @@ class QualifiedAccountNameAdapter @JvmOverloads constructor(
         context = context,
         where = null,
         whereArgs = null,
-        adapter = AccountsDbAdapter.getInstance(),
+        adapter = AccountsDbAdapter.instance,
         lifecycleOwner = lifecycleOwner
     )
 

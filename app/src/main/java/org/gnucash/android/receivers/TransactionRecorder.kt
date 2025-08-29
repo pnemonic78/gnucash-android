@@ -19,6 +19,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import org.gnucash.android.app.isNullOrEmpty
 import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
@@ -55,7 +56,7 @@ class TransactionRecorder : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Timber.i("Received transaction recording intent")
         val args = intent.extras
-        if (args == null) {
+        if (args.isNullOrEmpty()) {
             Timber.w("Transaction arguments required")
             return
         }
@@ -65,7 +66,7 @@ class TransactionRecorder : BroadcastReceiver() {
             Timber.w("Transaction name required")
             return
         }
-        val transactionsDbAdapter = TransactionsDbAdapter.getInstance()
+        val transactionsDbAdapter = TransactionsDbAdapter.instance
         val commoditiesDbAdapter = transactionsDbAdapter.commoditiesDbAdapter
 
         val note = args.getString(Intent.EXTRA_TEXT)
@@ -132,7 +133,7 @@ class TransactionRecorder : BroadcastReceiver() {
             }
         }
 
-        transactionsDbAdapter.addRecord(transaction, DatabaseAdapter.UpdateMethod.Insert)
+        transactionsDbAdapter.insert(transaction)
 
         WidgetConfigurationActivity.updateAllWidgets(context)
     }

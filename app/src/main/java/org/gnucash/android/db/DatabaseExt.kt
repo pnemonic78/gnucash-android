@@ -1,8 +1,12 @@
 package org.gnucash.android.db
 
 import android.database.Cursor
+import android.database.SQLException
 import android.database.sqlite.SQLiteStatement
 import androidx.annotation.IntRange
+import org.gnucash.android.db.adapter.DatabaseAdapter
+import org.gnucash.android.db.adapter.DatabaseAdapter.UpdateMethod
+import org.gnucash.android.model.BaseModel
 import java.math.BigDecimal
 import java.math.BigInteger
 

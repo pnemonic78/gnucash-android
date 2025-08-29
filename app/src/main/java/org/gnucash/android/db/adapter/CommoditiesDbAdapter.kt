@@ -67,7 +67,7 @@ class CommoditiesDbAdapter @JvmOverloads constructor(
         Commodity.EUR = getCurrency("EUR")!!
         Commodity.GBP = getCurrency("GBP")!!
         Commodity.JPY = getCurrency("JPY")!!
-        Commodity.Companion.USD = getCurrency("USD")!!
+        Commodity.USD = getCurrency("USD")!!
 
         Commodity.DEFAULT_COMMODITY = getDefaultCommodity()
         defaultCommodity = Commodity.DEFAULT_COMMODITY
@@ -157,7 +157,7 @@ class CommoditiesDbAdapter @JvmOverloads constructor(
             if (cursor.moveToFirst()) {
                 val commodity = buildModelInstance(cursor)
                 if (isCached) {
-                    cache[commodity.getUID()] = commodity
+                    cache[commodity.uid] = commodity
                 }
                 return commodity
             } else {
@@ -182,7 +182,7 @@ class CommoditiesDbAdapter @JvmOverloads constructor(
 
     fun getCommodityUID(currencyCode: String): String? {
         val commodity = getCurrency(currencyCode)
-        return commodity?.getUID()
+        return commodity?.uid
     }
 
     @Throws(IllegalArgumentException::class)
@@ -219,9 +219,9 @@ class CommoditiesDbAdapter @JvmOverloads constructor(
         if (currencyCode == null) {
             currencyCode = getLocaleCurrencyCode()
         }
-        commodity = getCurrency(currencyCode)
+        commodity = getCurrency(currencyCode) ?: Commodity.DEFAULT_COMMODITY
         defaultCommodity = commodity
-        return commodity ?: Commodity.DEFAULT_COMMODITY
+        return commodity
     }
 
     fun setDefaultCurrencyCode(currencyCode: String?) {
@@ -239,7 +239,6 @@ class CommoditiesDbAdapter @JvmOverloads constructor(
 
     companion object {
         @JvmStatic
-        fun getInstance(): CommoditiesDbAdapter =
-            GnuCashApplication.Companion.commoditiesDbAdapter!!
+        val instance: CommoditiesDbAdapter get() = GnuCashApplication.commoditiesDbAdapter!!
     }
 }

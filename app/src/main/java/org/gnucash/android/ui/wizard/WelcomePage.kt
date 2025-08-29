@@ -30,7 +30,7 @@ class WelcomePage(callbacks: ModelCallbacks, title: String) : Page(callbacks, ti
         return WelcomePageFragment()
     }
 
-    override fun getReviewItems(dest: ArrayList<ReviewItem?>?) {
+    override fun getReviewItems(dest: ArrayList<ReviewItem>?) {
         //nothing to see here, move along
     }
 }

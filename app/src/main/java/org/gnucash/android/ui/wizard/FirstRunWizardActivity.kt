@@ -39,10 +39,10 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashActivity
 import org.gnucash.android.app.GnuCashApplication.Companion.defaultCurrencyCode
 import org.gnucash.android.databinding.ActivityFirstRunWizardBinding
-import org.gnucash.android.db.adapter.BooksDbAdapter.Companion.getInstance
+import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.importer.ImportBookCallback
 import org.gnucash.android.ui.account.AccountsActivity
-import org.gnucash.android.ui.settings.ThemeHelper.Companion.apply
+import org.gnucash.android.ui.settings.ThemeHelper
 import org.gnucash.android.ui.util.widget.FragmentStateAdapter
 import org.gnucash.android.util.openBook
 import timber.log.Timber
@@ -74,10 +74,10 @@ class FirstRunWizardActivity : GnuCashActivity(),
         wizardModel = createWizardModel(savedInstanceState)
 
         super.onCreate(savedInstanceState)
-        apply(this)
+        ThemeHelper.apply(this)
         val binding = ActivityFirstRunWizardBinding.inflate(getLayoutInflater())
         this.binding = binding
-        setContentView(binding.getRoot())
+        setContentView(binding.root)
 
         pagerAdapter = WizardPagerAdapter(this)
         binding.pager.adapter = pagerAdapter
@@ -160,7 +160,7 @@ class FirstRunWizardActivity : GnuCashActivity(),
 
             val activity: Activity = this@FirstRunWizardActivity
             //save the UID of the active book, and then delete it after successful import
-            val booksDbAdapter = getInstance()
+            val booksDbAdapter = BooksDbAdapter.instance
             val bookOldUID = booksDbAdapter.activeBookUID
             val callbackAfterImport: ImportBookCallback? =
                 if (bookOldUID.isNotEmpty()) object : ImportBookCallback {
@@ -343,7 +343,7 @@ class FirstRunWizardActivity : GnuCashActivity(),
 
     private fun importFileAndFinish(data: Intent?) {
         val activity: Activity = this
-        val booksDbAdapter = getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         val bookOldUID = booksDbAdapter.activeBookUID
         val callbackAfterImport: ImportBookCallback = object : ImportBookCallback {
             override fun onBookImported(bookUID: String?) {
@@ -359,14 +359,14 @@ class FirstRunWizardActivity : GnuCashActivity(),
         if (bookNewUID.isNullOrEmpty()) return
         if (bookOldUID == bookNewUID) return
 
-        val booksDbAdapter = getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         val bookOld = booksDbAdapter.getRecord(bookOldUID)
         val bookNew = booksDbAdapter.getRecord(bookNewUID)
 
         val bookName = bookOld.displayName
         booksDbAdapter.deleteBook(context, bookOldUID)
         bookNew.displayName = bookName
-        booksDbAdapter.updateRecord(bookNew)
+        booksDbAdapter.update(bookNew)
     }
 
     inner class WizardPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {

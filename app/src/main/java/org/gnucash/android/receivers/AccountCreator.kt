@@ -18,6 +18,7 @@ package org.gnucash.android.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import org.gnucash.android.app.isNullOrEmpty
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.model.Account
@@ -39,11 +40,11 @@ class AccountCreator : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent) {
         Timber.i("Received account creation intent")
         val args = intent.extras
-        if (args == null) {
+        if (args.isNullOrEmpty()) {
             Timber.w("Account arguments required")
             return
         }
-        val accountsDbAdapter = AccountsDbAdapter.getInstance()!!
+        val accountsDbAdapter = AccountsDbAdapter.instance
         val commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
 
         val name = args.getString(Intent.EXTRA_TITLE)
@@ -73,6 +74,6 @@ class AccountCreator : BroadcastReceiver() {
             account.setUID(uid)
         }
 
-        accountsDbAdapter.addRecord(account, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(account)
     }
 }

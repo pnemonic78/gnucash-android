@@ -46,7 +46,7 @@ import timber.log.Timber
 class ExportAsyncTask(
     context: Context,
     private val bookUID: String
-) : AsyncTask<ExportParams, Any?, Uri?>() {
+) : AsyncTask<ExportParams, Any, Uri>() {
     private val progressDialog: ProgressDialog?
     private var exportParams: ExportParams? = null
     private var exporter: Exporter? = null

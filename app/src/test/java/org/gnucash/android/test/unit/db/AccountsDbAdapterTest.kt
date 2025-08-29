@@ -87,10 +87,10 @@ class AccountsDbAdapterTest : GnuCashTest() {
      */
     private fun initAdapters(bookUID: String?) {
         if (bookUID == null) {
-            commoditiesDbAdapter = CommoditiesDbAdapter.getInstance()!!
-            splitsDbAdapter = SplitsDbAdapter.getInstance()
-            transactionsDbAdapter = TransactionsDbAdapter.getInstance()
-            accountsDbAdapter = AccountsDbAdapter.getInstance()
+            commoditiesDbAdapter = CommoditiesDbAdapter.instance!!
+            splitsDbAdapter = SplitsDbAdapter.instance
+            transactionsDbAdapter = TransactionsDbAdapter.instance
+            accountsDbAdapter = AccountsDbAdapter.instance
         } else {
             val databaseHelper = DatabaseHelper(context, bookUID)
             val dbHolder = databaseHelper.holder
@@ -99,7 +99,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
             transactionsDbAdapter = TransactionsDbAdapter(splitsDbAdapter)
             accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter)
             val b1 = GnuCashApplication.booksDbAdapter
-            val b2 = BooksDbAdapter.getInstance()
+            val b2 = BooksDbAdapter.instance
             assertThat(b1).isEqualTo(b2)
             b2.setActive(bookUID)
         }
@@ -283,7 +283,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.BACKUP)
         scheduledAction.actionUID = "Test-uid"
         scheduledAction.setRecurrence(Recurrence(PeriodType.WEEK))
-        val scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance()
+        val scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
 
         scheduledActionDbAdapter.addRecord(scheduledAction)
 
@@ -291,7 +291,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         val budgetAmount = BudgetAmount(createZeroInstance(account.commodity), account.uid)
         budget.addAmount(budgetAmount)
         budget.recurrence = Recurrence(PeriodType.MONTH)
-        BudgetsDbAdapter.getInstance().addRecord(budget)
+        BudgetsDbAdapter.instance.addRecord(budget)
 
         accountsDbAdapter.deleteAllRecords()
 
@@ -299,10 +299,10 @@ class AccountsDbAdapterTest : GnuCashTest() {
         assertThat(transactionsDbAdapter.recordsCount).isZero()
         assertThat(splitsDbAdapter.recordsCount).isZero()
         assertThat(scheduledActionDbAdapter.recordsCount).isZero()
-        assertThat(BudgetAmountsDbAdapter.getInstance().recordsCount).isZero()
-        assertThat(BudgetsDbAdapter.getInstance().recordsCount).isZero()
-        assertThat(PricesDbAdapter.getInstance().recordsCount).isZero() //prices should remain
-        assertThat(CommoditiesDbAdapter.getInstance()!!.recordsCount).isGreaterThan(50) //commodities should remain
+        assertThat(BudgetAmountsDbAdapter.instance.recordsCount).isZero()
+        assertThat(BudgetsDbAdapter.instance.recordsCount).isZero()
+        assertThat(PricesDbAdapter.instance.recordsCount).isZero() //prices should remain
+        assertThat(CommoditiesDbAdapter.instance!!.recordsCount).isGreaterThan(50) //commodities should remain
     }
 
     @Test
@@ -487,7 +487,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
 
         //edit the account
         account.name = "Edited account"
-        accountsDbAdapter.addRecord(account, DatabaseAdapter.UpdateMethod.Update)
+        accountsDbAdapter.update(account)
 
         assertThat(
             transactionsDbAdapter.getScheduledTransactionsForAccount(account.uid)
@@ -559,7 +559,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         assertThat(accountsDbAdapter.recordsCount).isZero()
 
         val account1 = Account("Test")
-        accountsDbAdapter.addRecord(account1, DatabaseAdapter.UpdateMethod.Insert)
+        accountsDbAdapter.insert(account1)
         assertThat(account1.id).isNotEqualTo(0) //plus ROOT account
         assertThat(accountsDbAdapter.recordsCount).isEqualTo(2) //plus ROOT account
 
@@ -572,7 +572,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         account2.isPlaceholder = true
         account2.isFavorite = true
         account2.color = Color.MAGENTA
-        accountsDbAdapter.addRecord(account2, DatabaseAdapter.UpdateMethod.Replace)
+        accountsDbAdapter.insert(account2)
         val account3 = accountsDbAdapter.getRecord(account2.uid)
         assertThat(account3).isEqualTo(account2)
         assertThat(account3.isPlaceholder).isTrue()
@@ -582,7 +582,7 @@ class AccountsDbAdapterTest : GnuCashTest() {
         account3.isPlaceholder = true
         account3.isFavorite = false
         account3.color = Color.YELLOW
-        accountsDbAdapter.addRecord(account3, DatabaseAdapter.UpdateMethod.Update)
+        accountsDbAdapter.update(account3)
         val account4 = accountsDbAdapter.getRecord(account3.uid)
         assertThat(account4).isEqualTo(account3)
         assertThat(account4.isPlaceholder).isTrue()

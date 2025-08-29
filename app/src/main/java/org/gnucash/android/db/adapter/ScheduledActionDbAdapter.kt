@@ -28,7 +28,6 @@ import org.gnucash.android.db.getLong
 import org.gnucash.android.db.getString
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.model.ScheduledAction
-import org.gnucash.android.model.ScheduledAction.ActionType.Companion.of
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import org.gnucash.android.util.set
 import timber.log.Timber
@@ -108,7 +107,7 @@ class ScheduledActionDbAdapter(val recurrenceDbAdapter: RecurrenceDbAdapter) :
 
         val recurrence = scheduledAction.recurrence
         recurrence!!.setUID(recurrenceUID)
-        recurrenceDbAdapter.addRecord(recurrence, UpdateMethod.Update)
+        recurrenceDbAdapter.update(recurrence)
 
         val contentValues = ContentValues()
         extractBaseModelAttributes(contentValues, scheduledAction)
@@ -172,7 +171,7 @@ class ScheduledActionDbAdapter(val recurrenceDbAdapter: RecurrenceDbAdapter) :
         val recurrenceUID = cursor.getString(ScheduledActionEntry.COLUMN_RECURRENCE_UID)!!
         val templateAccountUID = cursor.getString(ScheduledActionEntry.COLUMN_TEMPLATE_ACCT_UID)
 
-        val actionType = of(typeString)
+        val actionType = ScheduledAction.ActionType.of(typeString)
         val event = ScheduledAction(actionType)
         populateBaseModelAttributes(cursor, event)
         event.startTime = startTime
@@ -251,13 +250,7 @@ class ScheduledActionDbAdapter(val recurrenceDbAdapter: RecurrenceDbAdapter) :
     }
 
     companion object {
-        /**
-         * Returns application-wide instance of database adapter
-         *
-         * @return ScheduledEventDbAdapter instance
-         */
         @JvmStatic
-        fun getInstance(): ScheduledActionDbAdapter =
-            GnuCashApplication.Companion.scheduledEventDbAdapter!!
+        val instance: ScheduledActionDbAdapter get() = GnuCashApplication.scheduledEventDbAdapter!!
     }
 }

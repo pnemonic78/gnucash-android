@@ -359,7 +359,7 @@ object GncXmlHelper {
         val denomString = denomInt.toString()
 
         val numerator = TransactionFormFragment.stripCurrencyFormatting(
-            amount.multiply(denom).stripTrailingZeros().toPlainString()
+            (amount * denom).stripTrailingZeros().toPlainString()
         )
         return "$numerator/$denomString"
     }

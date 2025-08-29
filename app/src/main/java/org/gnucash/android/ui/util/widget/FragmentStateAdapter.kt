@@ -16,7 +16,7 @@ abstract class FragmentStateAdapter(activity: FragmentActivity) :
 
     private val fragmentManager: FragmentManager = activity.supportFragmentManager
     private val fragmentsById = LongSparseArray<Fragment>()
-    private val fragments = SparseArray<Fragment?>()
+    private val fragments = SparseArray<Fragment>()
 
     private var pager: ViewPager2? = null
     var selectedPosition: Int = RecyclerView.NO_POSITION

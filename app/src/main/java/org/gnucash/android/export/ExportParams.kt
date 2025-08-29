@@ -16,7 +16,7 @@
 package org.gnucash.android.export
 
 import android.net.Uri
-import org.gnucash.android.export.ExportFormat.Companion.of
+import androidx.core.net.toUri
 import org.gnucash.android.util.TimestampHelper
 import java.sql.Timestamp
 
@@ -131,12 +131,12 @@ class ExportParams() {
         fun parseTag(tag: String): ExportParams {
             val tokens: Array<String> =
                 tag.split(TAG_SEPARATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            val params = ExportParams(of(tokens[0]))
+            val params = ExportParams(ExportFormat.of(tokens[0]))
             params.exportTarget = ExportTarget.valueOf(tokens[1])
             params.exportStartTime = TimestampHelper.getTimestampFromUtcString(tokens[2])
             params.deleteTransactionsAfterExport = tokens[3].toBoolean()
             if (tokens.size >= 5) {
-                params.exportLocation = Uri.parse(tokens[4])
+                params.exportLocation = tokens[4].toUri()
                 if (tokens.size >= 6) {
                     params.isCompressed = tokens[5].toBoolean()
                 }

@@ -29,7 +29,6 @@ import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter.NoActiveBookFoundException
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
-import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.db.adapter.PricesDbAdapter
 import org.gnucash.android.db.adapter.RecurrenceDbAdapter
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
@@ -142,7 +141,6 @@ import org.gnucash.android.model.Price
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.model.Slot
-import org.gnucash.android.model.Slot.Companion.empty
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
@@ -264,7 +262,7 @@ class GncXmlHandler @JvmOverloads constructor(
     @Deprecated("Use the new scheduled action elements instead")
     private var recurrencePeriod: Long = 0
 
-    private val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.getInstance()
+    private val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.instance
     private var transactionsDbAdapter: TransactionsDbAdapter? = null
     private var scheduledActionsDbAdapter: ScheduledActionDbAdapter? = null
     private var commoditiesDbAdapter: CommoditiesDbAdapter? = null
@@ -375,7 +373,7 @@ class GncXmlHandler @JvmOverloads constructor(
     }
 
     private fun handleStartSlot() {
-        slots.push(empty())
+        slots.push(Slot.empty())
     }
 
     @Throws(SAXException::class)
@@ -453,7 +451,7 @@ class GncXmlHandler @JvmOverloads constructor(
 
         val imbalanceAccounts = mutableMapOf<String, Account>()
         val imbalancePrefix = AccountsDbAdapter.getImbalanceAccountPrefix(context)
-        val rootUID = rootAccount!!.getUID()
+        val rootUID = rootAccount!!.uid
         for (account in accounts) {
             if ((account.parentUID == null && !account.isRoot) || rootUID == account.parentUID) {
                 if (account.name.startsWith(imbalancePrefix)) {
@@ -471,20 +469,20 @@ class GncXmlHandler @JvmOverloads constructor(
             if (imbAccount == null) {
                 val commodity = commoditiesDbAdapter!!.getRecord(currencyUID)
                 imbAccount = Account(imbalancePrefix + commodity.currencyCode, commodity)
-                imbAccount.parentUID = rootAccount!!.getUID()
+                imbAccount.parentUID = rootAccount!!.uid
                 imbAccount.accountType = AccountType.BANK
                 imbalanceAccounts[currencyUID] = imbAccount
-                accountsDbAdapter!!.addRecord(imbAccount, DatabaseAdapter.UpdateMethod.Insert)
+                accountsDbAdapter!!.insert(imbAccount)
                 listener?.onAccount(imbAccount)
             }
-            split.accountUID = imbAccount.getUID()
+            split.accountUID = imbAccount.uid
         }
 
         var mostAppearedCurrency: String? = ""
         var mostCurrencyAppearance = 0
         for (entry in currencyCount.entries) {
-            if (entry.value!! > mostCurrencyAppearance) {
-                mostCurrencyAppearance = entry.value!!
+            if (entry.value > mostCurrencyAppearance) {
+                mostCurrencyAppearance = entry.value
                 mostAppearedCurrency = entry.key
             }
         }
@@ -517,7 +515,7 @@ class GncXmlHandler @JvmOverloads constructor(
             activeBookUID = GnuCashApplication.activeBookUID
         } catch (_: NoActiveBookFoundException) {
         }
-        val newBookUID = importedBook.getUID()
+        val newBookUID = importedBook.uid
         if (activeBookUID == null || activeBookUID != newBookUID) {
             close()
         }
@@ -527,13 +525,13 @@ class GncXmlHandler @JvmOverloads constructor(
         cancellationSignal.cancel()
     }
 
+    /**
+     * Returns the unique identifier of the just-imported book
+     *
+     * @return GUID of the newly imported book
+     */
     val importedBookUID: String
-        /**
-         * Returns the unique identifier of the just-imported book
-         *
-         * @return GUID of the newly imported book
-         */
-        get() = this.importedBook.getUID()
+          get() = importedBook.uid
 
     /**
      * Returns the currency for an account which has been parsed (but not yet saved to the db)
@@ -602,7 +600,7 @@ class GncXmlHandler @JvmOverloads constructor(
                 if (account.isRoot) {
                     if (rootAccount == null) {
                         rootAccount = account
-                        importedBook.rootAccountUID = account.getUID()
+                        importedBook.rootAccountUID = account.uid
                     } else {
                         throw SAXException("Multiple ROOT accounts exist in book")
                     }
@@ -610,20 +608,20 @@ class GncXmlHandler @JvmOverloads constructor(
                     account = Account(AccountsDbAdapter.ROOT_ACCOUNT_NAME)
                     rootAccount = account
                     rootAccount!!.accountType = AccountType.ROOT
-                    importedBook.rootAccountUID = rootAccount!!.getUID()
+                    importedBook.rootAccountUID = account.uid
                 }
                 accounts.add(account)
                 listener?.onAccount(account)
             }
-            accountsDbAdapter!!.addRecord(account, DatabaseAdapter.UpdateMethod.Insert)
-            accountMap[account.getUID()] = account
+            accountsDbAdapter!!.insert(account)
+            accountMap[account.uid] = account
             // prepare for next input
             this.account = null
         } else if (NS_SPLIT == uri) {
             val accountUID = value
             split!!.accountUID = accountUID
             if (isInTemplates) {
-                templateAccountToTransaction[accountUID] = transaction!!.getUID()
+                templateAccountToTransaction[accountUID] = transaction!!.uid
             } else {
                 //the split amount uses the account currency
                 split!!.quantity =
@@ -661,11 +659,11 @@ class GncXmlHandler @JvmOverloads constructor(
     private fun handleEndBook(localName: String) {
         if (hasBookElement) {
             if (TAG_BOOK == localName) {
-                booksDbAdapter.addRecord(this.importedBook, DatabaseAdapter.UpdateMethod.Replace)
+                booksDbAdapter.replace(this.importedBook)
                 listener?.onBook(this.importedBook)
             }
         } else {
-            booksDbAdapter.addRecord(this.importedBook, DatabaseAdapter.UpdateMethod.Replace)
+            booksDbAdapter.replace(this.importedBook)
             listener?.onBook(this.importedBook)
         }
     }
@@ -674,7 +672,7 @@ class GncXmlHandler @JvmOverloads constructor(
         val budget = budget ?: return
         if (!budget.budgetAmounts.isEmpty()) { //ignore if no budget amounts exist for the budget
             // TODO: 01.06.2016 Re-enable import of Budget stuff when the UI is complete */
-            budgetsDbAdapter!!.addRecord(budget, DatabaseAdapter.UpdateMethod.Insert)
+            budgetsDbAdapter!!.insert(budget)
             listener?.onBudget(budget)
         }
         this.budget = null
@@ -700,7 +698,7 @@ class GncXmlHandler @JvmOverloads constructor(
             var commodity = getCommodity(commodity)
             if (commodity == null) {
                 commodity = this.commodity
-                commoditiesDbAdapter!!.addRecord(commodity!!, DatabaseAdapter.UpdateMethod.Insert)
+                commoditiesDbAdapter!!.insert(commodity!!)
                 commodities[commodity.key] = commodity
             }
             listener?.onCommodity(commodity)
@@ -840,7 +838,7 @@ class GncXmlHandler @JvmOverloads constructor(
         if (NS_ACCOUNT == uri) {
             account!!.setUID(id)
         } else if (NS_BOOK == uri) {
-            maybeInitDb(importedBook.getUID(), id)
+            maybeInitDb(importedBook.uid, id)
             importedBook.setUID(id)
         } else if (NS_BUDGET == uri) {
             budget!!.setUID(id)
@@ -957,7 +955,7 @@ class GncXmlHandler @JvmOverloads constructor(
     private fun handleEndPrice() {
         val price = price
         if (price != null) {
-            pricesDbAdapter!!.addRecord(price, DatabaseAdapter.UpdateMethod.Insert)
+            pricesDbAdapter!!.insert(price)
             listener?.onPrice(price)
         }
         this.price = null
@@ -1008,15 +1006,12 @@ class GncXmlHandler @JvmOverloads constructor(
                 // TODO: implement parsing of by days for scheduled actions
                 setMinimalScheduledActionByDays()
             }
-            scheduledActionsDbAdapter!!.addRecord(
-                scheduledAction,
-                DatabaseAdapter.UpdateMethod.Insert
-            )
+            scheduledActionsDbAdapter!!.insert(scheduledAction)
             listener?.onSchedule(scheduledAction)
             if (scheduledAction.actionType == ScheduledAction.ActionType.TRANSACTION) {
                 val transactionUID = scheduledAction.actionUID
                 val txValues = ContentValues()
-                txValues[TransactionEntry.COLUMN_SCHEDX_ACTION_UID] = scheduledAction.getUID()
+                txValues[TransactionEntry.COLUMN_SCHEDX_ACTION_UID] = scheduledAction.uid
                 transactionsDbAdapter!!.updateRecord(transactionUID!!, txValues)
             }
             this.scheduledAction = null
@@ -1175,7 +1170,7 @@ class GncXmlHandler @JvmOverloads constructor(
                 val transactionUID = templateAccountToTransaction[uid]
                 scheduledAction.actionUID = transactionUID
             } else {
-                scheduledAction.actionUID = importedBook.getUID()
+                scheduledAction.actionUID = importedBook.uid
             }
         }
     }
@@ -1198,23 +1193,17 @@ class GncXmlHandler @JvmOverloads constructor(
         }
         if (isInTemplates) {
             if (!ignoreTemplateTransaction) {
-                transactionsDbAdapter!!.addRecord(
-                    transaction!!,
-                    DatabaseAdapter.UpdateMethod.Insert
-                )
+                transactionsDbAdapter!!.insert(transaction!!)
             }
         } else {
-            transactionsDbAdapter!!.addRecord(transaction!!, DatabaseAdapter.UpdateMethod.Insert)
+            transactionsDbAdapter!!.insert(transaction!!)
             listener?.onTransaction(transaction!!)
         }
         if (recurrencePeriod > 0) { //if we find an old format recurrence period, parse it
             transaction!!.isTemplate = true
             val scheduledAction =
                 ScheduledAction.parseScheduledAction(transaction!!, recurrencePeriod)
-            scheduledActionsDbAdapter!!.addRecord(
-                scheduledAction,
-                DatabaseAdapter.UpdateMethod.Insert
-            )
+            scheduledActionsDbAdapter!!.insert(scheduledAction)
             listener?.onSchedule(scheduledAction)
         }
         recurrencePeriod = 0

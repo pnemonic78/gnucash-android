@@ -36,7 +36,6 @@ import android.widget.DatePicker
 import android.widget.TimePicker
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.recyclerview.widget.RecyclerView
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
@@ -47,6 +46,8 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.isNullOrEmpty
 import org.gnucash.android.app.takePersistableUriPermission
 import org.gnucash.android.databinding.FragmentExportFormBinding
 import org.gnucash.android.db.adapter.BooksDbAdapter
@@ -65,6 +66,7 @@ import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.export.OptionsViewAnimationUtils.collapse
 import org.gnucash.android.ui.export.OptionsViewAnimationUtils.expand
+import org.gnucash.android.ui.get
 import org.gnucash.android.ui.passcode.PasscodeHelper.skipPasscodeScreen
 import org.gnucash.android.ui.settings.dialog.OwnCloudDialogFragment
 import org.gnucash.android.ui.transaction.TransactionFormFragment
@@ -173,12 +175,11 @@ class ExportFormFragment : MenuFragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val activity = requireActivity() as AppCompatActivity
-        val actionBar: ActionBar = checkNotNull(activity.supportActionBar)
-        actionBar.setTitle(R.string.title_export_dialog)
+        val actionBar: ActionBar? = this.actionBar
+        actionBar?.setTitle(R.string.title_export_dialog)
 
         val args = arguments
-        if ((args == null) || args.isEmpty()) {
+        if (args.isNullOrEmpty()) {
             return
         }
         val binding = this.binding!!
@@ -188,7 +189,7 @@ class ExportFormFragment : MenuFragment(),
         if (scheduledUID.isNullOrEmpty()) {
             return
         }
-        val scheduledActionDbAdapter = ScheduledActionDbAdapter.getInstance()
+        val scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
         val scheduledAction = scheduledActionDbAdapter.getRecordOrNull(scheduledUID)
         if (scheduledAction != null) {
             bindForm(binding, scheduledAction)
@@ -230,10 +231,9 @@ class ExportFormFragment : MenuFragment(),
         binding.valueExportFormat.setSelection(formatIndex)
 
         when (csvSeparator) {
-            ExportParams.Companion.CSV_COMMA -> binding.radioSeparatorCommaFormat.setChecked(true)
-            ExportParams.Companion.CSV_COLON -> binding.radioSeparatorColonFormat.setChecked(true)
-            ExportParams.Companion.CSV_SEMICOLON ->
-                binding.radioSeparatorSemicolonFormat.setChecked(true)
+            ExportParams.CSV_COMMA -> binding.radioSeparatorCommaFormat.setChecked(true)
+            ExportParams.CSV_COLON -> binding.radioSeparatorColonFormat.setChecked(true)
+            ExportParams.CSV_SEMICOLON -> binding.radioSeparatorSemicolonFormat.setChecked(true)
         }
 
         val startTimeMills = startTime.time
@@ -327,7 +327,7 @@ class ExportFormFragment : MenuFragment(),
             }
             scheduledAction.setRecurrence(RecurrenceParser.parse(eventRecurrence))
             scheduledAction.tag = exportParameters.toTag()
-            ScheduledActionDbAdapter.getInstance().addRecord(scheduledAction, updateMethod)
+            ScheduledActionDbAdapter.instance.addRecord(scheduledAction, updateMethod)
             this.scheduledAction = scheduledAction
         }
 
@@ -446,7 +446,7 @@ class ExportFormFragment : MenuFragment(),
         )
 
         binding.inputRecurrence.setOnClickListener(
-            RecurrenceViewClickListener(requireActivity(), recurrenceRule, this)
+            RecurrenceViewClickListener(parentFragmentManager, recurrenceRule, this)
         )
 
         //this part (setting the export format) must come after the recurrence view bindings above
@@ -495,7 +495,7 @@ class ExportFormFragment : MenuFragment(),
             ) {
                 if (view == null)  //the item selection is fired twice by the Android framework. Ignore the first one
                     return
-                val item: ExportFormatItem = formatAdapter.getItem(position)!!
+                val item: ExportFormatItem = formatAdapter[position]
                 onFormatSelected(binding, item.value)
             }
 
@@ -513,17 +513,17 @@ class ExportFormFragment : MenuFragment(),
 
         binding.radioSeparatorCommaFormat.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                exportParams.csvSeparator = ExportParams.Companion.CSV_COMMA
+                exportParams.csvSeparator = ExportParams.CSV_COMMA
             }
         }
         binding.radioSeparatorColonFormat.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                exportParams.csvSeparator = ExportParams.Companion.CSV_COLON
+                exportParams.csvSeparator = ExportParams.CSV_COLON
             }
         }
         binding.radioSeparatorSemicolonFormat.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                exportParams.csvSeparator = ExportParams.Companion.CSV_SEMICOLON
+                exportParams.csvSeparator = ExportParams.CSV_SEMICOLON
             }
         }
     }
@@ -562,7 +562,7 @@ class ExportFormFragment : MenuFragment(),
      * Open a chooser for user to pick a file to export to
      */
     private fun selectExportFile() {
-        val bookName = BooksDbAdapter.getInstance().activeBookDisplayName
+        val bookName = BooksDbAdapter.instance.activeBookDisplayName
         val filename =
             buildExportFilename(exportParams.exportFormat, exportParams.isCompressed, bookName)
 

@@ -703,7 +703,6 @@ class TransactionsDbAdapter(
          * @return Transaction database adapter
          */
         @JvmStatic
-        fun getInstance(): TransactionsDbAdapter =
-            GnuCashApplication.Companion.transactionDbAdapter!!
+        val instance: TransactionsDbAdapter get() = GnuCashApplication.transactionDbAdapter!!
     }
 }

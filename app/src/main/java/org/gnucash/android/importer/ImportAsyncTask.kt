@@ -46,7 +46,7 @@ class ImportAsyncTask @JvmOverloads constructor(
     context: Activity,
     private val bookCallback: ImportBookCallback? = null,
     private val backup: Boolean = false
-) : AsyncTask<Uri, Any?, String?>() {
+) : AsyncTask<Uri, Any, String>() {
     private val progressDialog: ProgressDialog
     private val listener: AsyncTaskProgressListener = ProgressListener(context)
     private var importer: GncXmlImporter? = null
@@ -93,7 +93,7 @@ class ImportAsyncTask @JvmOverloads constructor(
             this.importer = importer
             book = importer.parse()
             book.sourceUri = uri
-            bookUID = book.getUID()
+            bookUID = book.uid
         } catch (ce: OperationCanceledException) {
             Timber.i(ce)
             return null
@@ -102,7 +102,7 @@ class ImportAsyncTask @JvmOverloads constructor(
             return null
         }
 
-        val booksDbAdapter = BooksDbAdapter.getInstance()
+        val booksDbAdapter = BooksDbAdapter.instance
         val contentValues = ContentValues()
         contentValues[BookEntry.COLUMN_SOURCE_URI] = uri.toString()
 

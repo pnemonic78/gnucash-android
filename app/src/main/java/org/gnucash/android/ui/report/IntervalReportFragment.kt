@@ -21,11 +21,11 @@ abstract class IntervalReportFragment : BaseReportFragment() {
     protected val accountTypes = listOf(AccountType.INCOME, AccountType.EXPENSE)
 
     @JvmField
-    protected var transactionsDbAdapter: TransactionsDbAdapter = TransactionsDbAdapter.getInstance()
+    protected var transactionsDbAdapter: TransactionsDbAdapter = TransactionsDbAdapter.instance
 
     override fun onStart() {
         super.onStart()
-        transactionsDbAdapter = TransactionsDbAdapter.getInstance()
+        transactionsDbAdapter = TransactionsDbAdapter.instance
     }
 
     /**
@@ -36,12 +36,12 @@ abstract class IntervalReportFragment : BaseReportFragment() {
     protected fun calculateEarliestAndLatestTimestamps(accountTypes: List<AccountType>) {
         earliestTimestamps.clear()
         latestTimestamps.clear()
-        earliestTransactionTimestamp = mReportPeriodStart
+        earliestTransactionTimestamp = reportPeriodStart
         if (earliestTransactionTimestamp != null) {
             return
         }
 
-        val commodityUID = mCommodity.getUID()
+        val commodityUID = commodity.uid
         for (type in accountTypes) {
             val earliest =
                 transactionsDbAdapter.getTimestampOfEarliestTransaction(type, commodityUID)

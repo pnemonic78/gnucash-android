@@ -15,7 +15,7 @@ import org.gnucash.android.model.Commodity
 
 class CommoditiesAdapter @JvmOverloads constructor(
     context: Context,
-    private val adapter: CommoditiesDbAdapter = CommoditiesDbAdapter.getInstance()!!,
+    private val adapter: CommoditiesDbAdapter = CommoditiesDbAdapter.instance!!,
     private val scope: CoroutineScope
 ) : ArrayAdapter<CommoditiesAdapter.Label>(context, android.R.layout.simple_spinner_item) {
 

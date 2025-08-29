@@ -1,5 +1,7 @@
 package org.gnucash.android.lang
 
+import android.text.Editable
+import android.text.TextUtils
 import androidx.collection.LongSparseArray
 
 typealias BooleanCallback = ((Boolean) -> Unit)
@@ -11,4 +13,12 @@ operator fun <E> LongSparseArray<E>.set(key: Long, value: E){
 
 operator fun CharSequence.plus(rhs: CharSequence): String {
     return this.toString() + rhs
+}
+
+infix fun CharSequence.equals(rhs: CharSequence?): Boolean {
+    return TextUtils.equals(this, rhs)
+}
+
+fun Editable.trim(): String {
+    return this.toString().trim()
 }

@@ -186,7 +186,6 @@ import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.model.Slot
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
-import org.gnucash.android.model.TransactionType.Companion.of
 import org.gnucash.android.model.WeekendAdjust
 import org.gnucash.android.util.TimestampHelper.getTimestampFromUtcString
 import org.gnucash.android.util.formatRGB
@@ -223,18 +222,18 @@ class GncXmlExporter @JvmOverloads constructor(
                 AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_TEMPLATE + "=1"
             var whereArgs = arrayOf<String?>(AccountType.ROOT.name)
             val template =
-                commoditiesDbAdapter.getCurrency(Commodity.Companion.TEMPLATE)
+                commoditiesDbAdapter.getCurrency(Commodity.TEMPLATE)
             var accounts =
                 accountsDbAdapter.getSimpleAccounts(where, whereArgs, null)
             if (accounts.isEmpty()) {
                 val commodity =
-                    commoditiesDbAdapter.getCurrency(Commodity.Companion.TEMPLATE)
+                    commoditiesDbAdapter.getCurrency(Commodity.TEMPLATE)
                 if (commodity != null) {
                     where =
                         AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_COMMODITY_UID + "=?"
                     whereArgs = arrayOf<String?>(
                         AccountType.ROOT.name,
-                        commodity.getUID()
+                        commodity.uid
                     )
                 } else {
                     where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_NAME + "=?"
@@ -345,7 +344,7 @@ class GncXmlExporter @JvmOverloads constructor(
                 Timber.i("No template root account found!")
                 return
             }
-            rootUID = account.getUID()
+            rootUID = account.uid
         } else {
             rootUID = accountsDbAdapter.rootAccountUID
             if (rootUID.isNullOrEmpty()) {
@@ -513,7 +512,7 @@ class GncXmlExporter @JvmOverloads constructor(
                 val txUID = cursor.getString("trans_uid")!!
                 val account = Account(generateUID(), Commodity.template)
                 account.accountType = AccountType.BANK
-                account.parentUID = rootTemplateAccount.getUID()
+                account.parentUID = rootTemplateAccount.uid
                 transactionToTemplateAccounts[txUID] = account
             } while (cursor.moveToNext())
 
@@ -627,7 +626,7 @@ class GncXmlExporter @JvmOverloads constructor(
             xmlSerializer.endTag(NS_SPLIT, TAG_RECONCILED_STATE)
             //todo: if split is reconciled, add reconciled date
             // value, in the transaction's currency
-            val trxType = of(cursor.getString("split_type"))
+            val trxType = TransactionType.of(cursor.getString("split_type"))
             val splitValueNum = cursor.getLong("split_value_num")
             val splitValueDenom = cursor.getLong("split_value_denom")
             val splitAmount = toBigDecimal(splitValueNum, splitValueDenom)
@@ -656,7 +655,7 @@ class GncXmlExporter @JvmOverloads constructor(
             var splitAccountUID = cursor.getString("split_acct_uid")
             if (isTemplates) {
                 //get the UID of the template account
-                splitAccountUID = transactionToTemplateAccounts[curTrxUID]!!.getUID()
+                splitAccountUID = transactionToTemplateAccounts[curTrxUID]!!.uid
             } else {
                 splitAccountUID = cursor.getString("split_acct_uid")
             }
@@ -747,7 +746,7 @@ class GncXmlExporter @JvmOverloads constructor(
         xmlSerializer: XmlSerializer,
         scheduledAction: ScheduledAction
     ) {
-        var uid = scheduledAction.getUID()
+        var uid = scheduledAction.uid
         val actionUID = scheduledAction.actionUID
         val accountUID = scheduledAction.templateAccountUID
         var account: Account? = null
@@ -807,7 +806,7 @@ class GncXmlExporter @JvmOverloads constructor(
         xmlSerializer.text(scheduledAction.advanceNotifyDays.toString())
         xmlSerializer.endTag(NS_SX, TAG_ADVANCE_REMIND_DAYS)
         xmlSerializer.startTag(NS_SX, TAG_INSTANCE_COUNT)
-        val scheduledActionUID = scheduledAction.getUID()
+        val scheduledActionUID = scheduledAction.uid
         val instanceCount = scheduledActionDbAdapter.getActionInstanceCount(scheduledActionUID)
         xmlSerializer.text(instanceCount.toString())
         xmlSerializer.endTag(NS_SX, TAG_INSTANCE_COUNT)
@@ -921,7 +920,7 @@ class GncXmlExporter @JvmOverloads constructor(
         xmlSerializer.startTag(NS_COMMODITY, TAG_ID)
         xmlSerializer.text(commodity.currencyCode)
         xmlSerializer.endTag(NS_COMMODITY, TAG_ID)
-        if (CommoditiesXmlHandler.Companion.SOURCE_CURRENCY != commodity.quoteSource) {
+        if (CommoditiesXmlHandler.SOURCE_CURRENCY != commodity.quoteSource) {
             if (!commodity.fullname.isNullOrEmpty() && !commodity.isCurrency) {
                 xmlSerializer.startTag(NS_COMMODITY, TAG_NAME)
                 xmlSerializer.text(commodity.fullname)

@@ -85,12 +85,12 @@ class ScheduledActionServiceTest : GnuCashTest() {
         actionUID = templateTransaction.uid
         Timber.v("action ID: $actionUID")
 
-        val accountsDbAdapter = AccountsDbAdapter.getInstance()
+        val accountsDbAdapter = AccountsDbAdapter.instance
         accountsDbAdapter.addRecord(baseAccount)
         accountsDbAdapter.addRecord(transferAccount)
 
-        transactionsDbAdapter = TransactionsDbAdapter.getInstance()
-        transactionsDbAdapter.addRecord(templateTransaction, DatabaseAdapter.UpdateMethod.Insert)
+        transactionsDbAdapter = TransactionsDbAdapter.instance
+        transactionsDbAdapter.insert(templateTransaction)
     }
 
     @After
@@ -107,7 +107,7 @@ class ScheduledActionServiceTest : GnuCashTest() {
         scheduledAction1.actionUID = actionUID
         scheduledAction1.setRecurrence(recurrence)
 
-        val trxnAdapter = TransactionsDbAdapter.getInstance()
+        val trxnAdapter = TransactionsDbAdapter.instance
 
         assertThat(trxnAdapter.recordsCount).isZero()
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction1)
@@ -122,7 +122,7 @@ class ScheduledActionServiceTest : GnuCashTest() {
         scheduledAction.setRecurrence(Recurrence(PeriodType.MONTH))
         scheduledAction.actionUID = actionUID
 
-        val trxnAdapter = TransactionsDbAdapter.getInstance()
+        val trxnAdapter = TransactionsDbAdapter.instance
 
         assertThat(trxnAdapter.recordsCount).isZero()
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
@@ -142,7 +142,7 @@ class ScheduledActionServiceTest : GnuCashTest() {
         scheduledAction.totalPlannedExecutionCount = 4
         scheduledAction.executionCount = 4
 
-        val trxnAdapter = TransactionsDbAdapter.getInstance()
+        val trxnAdapter = TransactionsDbAdapter.instance
         assertThat(trxnAdapter.recordsCount).isZero()
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
         assertThat(trxnAdapter.recordsCount).isZero()
@@ -165,10 +165,9 @@ class ScheduledActionServiceTest : GnuCashTest() {
         recurrence.multiplier = 2
         recurrence.byDays = listOf(Calendar.MONDAY)
         scheduledAction.setRecurrence(recurrence)
-        ScheduledActionDbAdapter.getInstance()
-            .addRecord(scheduledAction, DatabaseAdapter.UpdateMethod.Insert)
+        ScheduledActionDbAdapter.instance.insert(scheduledAction)
 
-        val transactionsDbAdapter = TransactionsDbAdapter.getInstance()
+        val transactionsDbAdapter = TransactionsDbAdapter.instance
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
@@ -184,10 +183,9 @@ class ScheduledActionServiceTest : GnuCashTest() {
 
         scheduledAction.setRecurrence(PeriodType.WEEK, 2)
         scheduledAction.endTime = DateTime(2017, 8, 16, 9, 0).millis
-        ScheduledActionDbAdapter.getInstance()
-            .addRecord(scheduledAction, DatabaseAdapter.UpdateMethod.Insert)
+        ScheduledActionDbAdapter.instance.insert(scheduledAction)
 
-        val transactionsDbAdapter = TransactionsDbAdapter.getInstance()
+        val transactionsDbAdapter = TransactionsDbAdapter.instance
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
@@ -218,10 +216,9 @@ class ScheduledActionServiceTest : GnuCashTest() {
         recurrence.byDays = listOf(Calendar.MONDAY)
         scheduledAction.setRecurrence(recurrence)
         scheduledAction.endTime = DateTime(2016, 8, 8, 9, 0).millis
-        ScheduledActionDbAdapter.getInstance()
-            .addRecord(scheduledAction, DatabaseAdapter.UpdateMethod.Insert)
+        ScheduledActionDbAdapter.instance.insert(scheduledAction)
 
-        val transactionsDbAdapter = TransactionsDbAdapter.getInstance()
+        val transactionsDbAdapter = TransactionsDbAdapter.instance
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
@@ -242,7 +239,7 @@ class ScheduledActionServiceTest : GnuCashTest() {
         scheduledAction.startTime = startTime.millis
         scheduledAction.setRecurrence(PeriodType.MONTH, 1)
 
-        val transactionsDbAdapter = TransactionsDbAdapter.getInstance()
+        val transactionsDbAdapter = TransactionsDbAdapter.instance
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)

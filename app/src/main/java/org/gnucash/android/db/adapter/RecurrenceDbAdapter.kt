@@ -80,7 +80,7 @@ class RecurrenceDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Recurrence>(
 
     companion object {
         @JvmStatic
-        fun getInstance(): RecurrenceDbAdapter = GnuCashApplication.Companion.recurrenceDbAdapter!!
+        val instance: RecurrenceDbAdapter get() = GnuCashApplication.recurrenceDbAdapter!!
 
         /**
          * Converts a list of days of week as Calendar constants to an String for
