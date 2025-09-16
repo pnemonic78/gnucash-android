@@ -193,7 +193,7 @@ dependencies {
         exclude(group = "commons-logging", module = "commons-logging")
     }
 
-    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.assertj:assertj-core:3.27.4")
 
