@@ -56,7 +56,7 @@ class BooksDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Book>(
     )
 ) {
     override fun buildModelInstance(cursor: Cursor): Book {
-        val rootAccountGUID = cursor.getString(BookEntry.COLUMN_ROOT_GUID)
+        val rootAccountGUID = cursor.getString(BookEntry.COLUMN_ROOT_GUID)!!
         val rootTemplateGUID = cursor.getString(BookEntry.COLUMN_TEMPLATE_GUID)
         val uriString = cursor.getString(BookEntry.COLUMN_SOURCE_URI)
         val displayName = cursor.getString(BookEntry.COLUMN_DISPLAY_NAME)
