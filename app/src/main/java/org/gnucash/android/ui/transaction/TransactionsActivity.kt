@@ -218,10 +218,8 @@ class TransactionsActivity : BaseDrawerActivity(),
         isShowHiddenAccounts =
             intent.getBooleanExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
 
-        var accountUID = intent.getStringExtra(UxArgument.SELECTED_ACCOUNT_UID)
-        if (accountUID.isNullOrEmpty()) {
-            accountUID = accountsDbAdapter.rootAccountUID
-        }
+        val account = requireAccount()
+        val accountUID = account.uid
 
         binding.tabLayout.addTab(
             binding.tabLayout.newTab().setText(R.string.section_header_subaccounts)
@@ -537,8 +535,11 @@ class TransactionsActivity : BaseDrawerActivity(),
         if (account != null) {
             return account
         }
-        val args: Bundle = intent.extras!!
-        val accountUID = args.getString(UxArgument.SELECTED_ACCOUNT_UID)!!
+        var accountUID = intent.getStringExtra(UxArgument.SELECTED_ACCOUNT_UID)
+        if (accountUID.isNullOrEmpty()) {
+            Timber.w("Account UID expected for intent %s", intent)
+            accountUID = accountsDbAdapter.rootAccountUID
+        }
         try {
             account = accountsDbAdapter.getRecord(accountUID)
             this.account = account
