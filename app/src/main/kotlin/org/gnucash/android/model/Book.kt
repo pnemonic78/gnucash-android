@@ -23,7 +23,7 @@ import java.sql.Timestamp
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class Book() : BaseModel() {
+class Book(rootAccountUID: String? = generateUID()) : BaseModel() {
     /**
      * The Uri of the GnuCash XML source for the book
      *
@@ -51,7 +51,7 @@ class Book() : BaseModel() {
      *
      * @param rootAccountUID GUID of the book root account
      */
-    var rootAccountUID: String = generateUID()
+    var rootAccountUID: String? = rootAccountUID
 
     /**
      * The GUID of the root template account
@@ -71,15 +71,6 @@ class Book() : BaseModel() {
      * @param lastSync Timestamp of last synchronization
      */
     var lastSync: Timestamp = Timestamp(System.currentTimeMillis())
-
-    /**
-     * Create a new book instance
-     *
-     * @param rootAccountUID GUID of root account
-     */
-    constructor(rootAccountUID: String) : this() {
-        this.rootAccountUID = rootAccountUID
-    }
 
     override fun toString(): String {
         return displayName ?: super.toString()
