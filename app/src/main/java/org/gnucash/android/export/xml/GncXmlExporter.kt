@@ -46,7 +46,6 @@ import org.gnucash.android.export.xml.GncXmlHelper.KEY_DEBIT_FORMULA
 import org.gnucash.android.export.xml.GncXmlHelper.KEY_DEBIT_NUMERIC
 import org.gnucash.android.export.xml.GncXmlHelper.KEY_DEFAULT_TRANSFER_ACCOUNT
 import org.gnucash.android.export.xml.GncXmlHelper.KEY_FAVORITE
-import org.gnucash.android.export.xml.GncXmlHelper.KEY_FROM_SCHED_ACTION
 import org.gnucash.android.export.xml.GncXmlHelper.KEY_HIDDEN
 import org.gnucash.android.export.xml.GncXmlHelper.KEY_NOTES
 import org.gnucash.android.export.xml.GncXmlHelper.KEY_PLACEHOLDER
@@ -512,7 +511,6 @@ class GncXmlExporter(
                 transactionToTemplateAccounts[txUID] = account
             } while (cursor.moveToNext())
 
-            writeTemplateAccounts(xmlSerializer, transactionToTemplateAccounts.values)
             //push cursor back to before the beginning
             cursor.moveToFirst()
         }
@@ -588,10 +586,6 @@ class GncXmlExporter(
                     slots.add(Slot.string(KEY_NOTES, notes))
                 }
 
-                val scheduledActionUID = cursor.getString("trans_from_sched_action")
-                if (!scheduledActionUID.isNullOrEmpty()) {
-                    slots.add(Slot.guid(KEY_FROM_SCHED_ACTION, scheduledActionUID))
-                }
                 if (!slots.isEmpty()) {
                     xmlSerializer.startTag(NS_TRANSACTION, TAG_SLOTS)
                     writeSlots(xmlSerializer, slots)
@@ -648,18 +642,11 @@ class GncXmlExporter(
             // account guid
             xmlSerializer.startTag(NS_SPLIT, TAG_ACCOUNT)
             xmlSerializer.attribute(null, ATTR_KEY_TYPE, ATTR_VALUE_GUID)
-            var splitAccountUID: String
-            if (isTemplates) {
-                //get the UID of the template account
-                splitAccountUID = transactionToTemplateAccounts[txUID]!!.uid
-            } else {
-                splitAccountUID = cursor.getString("split_acct_uid")!!
-            }
+            val splitAccountUID = cursor.getString("split_acct_uid")!!
             xmlSerializer.text(splitAccountUID)
             xmlSerializer.endTag(NS_SPLIT, TAG_ACCOUNT)
 
             //if we are exporting a template transaction, then we need to add some extra slots
-            // TODO be able to import `KEY_SCHED_XACTION` slots.
             if (isTemplates) {
                 val slots = mutableListOf<Slot>()
                 val frame = mutableListOf<Slot>()
@@ -667,7 +654,7 @@ class GncXmlExporter(
                 if (sched_xaction_acct_uid.isNullOrEmpty()) {
                     sched_xaction_acct_uid = splitAccountUID
                 }
-                frame.add(Slot.guid(KEY_SPLIT_ACCOUNT_SLOT, sched_xaction_acct_uid!!))
+                frame.add(Slot.guid(KEY_SPLIT_ACCOUNT_SLOT, sched_xaction_acct_uid))
                 if (trxType == TransactionType.CREDIT) {
                     frame.add(
                         Slot.string(KEY_CREDIT_FORMULA, formatFormula(splitAmount, trnCommodity))
@@ -700,18 +687,11 @@ class GncXmlExporter(
     }
 
     @Throws(IOException::class)
-    private fun writeTemplateAccounts(xmlSerializer: XmlSerializer, accounts: Collection<Account>) {
-        for (account in accounts) {
-            writeAccount(xmlSerializer, account)
-        }
-    }
-
-    @Throws(IOException::class)
     private fun writeTemplateTransactions(xmlSerializer: XmlSerializer) {
         cancellationSignal.throwIfCanceled()
         if (transactionsDbAdapter.templateTransactionsCount > 0) {
             xmlSerializer.startTag(NS_GNUCASH, TAG_TEMPLATE_TRANSACTIONS)
-            //TODO writeAccounts(xmlSerializer, true);
+            writeAccounts(xmlSerializer, true);
             writeTransactions(xmlSerializer, true)
             xmlSerializer.endTag(NS_GNUCASH, TAG_TEMPLATE_TRANSACTIONS)
         }
@@ -747,7 +727,7 @@ class GncXmlExporter(
         if (accountUID.isNotEmpty()) {
             try {
                 account = accountsDbAdapter.getRecord(accountUID)
-            } catch (_: IllegalArgumentException) {
+            } catch (_: Exception) {
             }
         }
         if (account == null) {
