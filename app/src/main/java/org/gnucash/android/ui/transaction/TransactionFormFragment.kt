@@ -447,7 +447,6 @@ class TransactionFormFragment : MenuFragment(),
         binding.inputTransactionAmount.commodity = accountCommodity
         binding.inputTransactionType.setChecked(transactionType)
 
-        binding.checkboxSaveTemplate.isChecked = transaction.isTemplate
         val scheduledActionUID = transaction.scheduledActionUID
         if (!scheduledActionUID.isNullOrEmpty()) {
             val scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID)
@@ -830,8 +829,8 @@ class TransactionFormFragment : MenuFragment(),
             return
         }
 
-        val isTemplate = binding.checkboxSaveTemplate.isChecked
         val transactionOld = transaction
+        val isTemplate = transactionOld?.isTemplate == true
         val transaction = extractTransactionFromView(binding)
         var scheduledActionUID: String? = null
 
@@ -1076,13 +1075,6 @@ class TransactionFormFragment : MenuFragment(),
                 Timber.e(e, "Bad recurrence for [%s]", rrule)
                 return
             }
-
-            //when recurrence is set, we will definitely be saving a template
-            binding.checkboxSaveTemplate.isChecked = true
-            binding.checkboxSaveTemplate.setEnabled(false)
-        } else {
-            binding.checkboxSaveTemplate.setEnabled(true)
-            binding.checkboxSaveTemplate.isChecked = false
         }
         if (repeatString.isNullOrEmpty()) {
             repeatString = context.getString(R.string.label_tap_to_create_schedule)

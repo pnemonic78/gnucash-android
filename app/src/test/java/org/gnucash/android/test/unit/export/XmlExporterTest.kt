@@ -41,7 +41,6 @@ class XmlExporterTest : BookHelperTest() {
     }
 
     @Test
-    @Ignore("FIXME - the UIDs for templates and scheduled actions are generated")
     fun `the exported file is exactly like the imported file - common accounts with 1 of each type`() {
         val bookUID = importGnuCashXml("common_1.gnucash")
         assertThat(bookUID).isEqualTo("a7682e5d878e43cea216611401f08463")
@@ -60,6 +59,7 @@ class XmlExporterTest : BookHelperTest() {
         val expected = readFile("expected.common_1.gnucash")
         val expectedIgnoreRoot = expected.trim()
             .substring(expected.indexOf('>', expected.indexOf("<gnc-v2")))
+            .replace("\r\n", "\n")
         assertThat(actualIgnoreRoot).isEqualTo(expectedIgnoreRoot)
     }
 }

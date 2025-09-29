@@ -83,7 +83,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/label_transaction_amount"
-                        android:nextFocusDown="@+id/input_transfer_account_spinner"
+                        android:nextFocusDown="@+id/notes"
                         android:textColor="@color/debit_red"
                         android:textSize="20sp" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -93,6 +93,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
+                    android:checked="false"
                     android:gravity="center_vertical"
                     android:textOff="@string/label_debit"
                     android:textOn="@string/label_credit"
@@ -196,15 +197,6 @@
                     android:text="@string/label_tap_to_create_schedule" />
 
             </LinearLayout>
-
-            <CheckBox
-                android:id="@+id/checkbox_save_template"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/form_row_bottom_margin"
-                android:text="@string/label_save_template"
-                android:visibility="gone" />
-            <!-- Not exposing the transaction template checkbox to the UI at this time -->
         </LinearLayout>
     </ScrollView>
 
