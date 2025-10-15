@@ -1,0 +1,115 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    tools:context=".ui.common.FormActivity">
+
+    <ScrollView
+        android:id="@+id/split_list_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/calculator_keyboard"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout style="@style/FormRow">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/description"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:completionThreshold="1"
+                        android:hint="@string/label_transaction_name"
+                        android:inputType="textCapSentences"
+                        android:singleLine="true"
+                        android:textAppearance="?android:textAppearanceMedium">
+
+                        <requestFocus />
+                    </com.google.android.material.textfield.MaterialAutoCompleteTextView>
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <LinearLayout style="@style/FormRow">
+
+                <ImageView
+                    style="@style/FormIcon"
+                    android:src="@drawable/ic_notes" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <EditText
+                        android:id="@+id/notes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hint_notes"
+                        android:inputType="textMultiLine|textCapSentences"
+                        android:singleLine="false"
+                        android:textAppearance="?android:textAppearanceSmall" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <LinearLayout style="@style/FormRow">
+
+                <ImageView
+                    style="@style/FormIcon"
+                    android:src="@drawable/ic_calendar_start" />
+
+                <TextView
+                    android:id="@+id/date_start"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?selectableItemBackground"
+                    android:padding="4dp" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/FormRow">
+
+                <ImageView
+                    style="@style/FormIcon"
+                    android:src="@drawable/ic_calendar_end" />
+
+                <TextView
+                    android:id="@+id/date_end"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?selectableItemBackground"
+                    android:padding="4dp" />
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/btn_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_search"
+                android:text="@string/action_find" />
+        </LinearLayout>
+    </ScrollView>
+
+    <include
+        android:id="@+id/calculator_keyboard"
+        layout="@layout/kbd_calculator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

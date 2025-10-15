@@ -12,6 +12,7 @@ import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.ui.common.Refreshable
 import org.gnucash.android.util.BackupManager
+import org.gnucash.android.util.BackupManager.backupActiveBookAsync
 import org.gnucash.android.util.formatMediumDateTime
 
 abstract class ScheduledViewHolder(
@@ -69,7 +70,7 @@ abstract class ScheduledViewHolder(
                 val action = scheduledAction
                 if (action != null) {
                     val activity = itemView.context.findActivity()
-                    BackupManager.backupActiveBookAsync(activity) {
+                    backupActiveBookAsync(activity) {
                         deleteSchedule(action)
                         refreshable.refresh()
                     }
