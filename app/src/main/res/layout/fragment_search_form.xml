@@ -21,9 +21,25 @@
 
             <LinearLayout style="@style/FormRow">
 
-                <com.google.android.material.textfield.TextInputLayout
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_search_items_where"
+                    android:textAppearance="?android:textAppearanceSmall" />
+
+                <Spinner
+                    android:id="@+id/grouping_combo"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/FormRow">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
 
                     <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/description"
@@ -38,6 +54,15 @@
                         <requestFocus />
                     </com.google.android.material.textfield.MaterialAutoCompleteTextView>
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <ImageView
+                    android:id="@+id/description_clear"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="top"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/searchview_description_clear"
+                    android:src="@drawable/ic_close" />
             </LinearLayout>
 
             <LinearLayout style="@style/FormRow">
@@ -47,8 +72,9 @@
                     android:src="@drawable/ic_notes" />
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
 
                     <EditText
                         android:id="@+id/notes"
@@ -59,6 +85,15 @@
                         android:singleLine="false"
                         android:textAppearance="?android:textAppearanceSmall" />
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <ImageView
+                    android:id="@+id/notes_clear"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="top"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/searchview_description_clear"
+                    android:src="@drawable/ic_close" />
             </LinearLayout>
 
             <LinearLayout style="@style/FormRow">
@@ -69,10 +104,20 @@
 
                 <TextView
                     android:id="@+id/date_start"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:background="?selectableItemBackground"
                     android:padding="4dp" />
+
+                <ImageView
+                    android:id="@+id/date_start_clear"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="top"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/searchview_description_clear"
+                    android:src="@drawable/ic_close" />
             </LinearLayout>
 
             <LinearLayout style="@style/FormRow">
@@ -83,23 +128,29 @@
 
                 <TextView
                     android:id="@+id/date_end"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:background="?selectableItemBackground"
                     android:padding="4dp" />
+
+                <ImageView
+                    android:id="@+id/date_end_clear"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="top"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/searchview_description_clear"
+                    android:src="@drawable/ic_close" />
             </LinearLayout>
 
             <View style="@style/Divider" />
-
-            <Space
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
 
             <Button
                 android:id="@+id/btn_search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:drawableStart="@drawable/ic_search"
                 android:text="@string/action_find" />
         </LinearLayout>

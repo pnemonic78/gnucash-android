@@ -86,7 +86,8 @@ class FormActivity : PasscodeLockActivity() {
             accountUID = args.getString(UxArgument.PARENT_ACCOUNT_UID)
         }
         if (!accountUID.isNullOrEmpty()) {
-            @ColorInt val accountColor = AccountsDbAdapter.instance.getActiveAccountColor(this, accountUID)
+            @ColorInt val accountColor =
+                AccountsDbAdapter.instance.getActiveAccountColor(this, accountUID)
             setTitlesColor(accountColor)
         }
 
@@ -111,8 +112,7 @@ class FormActivity : PasscodeLockActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                setResult(RESULT_CANCELED)
-                finish()
+                goBack()
                 return true
             }
         }
@@ -201,5 +201,15 @@ class FormActivity : PasscodeLockActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
+    }
+
+    private fun goBack() {
+        val fm = supportFragmentManager
+        if (fm.backStackEntryCount > 0) {
+            fm.popBackStack()
+        } else {
+            setResult(RESULT_CANCELED)
+            finish()
+        }
     }
 }

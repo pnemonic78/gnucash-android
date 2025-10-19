@@ -66,4 +66,8 @@ class SearchFormViewModel : ViewModel() {
         }
         setDateEnd(calendar.timeInMillis)
     }
+
+    fun setComparison(value: ComparisonType) {
+        form.comparisonType = value
+    }
 }

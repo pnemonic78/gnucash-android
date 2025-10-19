@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.ActionBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.viewModels
@@ -14,8 +15,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.launch
+import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
+import org.gnucash.android.app.actionBar
 import org.gnucash.android.databinding.FragmentTransactionsListBinding
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
@@ -48,7 +51,6 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
                 transactionsAdapter?.changeCursor(cursor)
             }
         }
-        viewModel.search()
     }
 
     override fun onCreateView(
@@ -63,6 +65,9 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val actionBar: ActionBar? = this.actionBar
+        actionBar?.setTitle(R.string.title_search)
 
         val binding = this.binding!!
         val context = binding.list.context
