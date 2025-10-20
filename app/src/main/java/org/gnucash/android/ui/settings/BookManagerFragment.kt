@@ -241,8 +241,8 @@ class BookManagerFragment : MenuFragment(), Refreshable, FragmentResultListener 
             val bookName = book.displayName
             optionsMenuView.setOnClickListener { v ->
                 val popupMenu = PopupMenu(v.context, v)
-                val menuInflater = popupMenu.menuInflater
-                menuInflater.inflate(R.menu.book_context_menu, popupMenu.menu)
+                val inflater = popupMenu.menuInflater
+                inflater.inflate(R.menu.book_context_menu, popupMenu.menu)
 
                 popupMenu.setOnMenuItemClickListener { item ->
                     when (item.itemId) {

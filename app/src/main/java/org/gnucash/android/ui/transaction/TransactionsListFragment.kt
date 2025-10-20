@@ -274,13 +274,13 @@ class TransactionsListFragment : MenuFragment(),
 
         init {
             optionsMenu.setOnClickListener { v ->
-                val popup = PopupMenu(v.context, v)
-                popup.setOnMenuItemClickListener(this@TransactionViewHolder)
-                val inflater = popup.menuInflater
-                val menu = popup.menu
+                val popupMenu = PopupMenu(v.context, v)
+                popupMenu.setOnMenuItemClickListener(this@TransactionViewHolder)
+                val inflater = popupMenu.menuInflater
+                val menu = popupMenu.menu
                 inflater.inflate(R.menu.transactions_context_menu, menu)
                 menu.findItem(R.id.menu_edit).isVisible = useCompactView
-                popup.show()
+                popupMenu.show()
             }
 
             itemView.setOnClickListener {

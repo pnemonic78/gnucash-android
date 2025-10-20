@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/FormRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <Spinner
+        android:id="@+id/comparison"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <org.gnucash.android.ui.util.widget.CalculatorEditText
+        android:id="@+id/input_split_amount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="@string/label_transaction_amount"
+        android:textColor="@color/debit_red" />
+
+    <ImageButton
+        android:id="@+id/delete_btn"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/menu_delete"
+        android:src="@drawable/ic_delete" />
+</LinearLayout>
