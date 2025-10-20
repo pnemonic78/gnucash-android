@@ -29,11 +29,12 @@ class SearchResultsViewModel : ViewModel() {
                 cursorOld?.close()
             }
 
-            val where = this@SearchResultsViewModel.where
+            val columns = arrayOf<String?>(TransactionEntry.TABLE_NAME + ".*")
+            val where = this@SearchResultsViewModel.where ?: return@launch
             Timber.d("Search transactions: $where")
 
             val orderBy = TransactionEntry.COLUMN_TIMESTAMP + " DESC"
-            val cursor = transactionsDbAdapter.fetchAllRecords(where, null, orderBy)
+            val cursor = transactionsDbAdapter.fetchTransactionsWithSplits(columns, where, null, orderBy)
 
             withContext(Dispatchers.Main) {
                 _results.emit(cursor)
