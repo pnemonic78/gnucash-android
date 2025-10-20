@@ -137,6 +137,7 @@ class TransactionsListFragment : MenuFragment(),
             binding.list.setLayoutManager(LinearLayoutManager(context))
         }
         binding.list.emptyView = binding.empty
+        binding.list.tag = "transactions"
         binding.list.adapter = transactionsAdapter
     }
 

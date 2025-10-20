@@ -129,6 +129,7 @@ class AccountsListFragment : MenuFragment(),
         binding.list.setHasFixedSize(true)
         binding.list.emptyView = binding.empty
         binding.list.adapter = accountListAdapter
+        binding.list.tag = "accounts"
 
         when (displayMode) {
             DisplayMode.TOP_LEVEL -> binding.empty.setText(R.string.label_no_accounts)
