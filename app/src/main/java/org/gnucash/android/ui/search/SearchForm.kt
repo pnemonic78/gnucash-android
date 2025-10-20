@@ -4,16 +4,29 @@ import android.database.DatabaseUtils.sqlEscapeString
 import org.gnucash.android.db.DatabaseHelper.Companion.sqlEscapeLike
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
+import org.gnucash.android.model.Commodity
 import org.gnucash.android.util.toDateTimeAtEndOfDay
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDate
 import java.math.BigDecimal
+import java.text.DecimalFormat
+import java.text.NumberFormat
+import java.util.Locale
 
 data class SearchForm(
     var comparisonType: ComparisonType = ComparisonType.All
 ) {
     private val _criteria: MutableList<SearchCriteria> = mutableListOf()
     val criteria: List<SearchCriteria> get() = _criteria
+
+    private val amountFormatter by lazy {
+        val commodity = Commodity.DEFAULT_COMMODITY
+        (NumberFormat.getInstance(Locale.getDefault()) as DecimalFormat).apply {
+            minimumFractionDigits = 0
+            maximumFractionDigits = commodity.smallestFractionDigits
+            isGroupingUsed = false
+        }
+    }
 
     fun addDescription(): SearchCriteria.Description {
         val criterion = SearchCriteria.Description()
@@ -59,7 +72,9 @@ data class SearchForm(
                     where.append(" OR ")
                 }
             }
+            where.append('(')
             appendQuery(criterion, where)
+            where.append(')')
         }
 
         return where.toString()
@@ -76,11 +91,10 @@ data class SearchForm(
     }
 
     private fun appendQuery(criterion: SearchCriteria.Numeric, where: StringBuilder) {
-        val a = criterion.value ?: BigDecimal.ZERO
+        val amount = criterion.value ?: BigDecimal.ZERO
         where.append('(')
-            .append('(')
             .append(SplitEntry.COLUMN_VALUE_NUM)
-            .append('/')
+            .append(" * 1.0 / ")
             .append(SplitEntry.COLUMN_VALUE_DENOM)
             .append(')')
         when (criterion.compare) {
@@ -91,17 +105,15 @@ data class SearchForm(
             Compare.GreaterThan -> where.append(" > ")
             Compare.GreaterThanOrEqualTo -> where.append(" >= ")
         }
-        where.append(a)
-            .append(')')
+        where.append(amountFormatter.format(amount))
     }
 
     private fun appendQuery(criterion: SearchCriteria.Date, where: StringBuilder) {
-        val d = criterion.value ?: LocalDate.now()
-        val dayStart = d.toDateTimeAtStartOfDay()
-        val dayEnd = d.toDateTimeAtEndOfDay()
+        val date = criterion.value ?: LocalDate.now()
+        val dayStart = date.toDateTimeAtStartOfDay()
+        val dayEnd = date.toDateTimeAtEndOfDay()
 
-        where.append('(')
-            .append(TransactionEntry.COLUMN_TIMESTAMP)
+        where.append(TransactionEntry.COLUMN_TIMESTAMP)
 
         when (criterion.compare) {
             Compare.LessThan -> {
@@ -134,8 +146,6 @@ data class SearchForm(
                 where.append(" >= ").append(dayStart.toMillis())
             }
         }
-
-        where.append(')')
     }
 
     private fun appendQuery(
@@ -143,8 +153,7 @@ data class SearchForm(
         where: StringBuilder
     ) {
         val s = criterion.value.orEmpty()
-        where.append('(')
-            .append(TransactionEntry.COLUMN_DESCRIPTION)
+        where.append(TransactionEntry.COLUMN_DESCRIPTION)
         when (criterion.compare) {
             StringCompare.Contains -> where.append(" LIKE ")
                 .append(sqlEscapeLike(s))
@@ -152,13 +161,11 @@ data class SearchForm(
             StringCompare.Equals -> where.append(" = ")
                 .append(sqlEscapeString(s))
         }
-        where.append(')')
     }
 
     private fun appendQuery(criterion: SearchCriteria.Memo, where: StringBuilder) {
         val s = criterion.value.orEmpty()
-        where.append('(')
-            .append(SplitEntry.COLUMN_MEMO)
+        where.append(SplitEntry.COLUMN_MEMO)
         when (criterion.compare) {
             StringCompare.Contains -> where.append(" LIKE ")
                 .append(sqlEscapeLike(s))
@@ -166,13 +173,11 @@ data class SearchForm(
             StringCompare.Equals -> where.append(" = ")
                 .append(sqlEscapeString(s))
         }
-        where.append(')')
     }
 
     private fun appendQuery(criterion: SearchCriteria.Note, where: StringBuilder) {
         val s = criterion.value.orEmpty()
-        where.append('(')
-            .append(TransactionEntry.COLUMN_NOTES)
+        where.append(TransactionEntry.COLUMN_NOTES)
         when (criterion.compare) {
             StringCompare.Contains -> where.append(" LIKE ")
                 .append(sqlEscapeLike(s))
@@ -180,6 +185,5 @@ data class SearchForm(
             StringCompare.Equals -> where.append(" = ")
                 .append(sqlEscapeString(s))
         }
-        where.append(')')
     }
 }

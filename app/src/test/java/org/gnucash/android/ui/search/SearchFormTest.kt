@@ -94,27 +94,27 @@ class SearchFormTest : GnuCashTest() {
         criterion.value = BigDecimal.valueOf(123.45)
         criterion.compare = Compare.GreaterThan
         var where = form.buildSQL()
-        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM}/${SplitEntry.COLUMN_VALUE_DENOM}) > 123.45)")
+        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM} * 1.0 / ${SplitEntry.COLUMN_VALUE_DENOM}) > 123.45)")
 
         criterion.compare = Compare.GreaterThanOrEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM}/${SplitEntry.COLUMN_VALUE_DENOM}) >= 123.45)")
+        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM} * 1.0 / ${SplitEntry.COLUMN_VALUE_DENOM}) >= 123.45)")
 
         criterion.compare = Compare.LessThan
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM}/${SplitEntry.COLUMN_VALUE_DENOM}) < 123.45)")
+        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM} * 1.0 / ${SplitEntry.COLUMN_VALUE_DENOM}) < 123.45)")
 
         criterion.compare = Compare.LessThanOrEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM}/${SplitEntry.COLUMN_VALUE_DENOM}) <= 123.45)")
+        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM} * 1.0 / ${SplitEntry.COLUMN_VALUE_DENOM}) <= 123.45)")
 
         criterion.compare = Compare.EqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM}/${SplitEntry.COLUMN_VALUE_DENOM}) = 123.45)")
+        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM} * 1.0 / ${SplitEntry.COLUMN_VALUE_DENOM}) = 123.45)")
 
         criterion.compare = Compare.NotEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM}/${SplitEntry.COLUMN_VALUE_DENOM}) <> 123.45)")
+        assertThat(where).isEqualTo("((${SplitEntry.COLUMN_VALUE_NUM} * 1.0 / ${SplitEntry.COLUMN_VALUE_DENOM}) <> 123.45)")
     }
 
 }

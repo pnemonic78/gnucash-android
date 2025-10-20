@@ -27,10 +27,12 @@ import org.gnucash.android.ui.adapter.SpinnerItem
 import org.gnucash.android.ui.search.SearchResultsFragment.Companion.EXTRA_FORM
 import org.gnucash.android.ui.text.DefaultTextWatcher
 import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment
+import org.gnucash.android.ui.util.widget.CalculatorEditText.OnValueChangedListener
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDate
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
+import java.math.BigDecimal
 
 class SearchFormFragment : Fragment() {
     private val viewModel by viewModels<SearchFormViewModel>()
@@ -88,7 +90,7 @@ class SearchFormFragment : Fragment() {
     private fun bind(binding: FragmentSearchFormBinding, form: SearchForm) {
         bindComparison(binding)
         binding.menuAdd.setOnClickListener { showAddMenu(binding.menuAdd) }
-        binding.btnSearch.setOnClickListener { viewModel.onSearchClicked() }
+        binding.btnSearch.setOnClickListener { submitForm(binding) }
 
         binding.list.removeAllViews()
         for (criterion in form.criteria) {
@@ -111,9 +113,9 @@ class SearchFormFragment : Fragment() {
         binding.groupingCombo.adapter = SpinnerArrayAdapter(context, comparisons)
         binding.groupingCombo.onItemSelectedListener =
             DefaultItemSelectedListener(false) { parent: AdapterView<*>,
-                                          view: View?,
-                                          position: Int,
-                                          id: Long ->
+                                                 view: View?,
+                                                 position: Int,
+                                                 id: Long ->
                 viewModel.setComparison(comparisons[position].value)
             }
     }
@@ -244,12 +246,9 @@ class SearchFormFragment : Fragment() {
         }
         binding.inputSplitAmount.setValue(criterion.value, true)
         binding.inputSplitAmount.bindKeyboard(bindingRoot.calculatorKeyboard)
-        binding.inputSplitAmount.addTextChangedListener(DefaultTextWatcher { s ->
-            val eval = binding.inputSplitAmount.evaluate()
-            if (eval.isEmpty()) {
-                criterion.value = null
-            } else {
-                criterion.value = binding.inputSplitAmount.value
+        binding.inputSplitAmount.addValueChangedListener(object : OnValueChangedListener {
+            override fun onValueChanged(value: BigDecimal?) {
+                criterion.value = value
             }
         })
         binding.deleteBtn.setOnClickListener {
@@ -263,7 +262,9 @@ class SearchFormFragment : Fragment() {
         val menu = popupMenu.menu
         menu.add(0, MENU_DESCRIPTION, 0, R.string.search_field_description)
         menu.add(0, MENU_NOTE, 0, R.string.search_field_notes)
+        menu.add(0, MENU_MEMO, 0, R.string.search_field_memo)
         menu.add(0, MENU_DATE_POSTED, 0, R.string.search_field_date_posted)
+        menu.add(0, MENU_NUMERIC, 0, R.string.search_field_amount)
         popupMenu.setOnMenuItemClickListener { item ->
             return@setOnMenuItemClickListener when (item.itemId) {
                 MENU_DESCRIPTION -> {
@@ -416,6 +417,18 @@ class SearchFormFragment : Fragment() {
             ),
         )
         return SpinnerArrayAdapter(context, items)
+    }
+
+    private fun submitForm(binding: FragmentSearchFormBinding) {
+        // First, prepare the form for submission.
+        val activity = activity ?: return
+        val currentFocus = activity.currentFocus
+        currentFocus?.clearFocus()
+
+        // Submit the form.
+        binding.root.post {
+            viewModel.onSearchClicked()
+        }
     }
 
     companion object {
