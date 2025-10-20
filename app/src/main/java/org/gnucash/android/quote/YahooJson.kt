@@ -60,7 +60,7 @@ class YahooJson : QuoteProvider {
                     withContext(Dispatchers.Main) {
                         callback.onQuote(price)
                     }
-                } catch (e: JSONException) {
+                } catch (e: Throwable) {
                     Timber.e(e)
                 }
             }
