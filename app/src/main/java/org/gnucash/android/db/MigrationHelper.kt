@@ -83,12 +83,7 @@ object MigrationHelper {
         if (oldVersion < 23) {
             migrateTo23(context, db)
         }
-        if (oldVersion < 24) {
-            migrateTo24(db)
-        }
-        if (oldVersion < 25) {
-            migrateTo25(db)
-        }
+        addMissingColumns(db)
     }
 
     /**
@@ -195,12 +190,7 @@ object MigrationHelper {
     private fun migrateTo21(db: SQLiteDatabase) {
         Timber.i("Upgrading database to version 21")
 
-        if (DatabaseHelper.hasTableColumn(
-                db,
-                AccountEntry.TABLE_NAME,
-                AccountEntry.COLUMN_CURRENCY
-            )
-        ) {
+        if (db.hasTableColumn(AccountEntry.TABLE_NAME, AccountEntry.COLUMN_CURRENCY)) {
             return
         }
 
@@ -232,12 +222,7 @@ object MigrationHelper {
     private fun migrateTo23(context: Context, db: SQLiteDatabase) {
         Timber.i("Upgrading database to version 23")
 
-        val hasColumnQuoteFlag = DatabaseHelper.hasTableColumn(
-            db,
-            CommodityEntry.TABLE_NAME,
-            CommodityEntry.COLUMN_QUOTE_FLAG
-        )
-        if (!hasColumnQuoteFlag) {
+        if (!db.hasTableColumn(CommodityEntry.TABLE_NAME, CommodityEntry.COLUMN_QUOTE_FLAG)) {
             // Restore the currency code column that was deleted in v19.
             val sqlCommodityFlag =
                 "ALTER TABLE " + CommodityEntry.TABLE_NAME + " ADD COLUMN " + CommodityEntry.COLUMN_QUOTE_FLAG + " tinyint default 0"
@@ -266,27 +251,15 @@ object MigrationHelper {
         }
     }
 
-    /**
-     * Upgrade the database to version 24.
-     *
-     * @param db the database.
-     */
-    private fun migrateTo24(db: SQLiteDatabase) {
-        Timber.i("Upgrading database to version 24")
+    private fun addMissingColumns(db: SQLiteDatabase) {
+        Timber.i("Add missing columns to database")
 
-        if (!DatabaseHelper.hasTableColumn(
-                db,
-                AccountEntry.TABLE_NAME,
-                AccountEntry.COLUMN_TEMPLATE
-            )
-        ) {
+        if (!db.hasTableColumn(AccountEntry.TABLE_NAME, AccountEntry.COLUMN_TEMPLATE)) {
             val sqlAccountTemplate = "ALTER TABLE " + AccountEntry.TABLE_NAME +
                     " ADD COLUMN " + AccountEntry.COLUMN_TEMPLATE + " tinyint default 0"
             db.execSQL(sqlAccountTemplate)
         }
-
-        if (!DatabaseHelper.hasTableColumn(
-                db,
+        if (!db.hasTableColumn(
                 SplitEntry.TABLE_NAME,
                 SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID
             )
@@ -295,22 +268,7 @@ object MigrationHelper {
                     " ADD COLUMN " + SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID + " varchar(255)"
             db.execSQL(sqlAddSchedxActionAccount)
         }
-    }
-
-    /**
-     * Upgrade the database to version 25.
-     *
-     * @param db the database.
-     */
-    private fun migrateTo25(db: SQLiteDatabase) {
-        Timber.i("Upgrading database to version 25")
-
-        if (!DatabaseHelper.hasTableColumn(
-                db,
-                ScheduledActionEntry.TABLE_NAME,
-                ScheduledActionEntry.COLUMN_NAME
-            )
-        ) {
+        if (!db.hasTableColumn(ScheduledActionEntry.TABLE_NAME, ScheduledActionEntry.COLUMN_NAME)) {
             val sqlActionName = "ALTER TABLE " + ScheduledActionEntry.TABLE_NAME +
                     " ADD COLUMN " + ScheduledActionEntry.COLUMN_NAME + " varchar(255)"
             db.execSQL(sqlActionName)
