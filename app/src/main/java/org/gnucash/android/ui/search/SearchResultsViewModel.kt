@@ -29,7 +29,7 @@ class SearchResultsViewModel : ViewModel() {
                 cursorOld?.close()
             }
 
-            val columns = arrayOf<String?>(TransactionEntry.TABLE_NAME + ".*")
+            val columns = arrayOf<String?>("DISTINCT " + TransactionEntry.TABLE_NAME + ".*")
             val where = this@SearchResultsViewModel.where ?: return@launch
             Timber.d("Search transactions: $where")
 
