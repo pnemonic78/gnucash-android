@@ -5,6 +5,7 @@ import org.gnucash.android.db.DatabaseHelper.Companion.sqlEscapeLike
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
 import org.gnucash.android.model.Commodity
+import org.gnucash.android.model.TransactionType
 import org.gnucash.android.util.toDateTimeAtEndOfDay
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDate
@@ -52,8 +53,15 @@ data class SearchForm(
         return criterion
     }
 
-    fun addNumeric(): SearchCriteria.Numeric {
-        val criterion = SearchCriteria.Numeric()
+    fun addNumeric(debcred: Boolean): SearchCriteria.Numeric {
+        val match = if (debcred) NumericMatch.HasDebitsOrCredits else null
+        val criterion = SearchCriteria.Numeric(match = match)
+        _criteria.add(criterion)
+        return criterion
+    }
+
+    fun addAccount(): SearchCriteria.Account {
+        val criterion = SearchCriteria.Account()
         _criteria.add(criterion)
         return criterion
     }
@@ -82,19 +90,25 @@ data class SearchForm(
 
     private fun appendQuery(criterion: SearchCriteria, where: StringBuilder) {
         when (criterion) {
-            is SearchCriteria.Numeric -> appendQuery(criterion, where)
+            is SearchCriteria.Account -> appendQuery(criterion, where)
             is SearchCriteria.Date -> appendQuery(criterion, where)
             is SearchCriteria.Description -> appendQuery(criterion, where)
             is SearchCriteria.Memo -> appendQuery(criterion, where)
             is SearchCriteria.Note -> appendQuery(criterion, where)
+            is SearchCriteria.Numeric -> appendQuery(criterion, where)
         }
     }
 
     private fun appendQuery(criterion: SearchCriteria.Numeric, where: StringBuilder) {
         val amount = criterion.value ?: BigDecimal.ZERO
+        val whereLength = where.length
         where.append('(')
+            .append(SplitEntry.TABLE_NAME)
+            .append('.')
             .append(SplitEntry.COLUMN_VALUE_NUM)
             .append(" * 1.0 / ")
+            .append(SplitEntry.TABLE_NAME)
+            .append('.')
             .append(SplitEntry.COLUMN_VALUE_DENOM)
             .append(')')
         when (criterion.compare) {
@@ -106,6 +120,22 @@ data class SearchForm(
             Compare.GreaterThanOrEqualTo -> where.append(" >= ")
         }
         where.append(amountFormatter.format(amount))
+
+        if (criterion.match != null && criterion.match != NumericMatch.HasDebitsOrCredits) {
+            val typeName = if (criterion.match == NumericMatch.HasDebits) {
+                TransactionType.DEBIT.value
+            } else {
+                TransactionType.CREDIT.value
+            }
+            where.insert(whereLength, '(')
+            where.append(") AND (")
+                .append(SplitEntry.TABLE_NAME)
+                .append('.')
+                .append(SplitEntry.COLUMN_TYPE)
+                .append(" = ")
+                .append(sqlEscapeString(typeName))
+                .append(')')
+        }
     }
 
     private fun appendQuery(criterion: SearchCriteria.Date, where: StringBuilder) {
@@ -165,7 +195,9 @@ data class SearchForm(
 
     private fun appendQuery(criterion: SearchCriteria.Memo, where: StringBuilder) {
         val s = criterion.value.orEmpty()
-        where.append(SplitEntry.COLUMN_MEMO)
+        where.append(SplitEntry.TABLE_NAME)
+            .append('.')
+            .append(SplitEntry.COLUMN_MEMO)
         when (criterion.compare) {
             StringCompare.Contains -> where.append(" LIKE ")
                 .append(sqlEscapeLike(s))
@@ -184,6 +216,22 @@ data class SearchForm(
 
             StringCompare.Equals -> where.append(" = ")
                 .append(sqlEscapeString(s))
+        }
+    }
+
+    private fun appendQuery(criterion: SearchCriteria.Account, where: StringBuilder) {
+        val s = criterion.value?.uid ?: return
+        where.append(SplitEntry.TABLE_NAME)
+            .append('.')
+            .append(SplitEntry.COLUMN_ACCOUNT_UID)
+        when (criterion.compare) {
+            ComparisonType.Any -> where.append(" = ")
+                .append(sqlEscapeString(s))
+
+            ComparisonType.None -> where.append(" <> ")
+                .append(sqlEscapeString(s))
+
+            ComparisonType.All -> where.append(" <> ''")
         }
     }
 }
