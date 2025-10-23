@@ -625,10 +625,10 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         // accounts to update, in case we're updating full names of a sub account tree
         val newName = selectedName.trim()
         if (newName.isEmpty()) {
-            binding.nameTextInputLayout.setError(getString(R.string.toast_no_account_name_entered))
+            binding.nameTextInputLayout.error = getString(R.string.toast_no_account_name_entered)
             return
         }
-        binding.nameTextInputLayout.setError(null)
+        binding.nameTextInputLayout.error = null
 
         var account = this.account
         if (account == null) {

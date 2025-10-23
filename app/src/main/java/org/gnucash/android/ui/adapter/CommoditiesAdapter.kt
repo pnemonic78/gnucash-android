@@ -75,6 +75,7 @@ class CommoditiesAdapter(
         val where = CommodityEntry.COLUMN_MNEMONIC + " <> ?" +
                 " AND " + CommodityEntry.COLUMN_NAMESPACE + " <> ?"
         val whereArgs = arrayOf<String?>(Commodity.TEMPLATE, Commodity.TEMPLATE)
-        return adapter.getAllRecords(where, whereArgs)
+        val orderBy = CommodityEntry.COLUMN_MNEMONIC + " ASC"
+        return adapter.getAllRecords(where, whereArgs, orderBy)
     }
 }
