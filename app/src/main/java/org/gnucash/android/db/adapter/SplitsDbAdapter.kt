@@ -183,7 +183,7 @@ class SplitsDbAdapter(
     }
 
     fun computeSplitBalance(account: Account, startTimestamp: Long, endTimestamp: Long): Money {
-        val accounts = mutableListOf<Account>(account)
+        val accounts = mutableListOf(account)
         val balances = computeSplitBalances(accounts, startTimestamp, endTimestamp)
         val balance = balances[account.uid]
         return balance ?: createZeroInstance(account.commodity)

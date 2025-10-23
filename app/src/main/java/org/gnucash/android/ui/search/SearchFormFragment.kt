@@ -23,7 +23,6 @@ import org.gnucash.android.databinding.ItemSearchDescriptionBinding
 import org.gnucash.android.databinding.ItemSearchMemoBinding
 import org.gnucash.android.databinding.ItemSearchNotesBinding
 import org.gnucash.android.databinding.ItemSearchNumericBinding
-import org.gnucash.android.databinding.ItemSearchValueBinding
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter
 import org.gnucash.android.ui.adapter.SpinnerArrayAdapter
@@ -105,13 +104,7 @@ class SearchFormFragment : Fragment() {
                 is SearchCriteria.Description -> addDescription(binding.list, criterion)
                 is SearchCriteria.Memo -> addMemo(binding.list, criterion)
                 is SearchCriteria.Note -> addNote(binding.list, criterion)
-                is SearchCriteria.Numeric -> {
-                    if (criterion.match != null) {
-                        addValue(binding.list, criterion)
-                    } else {
-                        addNumeric(binding.list, criterion)
-                    }
-                }
+                is SearchCriteria.Numeric -> addNumeric(binding.list, criterion)
             }
         }
     }
@@ -241,54 +234,31 @@ class SearchFormFragment : Fragment() {
 
     private fun bind(binding: ItemSearchNumericBinding, criterion: SearchCriteria.Numeric) {
         val bindingRoot = this@SearchFormFragment.binding ?: return
+        val isValue = (criterion.match != null)
 
         val context: Context = binding.root.context
-        val adapter = createNumericComparisonAdapter(context)
-        binding.comparison.adapter = adapter
-        binding.comparison.onItemSelectedListener =
-            DefaultItemSelectedListener { parent: AdapterView<*>,
-                                          view: View?,
-                                          position: Int,
-                                          id: Long ->
-                val item = adapter.getItem(position)!!
-                criterion.compare = item.value
+        val adapter: SpinnerArrayAdapter<Compare>
+        if (isValue) {
+            val matchAdapter = createDebitCreditComparisonAdapter(context)
+            binding.match.isVisible = true
+            binding.match.adapter = matchAdapter
+            binding.match.onItemSelectedListener =
+                DefaultItemSelectedListener { parent: AdapterView<*>,
+                                              view: View?,
+                                              position: Int,
+                                              id: Long ->
+                    val item = matchAdapter.getItem(position)!!
+                    criterion.match = item.value
+                }
+            binding.match.post {
+                val value = criterion.match ?: NumericMatch.HasDebitsOrCredits
+                binding.match.setSelection(matchAdapter.getValuePosition(value))
             }
-        binding.comparison.post {
-            binding.comparison.setSelection(adapter.getValuePosition(criterion.compare))
+            adapter = createNumericDebitCreditComparisonAdapter(context)
+        } else {
+            binding.match.isVisible = false
+            adapter = createNumericComparisonAdapter(context)
         }
-        binding.inputSplitAmount.setValue(criterion.value, true)
-        binding.inputSplitAmount.bindKeyboard(bindingRoot.calculatorKeyboard)
-        binding.inputSplitAmount.addValueChangedListener(object : OnValueChangedListener {
-            override fun onValueChanged(value: BigDecimal?) {
-                criterion.value = value
-            }
-        })
-        binding.deleteBtn.setOnClickListener {
-            viewModel.remove(criterion)
-            removeItem(binding.root)
-        }
-    }
-
-    private fun bind(binding: ItemSearchValueBinding, criterion: SearchCriteria.Numeric) {
-        val bindingRoot = this@SearchFormFragment.binding ?: return
-
-        val context: Context = binding.root.context
-        val matchAdapter = createDebitCreditComparisonAdapter(context)
-        binding.match.isVisible = true
-        binding.match.adapter = matchAdapter
-        binding.match.onItemSelectedListener =
-            DefaultItemSelectedListener { parent: AdapterView<*>,
-                                          view: View?,
-                                          position: Int,
-                                          id: Long ->
-                val item = matchAdapter.getItem(position)!!
-                criterion.match = item.value
-            }
-        binding.match.post {
-            val value = criterion.match ?: NumericMatch.HasDebitsOrCredits
-            binding.match.setSelection(matchAdapter.getValuePosition(value))
-        }
-        val adapter = createNumericDebitCreditComparisonAdapter(context)
         binding.comparison.adapter = adapter
         binding.comparison.onItemSelectedListener =
             DefaultItemSelectedListener { parent: AdapterView<*>,
@@ -460,7 +430,7 @@ class SearchFormFragment : Fragment() {
     }
 
     private fun addValue(parent: ViewGroup, criterion: SearchCriteria.Numeric) {
-        val bindingItem = ItemSearchValueBinding.inflate(layoutInflater, parent, true)
+        val bindingItem = ItemSearchNumericBinding.inflate(layoutInflater, parent, true)
         bind(bindingItem, criterion)
     }
 
@@ -569,11 +539,10 @@ class SearchFormFragment : Fragment() {
                 ComparisonType.Any,
                 context.getString(R.string.search_compare_account_any)
             ),
-            // FIXME : finds transactions where even 1 split has the account but others don't
-//            SpinnerItem(
-//                ComparisonType.None,
-//                context.getString(R.string.search_compare_account_none)
-//            )
+            SpinnerItem(
+                ComparisonType.None,
+                context.getString(R.string.search_compare_account_none)
+            )
         )
         return SpinnerArrayAdapter(context, items)
     }

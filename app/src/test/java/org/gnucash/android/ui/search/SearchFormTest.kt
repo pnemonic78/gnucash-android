@@ -13,52 +13,80 @@ import java.math.BigDecimal
 
 class SearchFormTest : GnuCashTest() {
     @Test
-    fun `Query for single description`() {
+    fun `Query for single description - contains`() {
         val form = SearchForm()
         val criterion = form.addDescription()
         criterion.value = "zebra"
         criterion.compare = StringCompare.Contains
-        var where = form.buildSQL()
-        assertThat(where).isEqualTo("(${TransactionEntry.COLUMN_DESCRIPTION} LIKE '%zebra%')")
-
-        criterion.compare = StringCompare.Equals
-        where = form.buildSQL()
-        assertThat(where).isEqualTo("(${TransactionEntry.COLUMN_DESCRIPTION} = 'zebra')")
+        val where = form.buildSQL()
+        val expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} LIKE '%zebra%')"
+        assertThat(where).isEqualTo(expected)
     }
 
     @Test
-    fun `Query for single note`() {
-        val column = TransactionEntry.COLUMN_NOTES
+    fun `Query for single description - equals`() {
+        val form = SearchForm()
+        val criterion = form.addDescription()
+        criterion.value = "zebra"
+        criterion.compare = StringCompare.Equals
+        val where = form.buildSQL()
+        val expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} = 'zebra')"
+        assertThat(where).isEqualTo(expected)
+    }
+
+    @Test
+    fun `Query for single note - contains`() {
+        val column = "t." + TransactionEntry.COLUMN_NOTES
         val form = SearchForm()
         val criterion = form.addNote()
         criterion.value = "zebra"
         criterion.compare = StringCompare.Contains
-        var where = form.buildSQL()
-        assertThat(where).isEqualTo("($column LIKE '%zebra%')")
-
-        criterion.compare = StringCompare.Equals
-        where = form.buildSQL()
-        assertThat(where).isEqualTo("($column = 'zebra')")
+        val where = form.buildSQL()
+        val expected = "($column LIKE '%zebra%')"
+        assertThat(where).isEqualTo(expected)
     }
 
     @Test
-    fun `Query for single memo`() {
-        val column = SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_MEMO
+    fun `Query for single note - equals`() {
+        val column = "t." + TransactionEntry.COLUMN_NOTES
+        val form = SearchForm()
+        val criterion = form.addNote()
+        criterion.value = "zebra"
+        criterion.compare = StringCompare.Equals
+        val where = form.buildSQL()
+        val expected = "($column = 'zebra')"
+        assertThat(where).isEqualTo(expected)
+    }
+
+    @Test
+    fun `Query for single memo - contains`() {
+        val column1 = "s1." + SplitEntry.COLUMN_MEMO
+        val column2 = "s2." + SplitEntry.COLUMN_MEMO
         val form = SearchForm()
         val criterion = form.addMemo()
         criterion.value = "zebra"
         criterion.compare = StringCompare.Contains
-        var where = form.buildSQL()
-        assertThat(where).isEqualTo("($column LIKE '%zebra%')")
+        val where = form.buildSQL()
+        val expected = "(($column1 LIKE '%zebra%') OR ($column2 LIKE '%zebra%'))"
+        assertThat(where).isEqualTo(expected)
+    }
 
+    @Test
+    fun `Query for single memo - equals`() {
+        val column1 = "s1." + SplitEntry.COLUMN_MEMO
+        val column2 = "s2." + SplitEntry.COLUMN_MEMO
+        val form = SearchForm()
+        val criterion = form.addMemo()
+        criterion.value = "zebra"
         criterion.compare = StringCompare.Equals
-        where = form.buildSQL()
-        assertThat(where).isEqualTo("($column = 'zebra')")
+        val where = form.buildSQL()
+        val expected = "(($column1 = 'zebra') OR ($column2 = 'zebra'))"
+        assertThat(where).isEqualTo(expected)
     }
 
     @Test
     fun `Query for single date`() {
-        val column = TransactionEntry.COLUMN_TIMESTAMP
+        val column = "t." + TransactionEntry.COLUMN_TIMESTAMP
         val form = SearchForm()
         val criterion = form.addDate()
         val now = LocalDate.now()
@@ -93,77 +121,107 @@ class SearchFormTest : GnuCashTest() {
 
     @Test
     fun `Query for single amount`() {
-        val column1 = SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_VALUE_NUM
-        val column2 = SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_VALUE_DENOM
+        val columnN1 = "s1." + SplitEntry.COLUMN_VALUE_NUM
+        val columnD1 = "s1." + SplitEntry.COLUMN_VALUE_DENOM
+        val columnN2 = "s2." + SplitEntry.COLUMN_VALUE_NUM
+        val columnD2 = "s2." + SplitEntry.COLUMN_VALUE_DENOM
+        val column1 = "($columnN1 * 1.0 / $columnD1)"
+        val column2 = "($columnN2 * 1.0 / $columnD2)"
         val form = SearchForm()
         val criterion = form.addNumeric(false)
         criterion.value = BigDecimal.valueOf(123.45)
         criterion.compare = Compare.GreaterThan
         var where = form.buildSQL()
-        assertThat(where).isEqualTo("(($column1 * 1.0 / $column2) > 123.45)")
+        var expected = "(($column1 > 123.45) OR ($column2 > 123.45))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.GreaterThanOrEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("(($column1 * 1.0 / $column2) >= 123.45)")
+        expected = "(($column1 >= 123.45) OR ($column2 >= 123.45))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.LessThan
         where = form.buildSQL()
-        assertThat(where).isEqualTo("(($column1 * 1.0 / $column2) < 123.45)")
+        expected = "(($column1 < 123.45) OR ($column2 < 123.45))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.LessThanOrEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("(($column1 * 1.0 / $column2) <= 123.45)")
+        expected = "(($column1 <= 123.45) OR ($column2 <= 123.45))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.EqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("(($column1 * 1.0 / $column2) = 123.45)")
+        expected = "(($column1 = 123.45) OR ($column2 = 123.45))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.NotEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("(($column1 * 1.0 / $column2) <> 123.45)")
+        expected = "(($column1 <> 123.45) OR ($column2 <> 123.45))"
+        assertThat(where).isEqualTo(expected)
     }
 
     @Test
-    fun `Query for single value`() {
+    fun `Query for single value - debits`() {
         `Query for single value`(NumericMatch.HasDebits)
+    }
+
+    @Test
+    fun `Query for single value - credits`() {
         `Query for single value`(NumericMatch.HasCredits)
     }
 
-    fun `Query for single value`(match: NumericMatch) {
-        val column1 = SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_VALUE_NUM
-        val column2 = SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_VALUE_DENOM
-        val column3 = SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TYPE
+    private fun `Query for single value`(match: NumericMatch) {
         val typeName = if (match == NumericMatch.HasDebits) {
             TransactionType.DEBIT.value
         } else {
             TransactionType.CREDIT.value
         }
+
+        val columnN1 = "s1." + SplitEntry.COLUMN_VALUE_NUM
+        val columnD1 = "s1." + SplitEntry.COLUMN_VALUE_DENOM
+        val columnT1 = "s1." + SplitEntry.COLUMN_TYPE
+        val column1 = "($columnN1 * 1.0 / $columnD1)"
+        val whereT1 = "($columnT1 = '$typeName')"
+
+        val columnN2 = "s2." + SplitEntry.COLUMN_VALUE_NUM
+        val columnD2 = "s2." + SplitEntry.COLUMN_VALUE_DENOM
+        val columnT2 = "s2." + SplitEntry.COLUMN_TYPE
+        val column2 = "($columnN2 * 1.0 / $columnD2)"
+        val whereT2 = "($columnT2 = '$typeName')"
+
         val form = SearchForm()
         val criterion = form.addNumeric(true)
         criterion.value = BigDecimal.valueOf(123.45)
         criterion.compare = Compare.GreaterThan
         criterion.match = match
         var where = form.buildSQL()
-        assertThat(where).isEqualTo("((($column1 * 1.0 / $column2) > 123.45) AND ($column3 = '$typeName'))")
+        var expected = "((($column1 > 123.45) AND $whereT1) OR (($column2 > 123.45) AND $whereT2))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.GreaterThanOrEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((($column1 * 1.0 / $column2) >= 123.45) AND ($column3 = '$typeName'))")
+        expected = "((($column1 >= 123.45) AND $whereT1) OR (($column2 >= 123.45) AND $whereT2))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.LessThan
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((($column1 * 1.0 / $column2) < 123.45) AND ($column3 = '$typeName'))")
+        expected = "((($column1 < 123.45) AND $whereT1) OR (($column2 < 123.45) AND $whereT2))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.LessThanOrEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((($column1 * 1.0 / $column2) <= 123.45) AND ($column3 = '$typeName'))")
+        expected = "((($column1 <= 123.45) AND $whereT1) OR (($column2 <= 123.45) AND $whereT2))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.EqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((($column1 * 1.0 / $column2) = 123.45) AND ($column3 = '$typeName'))")
+        expected = "((($column1 = 123.45) AND $whereT1) OR (($column2 = 123.45) AND $whereT2))"
+        assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.NotEqualTo
         where = form.buildSQL()
-        assertThat(where).isEqualTo("((($column1 * 1.0 / $column2) <> 123.45) AND ($column3 = '$typeName'))")
+        expected = "((($column1 <> 123.45) AND $whereT1) OR (($column2 <> 123.45) AND $whereT2))"
+        assertThat(where).isEqualTo(expected)
     }
 }
