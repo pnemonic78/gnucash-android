@@ -27,7 +27,7 @@ import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter
 import org.gnucash.android.ui.adapter.SpinnerArrayAdapter
 import org.gnucash.android.ui.adapter.SpinnerItem
-import org.gnucash.android.ui.search.SearchResultsFragment.Companion.EXTRA_FORM
+import org.gnucash.android.ui.search.SearchResultsFragment.Companion.EXTRA_WHERE
 import org.gnucash.android.ui.text.DefaultTextWatcher
 import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment
 import org.gnucash.android.ui.util.widget.CalculatorEditText.OnValueChangedListener
@@ -78,7 +78,7 @@ class SearchFormFragment : Fragment() {
 
     private fun showResults(sqlWhere: String) {
         val args = Bundle()
-        args.putString(EXTRA_FORM, sqlWhere)
+        args.putString(EXTRA_WHERE, sqlWhere)
 
         val fragment = SearchResultsFragment()
         fragment.arguments = args

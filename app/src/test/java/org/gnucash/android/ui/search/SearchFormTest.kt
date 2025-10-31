@@ -16,10 +16,15 @@ class SearchFormTest : GnuCashTest() {
     fun `Query for single description - contains`() {
         val form = SearchForm()
         val criterion = form.addDescription()
-        criterion.value = "zebra"
         criterion.compare = StringCompare.Contains
-        val where = form.buildSQL()
-        val expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} LIKE '%zebra%')"
+
+        var where = form.buildSQL()
+        var expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} LIKE '%%')"
+        assertThat(where).isEqualTo(expected)
+
+        criterion.value = "zebra"
+        where = form.buildSQL()
+        expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} LIKE '%zebra%')"
         assertThat(where).isEqualTo(expected)
     }
 
@@ -27,10 +32,15 @@ class SearchFormTest : GnuCashTest() {
     fun `Query for single description - equals`() {
         val form = SearchForm()
         val criterion = form.addDescription()
-        criterion.value = "zebra"
         criterion.compare = StringCompare.Equals
-        val where = form.buildSQL()
-        val expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} = 'zebra')"
+
+        var where = form.buildSQL()
+        var expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} = '')"
+        assertThat(where).isEqualTo(expected)
+
+        criterion.value = "zebra"
+        where = form.buildSQL()
+        expected = "(t.${TransactionEntry.COLUMN_DESCRIPTION} = 'zebra')"
         assertThat(where).isEqualTo(expected)
     }
 
@@ -39,10 +49,15 @@ class SearchFormTest : GnuCashTest() {
         val column = "t." + TransactionEntry.COLUMN_NOTES
         val form = SearchForm()
         val criterion = form.addNote()
-        criterion.value = "zebra"
         criterion.compare = StringCompare.Contains
-        val where = form.buildSQL()
-        val expected = "($column LIKE '%zebra%')"
+
+        var where = form.buildSQL()
+        var expected = "($column LIKE '%%')"
+        assertThat(where).isEqualTo(expected)
+
+        criterion.value = "zebra"
+        where = form.buildSQL()
+        expected = "($column LIKE '%zebra%')"
         assertThat(where).isEqualTo(expected)
     }
 
@@ -51,10 +66,15 @@ class SearchFormTest : GnuCashTest() {
         val column = "t." + TransactionEntry.COLUMN_NOTES
         val form = SearchForm()
         val criterion = form.addNote()
-        criterion.value = "zebra"
         criterion.compare = StringCompare.Equals
-        val where = form.buildSQL()
-        val expected = "($column = 'zebra')"
+
+        var where = form.buildSQL()
+        var expected = "($column = '')"
+        assertThat(where).isEqualTo(expected)
+
+        criterion.value = "zebra"
+        where = form.buildSQL()
+        expected = "($column = 'zebra')"
         assertThat(where).isEqualTo(expected)
     }
 
@@ -64,10 +84,14 @@ class SearchFormTest : GnuCashTest() {
         val column2 = "s2." + SplitEntry.COLUMN_MEMO
         val form = SearchForm()
         val criterion = form.addMemo()
-        criterion.value = "zebra"
         criterion.compare = StringCompare.Contains
-        val where = form.buildSQL()
-        val expected = "(($column1 LIKE '%zebra%') OR ($column2 LIKE '%zebra%'))"
+        var where = form.buildSQL()
+        var expected = "(($column1 LIKE '%%') OR ($column2 LIKE '%%'))"
+        assertThat(where).isEqualTo(expected)
+
+        criterion.value = "zebra"
+        where = form.buildSQL()
+        expected = "(($column1 LIKE '%zebra%') OR ($column2 LIKE '%zebra%'))"
         assertThat(where).isEqualTo(expected)
     }
 
@@ -77,10 +101,15 @@ class SearchFormTest : GnuCashTest() {
         val column2 = "s2." + SplitEntry.COLUMN_MEMO
         val form = SearchForm()
         val criterion = form.addMemo()
-        criterion.value = "zebra"
         criterion.compare = StringCompare.Equals
-        val where = form.buildSQL()
-        val expected = "(($column1 = 'zebra') OR ($column2 = 'zebra'))"
+
+        var where = form.buildSQL()
+        var expected = "(($column1 = '') OR ($column2 = ''))"
+        assertThat(where).isEqualTo(expected)
+
+        criterion.value = "zebra"
+        where = form.buildSQL()
+        expected = "(($column1 = 'zebra') OR ($column2 = 'zebra'))"
         assertThat(where).isEqualTo(expected)
     }
 
@@ -93,9 +122,12 @@ class SearchFormTest : GnuCashTest() {
         val dayStart = now.toDateTimeAtStartOfDay()
         val dayEnd = now.toDateTimeAtEndOfDay()
 
+        var where = form.buildSQL()
+        assertThat(where).isEqualTo(SQL_TRUE)
+
         criterion.value = now
         criterion.compare = Compare.GreaterThan
-        var where = form.buildSQL()
+        where = form.buildSQL()
         assertThat(where).isEqualTo("($column > ${dayStart.toMillis()})")
 
         criterion.compare = Compare.GreaterThanOrEqualTo
@@ -129,10 +161,15 @@ class SearchFormTest : GnuCashTest() {
         val column2 = "($columnN2 * 1.0 / $columnD2)"
         val form = SearchForm()
         val criterion = form.addNumeric(false)
+
+        var where = form.buildSQL()
+        var expected = "(($column1 = 0) OR ($column2 = 0))"
+        assertThat(where).isEqualTo(expected)
+
         criterion.value = BigDecimal.valueOf(123.45)
         criterion.compare = Compare.GreaterThan
-        var where = form.buildSQL()
-        var expected = "(($column1 > 123.45) OR ($column2 > 123.45))"
+        where = form.buildSQL()
+        expected = "(($column1 > 123.45) OR ($column2 > 123.45))"
         assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.GreaterThanOrEqualTo
@@ -192,11 +229,16 @@ class SearchFormTest : GnuCashTest() {
 
         val form = SearchForm()
         val criterion = form.addNumeric(true)
+
+        var where = form.buildSQL()
+        var expected = "(($column1 = 0) OR ($column2 = 0))"
+        assertThat(where).isEqualTo(expected)
+
         criterion.value = BigDecimal.valueOf(123.45)
         criterion.compare = Compare.GreaterThan
         criterion.match = match
-        var where = form.buildSQL()
-        var expected = "((($column1 > 123.45) AND $whereT1) OR (($column2 > 123.45) AND $whereT2))"
+        where = form.buildSQL()
+        expected = "((($column1 > 123.45) AND $whereT1) OR (($column2 > 123.45) AND $whereT2))"
         assertThat(where).isEqualTo(expected)
 
         criterion.compare = Compare.GreaterThanOrEqualTo
@@ -223,5 +265,9 @@ class SearchFormTest : GnuCashTest() {
         where = form.buildSQL()
         expected = "((($column1 <> 123.45) AND $whereT1) OR (($column2 <> 123.45) AND $whereT2))"
         assertThat(where).isEqualTo(expected)
+    }
+
+    companion object {
+        private const val SQL_TRUE = "(t._id >= 0)"
     }
 }
