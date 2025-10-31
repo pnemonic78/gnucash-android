@@ -40,7 +40,7 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
         super.onCreate(savedInstanceState)
         val context = requireContext()
 
-        viewModel.where = requireArguments().getString(EXTRA_FORM)
+        viewModel.where = requireArguments().getString(EXTRA_WHERE)
         isDoubleEntry = isDoubleEntryEnabled(context)
 
         transactionsAdapter = SearchResultsAdapter(null, isDoubleEntry, this)
@@ -153,6 +153,6 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
     }
 
     companion object {
-        const val EXTRA_FORM = "search_where"
+        const val EXTRA_WHERE = "search_where"
     }
 }

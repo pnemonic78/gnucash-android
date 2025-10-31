@@ -1,6 +1,7 @@
 package org.gnucash.android.ui.search
 
 import android.database.DatabaseUtils.sqlEscapeString
+import androidx.annotation.VisibleForTesting
 import org.gnucash.android.db.DatabaseHelper.Companion.sqlEscapeLike
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
@@ -82,6 +83,9 @@ data class SearchForm(
         private const val SPLIT1_ALIAS = "s1."
         private const val SPLIT2_ALIAS = "s2."
 
+        @VisibleForTesting
+        internal const val TRUE = "t." + TransactionEntry.COLUMN_ID + " >= 0"
+
         private val amountFormatter by lazy {
             (NumberFormat.getInstance(Locale.ROOT) as DecimalFormat).apply {
                 isGroupingUsed = false
@@ -102,7 +106,7 @@ data class SearchForm(
         }
 
         private fun StringBuilder.appendQuery(criterion: SearchCriteria.Account): StringBuilder {
-            val s = criterion.value?.uid ?: return this
+            val s = criterion.value?.uid ?: return append(TRUE)
             when (criterion.compare) {
                 ComparisonType.Any -> {
                     append('(')
@@ -132,7 +136,7 @@ data class SearchForm(
         }
 
         private fun StringBuilder.appendQuery(criterion: SearchCriteria.Date): StringBuilder {
-            val date = criterion.value ?: return this
+            val date = criterion.value ?: return append(TRUE)
             val dayStart = date.toDateTimeAtStartOfDay()
             val dayEnd = date.toDateTimeAtEndOfDay()
 
@@ -174,7 +178,7 @@ data class SearchForm(
         }
 
         private fun StringBuilder.appendQuery(criterion: SearchCriteria.Description): StringBuilder {
-            val s = criterion.value ?: return this
+            val s = criterion.value.orEmpty()
             append(TRANSACTION_ALIAS).append(TransactionEntry.COLUMN_DESCRIPTION)
             when (criterion.compare) {
                 StringCompare.Contains -> append(" LIKE ").append(sqlEscapeLike(s))
@@ -185,7 +189,7 @@ data class SearchForm(
         }
 
         private fun StringBuilder.appendQuery(criterion: SearchCriteria.Memo): StringBuilder {
-            val s = criterion.value ?: return this
+            val s = criterion.value.orEmpty()
             when (criterion.compare) {
                 StringCompare.Contains -> {
                     val ss = sqlEscapeLike(s)
@@ -213,7 +217,7 @@ data class SearchForm(
         }
 
         private fun StringBuilder.appendQuery(criterion: SearchCriteria.Note): StringBuilder {
-            val s = criterion.value ?: return this
+            val s = criterion.value.orEmpty()
             append(TRANSACTION_ALIAS).append(TransactionEntry.COLUMN_NOTES)
             when (criterion.compare) {
                 StringCompare.Contains -> append(" LIKE ").append(sqlEscapeLike(s))
