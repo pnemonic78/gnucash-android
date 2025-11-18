@@ -18,6 +18,7 @@ package org.gnucash.android.db.adapter
 
 import android.content.ContentValues
 import android.database.Cursor
+import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteQueryBuilder
 import android.database.sqlite.SQLiteStatement
 import org.gnucash.android.app.GnuCashApplication
@@ -218,18 +219,26 @@ class SplitsDbAdapter(
             selection += " AND t." + TransactionEntry.COLUMN_TIMESTAMP + " >= " + startTimestamp
         }
 
-        val sql = ("SELECT SUM(s." + SplitEntry.COLUMN_QUANTITY_NUM + ")"
-                + ", s." + SplitEntry.COLUMN_QUANTITY_DENOM
-                + ", s." + SplitEntry.COLUMN_TYPE
-                + ", a." + AccountEntry.COLUMN_UID
-                + ", a." + AccountEntry.COLUMN_COMMODITY_UID
-                + " FROM " + TransactionEntry.TABLE_NAME + " t"
-                + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID
-                + " INNER JOIN " + AccountEntry.TABLE_NAME + " a ON s." + SplitEntry.COLUMN_ACCOUNT_UID + " = a." + AccountEntry.COLUMN_UID
-                + " WHERE " + selection
-                + " GROUP BY a." + AccountEntry.COLUMN_UID
-                + ", s." + SplitEntry.COLUMN_TYPE
-                + ", s." + SplitEntry.COLUMN_QUANTITY_DENOM)
+        val sql = SQLiteQueryBuilder.buildQueryString(
+            false,
+            TransactionEntry.TABLE_NAME + " t" +
+                    " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
+                    " INNER JOIN " + AccountEntry.TABLE_NAME + " a ON s." + SplitEntry.COLUMN_ACCOUNT_UID + " = a." + AccountEntry.COLUMN_UID,
+            arrayOf<String?>(
+                "SUM(s." + SplitEntry.COLUMN_QUANTITY_NUM + ")",
+                "s." + SplitEntry.COLUMN_QUANTITY_DENOM,
+                "s." + SplitEntry.COLUMN_TYPE,
+                "a." + AccountEntry.COLUMN_UID,
+                "a." + AccountEntry.COLUMN_COMMODITY_UID
+            ),
+            selection,
+            "a." + AccountEntry.COLUMN_UID
+                    + ", s." + SplitEntry.COLUMN_TYPE
+                    + ", s." + SplitEntry.COLUMN_QUANTITY_DENOM,
+            null,
+            null,
+            null
+        )
         val totals = mutableMapOf<String, Money>()
         db.rawQuery(sql, accountsWhereArgs).forEach { cursor ->
             //FIXME beware of 64-bit overflow - get as BigInteger
@@ -268,18 +277,6 @@ class SplitsDbAdapter(
     }
 
     /**
-     * Returns the list of splits for a transaction
-     *
-     * @param transactionID DB record ID of the transaction
-     * @return List of [Split]s
-     * @see .getSplitsForTransaction
-     * @see .getTransactionUID
-     */
-    fun getSplitsForTransaction(transactionID: Long): List<Split> {
-        return getSplitsForTransaction(getTransactionUID(transactionID))
-    }
-
-    /**
      * Fetch splits for a given transaction within a specific account
      *
      * @param transactionUID String unique ID of transaction
@@ -294,115 +291,64 @@ class SplitsDbAdapter(
         return getRecords(cursor)
     }
 
-    /**
-     * Fetches a collection of splits for a given condition and sorted by `sortOrder`
-     *
-     * @param where     String condition, formatted as SQL WHERE clause
-     * @param whereArgs where args
-     * @param sortOrder Sort order for the returned records
-     * @return Cursor to split records
-     */
-    fun fetchSplits(where: String?, whereArgs: Array<String?>?, sortOrder: String?): Cursor? {
-        return db.query(tableName, null, where, whereArgs, null, null, sortOrder)
+    private val sqlForTransaction: String by lazy {
+        val selection = SplitEntry.COLUMN_TRANSACTION_UID + " = ?"
+        val orderBy = SplitEntry.COLUMN_ID + " ASC"
+        SQLiteQueryBuilder.buildQueryString(
+            false,
+            tableName,
+            null,
+            selection,
+            null,
+            null,
+            orderBy,
+            null
+        )
     }
 
     /**
      * Returns a Cursor to a dataset of splits belonging to a specific transaction
      *
-     * @param transactionUID Unique idendtifier of the transaction
+     * @param transactionUID Unique identifier of the transaction
      * @return Cursor to splits
      */
     fun fetchSplitsForTransaction(transactionUID: String): Cursor? {
-        Timber.v("Fetching all splits for transaction UID %s", transactionUID)
-        val where = SplitEntry.COLUMN_TRANSACTION_UID + " = ?"
-        val whereArgs = arrayOf<String?>(transactionUID)
-        val orderBy = SplitEntry.COLUMN_ID + " ASC"
-        return db.query(tableName, null, where, whereArgs, null, null, orderBy)
+        if (transactionUID.isEmpty()) return null
+
+        Timber.v("Fetching splits for transaction %s", transactionUID)
+        val selectionArgs = arrayOf<String?>(transactionUID)
+        return db.rawQuery(sqlForTransaction, selectionArgs)
     }
 
-    /**
-     * Fetches splits for a given account
-     *
-     * @param accountUID String unique ID of account
-     * @return Cursor containing splits dataset
-     */
-    fun fetchSplitsForAccount(accountUID: String): Cursor? {
-        Timber.d("Fetching all splits for account UID %s", accountUID)
-
-        //This is more complicated than a simple "where account_uid=?" query because
-        // we need to *not* return any splits which belong to recurring transactions
-        val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.setTables(
-            (TransactionEntry.TABLE_NAME
-                    + " INNER JOIN " + SplitEntry.TABLE_NAME + " ON "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID)
-        )
-        queryBuilder.isDistinct = true
-        val projectionIn = arrayOf<String?>(SplitEntry.TABLE_NAME + ".*")
-        val selection = (SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
-                + " AND " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TEMPLATE + " = 0")
-        val selectionArgs = arrayOf<String?>(accountUID)
-        val sortOrder =
-            TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TIMESTAMP + " DESC"
-
-        return queryBuilder.query(
-            db,
-            projectionIn,
+    private val sqlForTransactionAndAccount: String by lazy {
+        val selection = SplitEntry.COLUMN_TRANSACTION_UID + " = ? AND " +
+                SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
+        val orderBy = SplitEntry.COLUMN_VALUE_NUM + " ASC"
+        SQLiteQueryBuilder.buildQueryString(
+            false,
+            tableName,
+            null,
             selection,
-            selectionArgs,
             null,
             null,
-            sortOrder
+            orderBy,
+            null
         )
     }
 
     /**
      * Returns a cursor to splits for a given transaction and account
      *
-     * @param transactionUID Unique idendtifier of the transaction
+     * @param transactionUID Unique identifier of the transaction
      * @param accountUID     String unique ID of account
      * @return Cursor to splits data set
      */
-    fun fetchSplitsForTransactionAndAccount(transactionUID: String?, accountUID: String?): Cursor? {
-        if (transactionUID.isNullOrEmpty() || accountUID.isNullOrEmpty()) return null
+    fun fetchSplitsForTransactionAndAccount(transactionUID: String, accountUID: String): Cursor? {
+        if (transactionUID.isEmpty() || accountUID.isEmpty()) return null
 
-        Timber.v(
-            "Fetching all splits for transaction ID %s and account ID %s",
-            transactionUID, accountUID
-        )
-        return db.query(
-            tableName,
-            null, (SplitEntry.COLUMN_TRANSACTION_UID + " = ? AND "
-                    + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"),
-            arrayOf<String?>(transactionUID, accountUID),
-            null, null, SplitEntry.COLUMN_VALUE_NUM + " ASC"
-        )
-    }
-
-    /**
-     * Returns the unique ID of a transaction given the database record ID of same
-     *
-     * @param transactionId Database record ID of the transaction
-     * @return String unique ID of the transaction or null if transaction with the ID cannot be found.
-     */
-    @Throws(IllegalArgumentException::class)
-    fun getTransactionUID(transactionId: Long): String {
-        val cursor = db.query(
-            TransactionEntry.TABLE_NAME,
-            arrayOf(TransactionEntry.COLUMN_UID),
-            TransactionEntry.COLUMN_ID + " = " + transactionId,
-            null, null, null, null
-        )
-
-        try {
-            if (cursor.moveToFirst()) {
-                return cursor.getString(0)
-            }
-            throw IllegalArgumentException("Transaction not found")
-        } finally {
-            cursor.close()
-        }
+        Timber.v("Fetching splits for transaction %s and account %s", transactionUID, accountUID)
+        val selectionArgs = arrayOf<String?>(transactionUID, accountUID)
+        return db.rawQuery(sqlForTransactionAndAccount, selectionArgs)
     }
 
     override fun deleteRecord(rowId: Long): Boolean {
@@ -431,6 +377,19 @@ class SplitsDbAdapter(
         return result
     }
 
+    private val sqlTransactionID: String by lazy {
+        SQLiteQueryBuilder.buildQueryString(
+            false,
+            TransactionEntry.TABLE_NAME,
+            arrayOf(TransactionEntry.COLUMN_ID),
+            TransactionEntry.COLUMN_UID + "=?",
+            null,
+            null,
+            null,
+            null
+        )
+    }
+
     /**
      * Returns the database record ID for the specified transaction UID
      *
@@ -439,20 +398,7 @@ class SplitsDbAdapter(
      */
     @Throws(IllegalArgumentException::class)
     fun getTransactionID(transactionUID: String): Long {
-        val c = db.query(
-            TransactionEntry.TABLE_NAME,
-            arrayOf(TransactionEntry.COLUMN_ID),
-            TransactionEntry.COLUMN_UID + "=?",
-            arrayOf<String?>(transactionUID), null, null, null
-        )
-        try {
-            if (c.moveToFirst()) {
-                return c.getLong(0)
-            }
-            throw IllegalArgumentException("Transaction not found")
-        } finally {
-            c.close()
-        }
+        return DatabaseUtils.longForQuery(db, sqlTransactionID, arrayOf<String?>(transactionUID))
     }
 
     fun reassignAccount(oldAccountUID: String, newAccountUID: String) {
@@ -461,6 +407,19 @@ class SplitsDbAdapter(
             arrayOf<String?>(oldAccountUID),
             SplitEntry.COLUMN_ACCOUNT_UID,
             newAccountUID
+        )
+    }
+
+    private val sqlAccountCommodity: String by lazy {
+        SQLiteQueryBuilder.buildQueryString(
+            false,
+            AccountEntry.TABLE_NAME,
+            arrayOf<String?>(AccountEntry.COLUMN_COMMODITY_UID),
+            AccountEntry.COLUMN_UID + "= ?",
+            null,
+            null,
+            null,
+            null
         )
     }
 
@@ -477,24 +436,11 @@ class SplitsDbAdapter(
         if (commodity != null) {
             return commodity
         }
-        val cursor = db.query(
-            AccountEntry.TABLE_NAME,
-            arrayOf<String?>(AccountEntry.COLUMN_COMMODITY_UID),
-            AccountEntry.COLUMN_UID + "= ?",
-            arrayOf<String?>(accountUID),
-            null, null, null
-        )
-        try {
-            if (cursor.moveToFirst()) {
-                val commodityUID = cursor.getString(0)
-                commodity = commoditiesDbAdapter.getRecord(commodityUID)
-                accountCommodities[accountUID] = commodity
-                return commodity
-            }
-            throw IllegalArgumentException("Account not found")
-        } finally {
-            cursor.close()
-        }
+        val selectionArgs = arrayOf<String?>(accountUID)
+        val commodityUID = DatabaseUtils.stringForQuery(db, sqlAccountCommodity, selectionArgs)
+        commodity = commoditiesDbAdapter.getRecord(commodityUID)
+        accountCommodities[accountUID] = commodity
+        return commodity
     }
 
     companion object {

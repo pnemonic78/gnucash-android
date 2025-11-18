@@ -331,7 +331,6 @@ class AccountsActivityTest : GnuAndroidTest() {
 
         clickViewId(R.id.menu_save)
         assertThat(accountsDbAdapter.getTransactionCount(SIMPLE_ACCOUNT_UID)).isOne()
-        assertThat(splitsDbAdapter.fetchSplitsForAccount(SIMPLE_ACCOUNT_UID)?.count).isOne()
         assertThat(splitsDbAdapter.getSplitsForTransaction(transaction.uid)).hasSize(2)
     }
 

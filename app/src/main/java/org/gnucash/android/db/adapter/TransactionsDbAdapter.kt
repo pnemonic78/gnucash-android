@@ -26,7 +26,6 @@ import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHelper.Companion.sqlEscapeLike
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
-import org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
 import org.gnucash.android.db.bindBoolean
@@ -142,6 +141,14 @@ class TransactionsDbAdapter(
         return transaction
     }
 
+    private val deleteEmptyTransaction: SQLiteStatement by lazy {
+        db.compileStatement(
+            "DELETE FROM $tableName WHERE NOT EXISTS ( SELECT * FROM " + SplitEntry.TABLE_NAME +
+                    " WHERE " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID +
+                    " = " + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID + " ) "
+        )
+    }
+
     /**
      * Adds an several transactions to the database.
      * If a transaction already exists in the database with the same unique ID,
@@ -165,13 +172,6 @@ class TransactionsDbAdapter(
                 val nSplits = splitsDbAdapter.bulkAddRecords(splits, updateMethod)
                 Timber.d("%d splits inserted in %d ns", nSplits, System.nanoTime() - start)
             } finally {
-                val deleteEmptyTransaction = db.compileStatement(
-                    "DELETE FROM " +
-                            TransactionEntry.TABLE_NAME + " WHERE NOT EXISTS ( SELECT * FROM " +
-                            SplitEntry.TABLE_NAME +
-                            " WHERE " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID +
-                            " = " + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID + " ) "
-                )
                 deleteEmptyTransaction.execute()
             }
         }
@@ -196,15 +196,7 @@ class TransactionsDbAdapter(
         return stmt
     }
 
-    /**
-     * Returns a cursor to a set of all transactions which have a split belonging to the account with unique ID
-     * `accountUID`.
-     *
-     * @param accountUID UID of the account whose transactions are to be retrieved
-     * @return Cursor holding set of transactions for particular account
-     * @throws java.lang.IllegalArgumentException if the accountUID is null
-     */
-    fun fetchAllTransactionsForAccount(accountUID: String): Cursor? {
+    private val sqlAllTransactionsForAccount: String by lazy {
         val queryBuilder = SQLiteQueryBuilder()
         queryBuilder.tables = TransactionEntry.TABLE_NAME + " t" +
                 " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON " +
@@ -214,20 +206,25 @@ class TransactionsDbAdapter(
         val projectionIn = arrayOf<String?>("t.*")
         val selection = ("s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
                 + " AND t." + TransactionEntry.COLUMN_TEMPLATE + " = 0")
-        val selectionArgs = arrayOf<String?>(accountUID)
         val sortOrder = "t." + TransactionEntry.COLUMN_TIMESTAMP + " DESC, " +
                 "t." + TransactionEntry.COLUMN_NUMBER + " DESC, " +
                 "t." + TransactionEntry.COLUMN_ID + " DESC"
 
-        return queryBuilder.query(
-            db,
-            projectionIn,
-            selection,
-            selectionArgs,
-            null,
-            null,
-            sortOrder
-        )
+        queryBuilder.buildQuery(projectionIn, selection, null, null, sortOrder, null)
+    }
+
+    /**
+     * Returns a cursor to a set of all transactions which have a split belonging to the account with unique ID
+     * `accountUID`.
+     *
+     * @param accountUID UID of the account whose transactions are to be retrieved
+     * @return Cursor holding set of transactions for particular account
+     * @throws java.lang.IllegalArgumentException if the accountUID is null
+     */
+    fun fetchAllTransactionsForAccount(accountUID: String): Cursor? {
+        if (accountUID.isEmpty()) return null
+        val selectionArgs = arrayOf<String?>(accountUID)
+        return db.rawQuery(sqlAllTransactionsForAccount, selectionArgs)
     }
 
     /**
@@ -240,13 +237,11 @@ class TransactionsDbAdapter(
      */
     fun fetchScheduledTransactionsForAccount(accountUID: String): Cursor? {
         val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.setTables(
-            (TransactionEntry.TABLE_NAME
-                    + " INNER JOIN " + SplitEntry.TABLE_NAME + " ON "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID)
-        )
         queryBuilder.isDistinct = true
+        queryBuilder.tables = TransactionEntry.TABLE_NAME +
+                " INNER JOIN " + SplitEntry.TABLE_NAME + " ON " +
+                TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = " +
+                SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID
         val projectionIn = arrayOf<String?>(TransactionEntry.TABLE_NAME + ".*")
         val selection = (SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
                 + " AND " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TEMPLATE + " = 1")
@@ -265,6 +260,12 @@ class TransactionsDbAdapter(
         )
     }
 
+    private val sqlDeleteTransactionsForAccount = "DELETE FROM " + TransactionEntry.TABLE_NAME +
+            " WHERE " + TransactionEntry.COLUMN_UID + " IN " +
+            " (SELECT " + SplitEntry.COLUMN_TRANSACTION_UID +
+            " FROM " + SplitEntry.TABLE_NAME + " WHERE " +
+            SplitEntry.COLUMN_ACCOUNT_UID + " = ?)"
+
     /**
      * Deletes all transactions which contain a split in the account.
      *
@@ -274,51 +275,8 @@ class TransactionsDbAdapter(
      * @param accountUID GUID of the account
      */
     fun deleteTransactionsForAccount(accountUID: String) {
-        val rawDeleteQuery =
-            ("DELETE FROM " + TransactionEntry.TABLE_NAME + " WHERE " + TransactionEntry.COLUMN_UID + " IN "
-                    + " (SELECT " + SplitEntry.COLUMN_TRANSACTION_UID + " FROM " + SplitEntry.TABLE_NAME + " WHERE "
-                    + SplitEntry.COLUMN_ACCOUNT_UID + " = ?)")
-        db.execSQL(rawDeleteQuery, arrayOf<String?>(accountUID))
-    }
-
-    /**
-     * Deletes all transactions which have no splits associated with them
-     *
-     * @return Number of records deleted
-     */
-    fun deleteTransactionsWithNoSplits(): Int {
-        return db.delete(
-            tableName,
-            "NOT EXISTS ( SELECT * FROM " + SplitEntry.TABLE_NAME +
-                    " WHERE " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID +
-                    " = " + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID + " ) ",
-            null
-        )
-    }
-
-    /**
-     * Fetches all recurring transactions from the database.
-     *
-     * Recurring transactions are the transaction templates which have an entry in the scheduled events table
-     *
-     * @return Cursor holding set of all recurring transactions
-     */
-    fun fetchAllScheduledTransactions(): Cursor? {
-        val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.setTables(
-            (TransactionEntry.TABLE_NAME + " INNER JOIN " + ScheduledActionEntry.TABLE_NAME + " ON "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = "
-                    + ScheduledActionEntry.TABLE_NAME + "." + ScheduledActionEntry.COLUMN_ACTION_UID)
-        )
-
-        val projectionIn = arrayOf<String?>(
-            TransactionEntry.TABLE_NAME + ".*",
-            ScheduledActionEntry.TABLE_NAME + "." + ScheduledActionEntry.COLUMN_UID + " AS " + "origin_scheduled_action_uid"
-        )
-        val sortOrder =
-            TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_DESCRIPTION + " ASC"
-
-        return queryBuilder.query(db, projectionIn, null, null, null, null, sortOrder)
+        val selectionArgs = arrayOf<String?>(accountUID)
+        db.execSQL(sqlDeleteTransactionsForAccount, selectionArgs)
     }
 
     /**
@@ -529,22 +487,6 @@ class TransactionsDbAdapter(
     }
 
     /**
-     * Returns the number of splits for the transaction in the database
-     *
-     * @param transactionUID GUID of the transaction
-     * @return Number of splits belonging to the transaction
-     */
-    fun getSplitCount(transactionUID: String): Long {
-        if (transactionUID.isEmpty()) return 0
-        return DatabaseUtils.queryNumEntries(
-            db,
-            SplitEntry.TABLE_NAME,
-            SplitEntry.COLUMN_TRANSACTION_UID + "=?",
-            arrayOf<String?>(transactionUID)
-        )
-    }
-
-    /**
      * Returns a cursor to transactions whose name (UI: description) start with the `prefix`
      *
      * This method is used for autocomplete suggestions when creating new transactions. <br></br>
@@ -696,27 +638,12 @@ class TransactionsDbAdapter(
     }
 
     fun getTransactionsCountForAccount(accountUID: String): Long {
-        val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.setTables(
-            (TransactionEntry.TABLE_NAME + " t "
-                    + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON"
-                    + " t." + TransactionEntry.COLUMN_UID + " ="
-                    + " s." + SplitEntry.COLUMN_TRANSACTION_UID)
-        )
-        val projectionIn = arrayOf<String?>("COUNT(*)")
+        val table = (TransactionEntry.TABLE_NAME + " t "
+                + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON"
+                + " t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID)
         val selection = "s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
         val selectionArgs = arrayOf<String?>(accountUID)
-
-        val cursor =
-            queryBuilder.query(db, projectionIn, selection, selectionArgs, null, null, null)
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getLong(0)
-            }
-        } finally {
-            cursor!!.close()
-        }
-        return 0L
+        return DatabaseUtils.queryNumEntries(db, table, selection, selectionArgs)
     }
 
     @Throws(IOException::class)
