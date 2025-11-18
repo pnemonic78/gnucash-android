@@ -58,15 +58,6 @@ abstract class DatabaseAdapter<Model : BaseModel>(
 ) : Closeable {
     protected val db: SQLiteDatabase
 
-    @Volatile
-    private var _replaceStatement: SQLiteStatement? = null
-
-    @Volatile
-    private var _updateStatement: SQLiteStatement? = null
-
-    @Volatile
-    private var _insertStatement: SQLiteStatement? = null
-
     protected val cache: MutableMap<String, Model> = ConcurrentHashMap<String, Model>()
 
     enum class UpdateMethod {
@@ -243,6 +234,9 @@ abstract class DatabaseAdapter<Model : BaseModel>(
      */
     abstract fun buildModelInstance(cursor: Cursor): Model
 
+    @Volatile
+    private var _replaceStatement: SQLiteStatement? = null
+
     /**
      * Generates an [SQLiteStatement] with values from the `model`.
      * This statement can be executed to replace a record in the database.
@@ -283,6 +277,9 @@ abstract class DatabaseAdapter<Model : BaseModel>(
         return sql.toString()
     }
 
+    @Volatile
+    private var _updateStatement: SQLiteStatement? = null
+
     protected val updateStatement: SQLiteStatement
         get() {
             var stmt = _updateStatement
@@ -310,6 +307,9 @@ abstract class DatabaseAdapter<Model : BaseModel>(
         sql.append(" WHERE ").append(CommonColumns.COLUMN_UID).append("=?")
         return sql.toString()
     }
+
+    @Volatile
+    private var _insertStatement: SQLiteStatement? = null
 
     protected val insertStatement: SQLiteStatement
         get() {
