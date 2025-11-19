@@ -308,7 +308,9 @@ class QifExporter(
 
             val contentValues = ContentValues()
             contentValues[TransactionEntry.COLUMN_EXPORTED] = 1
-            transactionsDbAdapter.updateTransaction(contentValues, null, null)
+            val where = TransactionEntry.COLUMN_TIMESTAMP + " >= ?"
+            val whereArgs = arrayOf<String?>(lastExportTimeStamp)
+            transactionsDbAdapter.updateTransaction(contentValues, where, whereArgs)
 
             /** export successful */
             setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
