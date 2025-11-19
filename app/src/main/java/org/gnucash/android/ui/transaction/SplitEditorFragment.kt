@@ -447,8 +447,7 @@ class SplitEditorFragment : MenuFragment() {
                 val amount = viewHolder.amountValue.abs()
                 val position = viewHolder.accountsSpinner.selectedItemPosition
                 if (position < 0) return
-                val account = accountNameAdapter.getAccount(position)
-                if (account == null) return
+                val account = accountNameAdapter.getAccount(position) ?: return
                 val hasDebitNormalBalance = account.accountType.hasDebitNormalBalance
 
                 imbalance += if (viewHolder.splitTypeSwitch.isChecked) {
@@ -489,8 +488,7 @@ class SplitEditorFragment : MenuFragment() {
             if (view == null) return
             val accountFrom = this@SplitEditorFragment.account!!
 
-            val accountTo = accountNameAdapter!!.getAccount(position)
-            if (accountTo == null) return
+            val accountTo = accountNameAdapter!!.getAccount(position) ?: return
             val accountType = accountTo.accountType
             typeToggleButton.accountType = accountType
 
@@ -547,8 +545,7 @@ class SplitEditorFragment : MenuFragment() {
 
         for (viewHolder in splitViewHolders) {
             if (!viewHolder.splitAmountEditText.isInputModified) continue
-            val splitQuantity = viewHolder.quantity
-            if (splitQuantity == null) continue
+            val splitQuantity = viewHolder.quantity ?: continue
             val splitCommodity = splitQuantity.commodity
             if (fromCommodity == splitCommodity) continue
             startTransferFunds(fromCommodity, splitCommodity, viewHolder)

@@ -16,6 +16,7 @@
 package org.gnucash.android.ui.report.sheet
 
 import android.content.Context
+import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
@@ -73,6 +74,7 @@ class BalanceSheetFragment : BaseReportFragment() {
     }
 
     override fun displayReport() {
+        val t0 = SystemClock.elapsedRealtime()
         val binding = binding ?: return
         loadAccountViews(assetAccountTypes, binding.tableAssets)
         loadAccountViews(liabilityAccountTypes, binding.tableLiabilities)
@@ -82,6 +84,8 @@ class BalanceSheetFragment : BaseReportFragment() {
             assetsBalance + liabilitiesBalance,
             colorBalanceZero
         )
+        val t1 = SystemClock.elapsedRealtime()
+        println("~!@ displayReport ${t1 - t0}")
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -133,8 +137,7 @@ class BalanceSheetFragment : BaseReportFragment() {
             balanceTextView.displayBalance(balance, colorBalanceZero)
 
             // Price conversion.
-            val price = pricesDbAdapter.getPrice(balance.commodity, total.commodity)
-            if (price == null) continue
+            val price = pricesDbAdapter.getPrice(balance.commodity, total.commodity) ?: continue
             balance *= price
             total += balance
         }
