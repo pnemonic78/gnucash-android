@@ -18,6 +18,7 @@ package org.gnucash.android.ui.transaction
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -90,7 +91,7 @@ class SplitEditorFragment : MenuFragment() {
     private var binding: FragmentSplitEditorBinding? = null
 
     @ColorInt
-    private var colorBalanceZero = 0
+    private var colorBalanceZero = Color.TRANSPARENT
 
     override fun onCreateView(
         inflater: LayoutInflater,
