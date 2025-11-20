@@ -336,7 +336,7 @@ class GncXmlExporter(
         cancellationSignal.throwIfCanceled()
         Timber.i("export accounts. template: %s", isTemplate)
         if (isTemplate) {
-            val account = this.rootTemplateAccount
+            val account = rootTemplateAccount
             if (account == null) {
                 Timber.i("No template root account found!")
                 return
@@ -344,7 +344,7 @@ class GncXmlExporter(
             writeAccount(xmlSerializer, account)
         } else {
             val rootUID = accountsDbAdapter.rootAccountUID
-            if (rootUID.isNullOrEmpty()) {
+            if (rootUID.isEmpty()) {
                 throw ExporterException(exportParams, "No root account found!")
             }
             val account = accountsDbAdapter.getRecord(rootUID)
@@ -519,7 +519,7 @@ class GncXmlExporter(
 
         // FIXME: 12.10.2015 export split reconciled_state and reconciled_date to the export */
         var txUIDPrevious = ""
-        var trnCommodity: Commodity = Commodity.DEFAULT_COMMODITY
+        var trnCommodity = commoditiesDbAdapter.defaultCommodity
         var transaction: Transaction?
         do {
             cancellationSignal.throwIfCanceled()
