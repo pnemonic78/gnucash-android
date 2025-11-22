@@ -1,7 +1,9 @@
 package org.gnucash.android.ui.search
 
+import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDate
 import java.math.BigDecimal
+import kotlin.text.isNullOrEmpty
 
 enum class ComparisonType {
     All,
@@ -47,30 +49,42 @@ enum class NumericMatch {
 }
 
 sealed class SearchCriteria {
+    abstract fun isEmpty(): Boolean
+
     data class Description(
         var value: String? = null,
         var compare: StringCompare = StringCompare.Contains
-    ) : SearchCriteria()
+    ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = value == null
+    }
 
     data class Note(
         var value: String? = null,
         var compare: StringCompare = StringCompare.Contains
-    ) : SearchCriteria()
+    ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = value == null
+    }
 
     data class Memo(
         var value: String? = null,
         var compare: StringCompare = StringCompare.Contains
-    ) : SearchCriteria()
+    ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = value == null
+    }
 
     data class Number(
         var value: String? = null,
         var compare: StringCompare = StringCompare.Contains
-    ) : SearchCriteria()
+    ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = value == null
+    }
 
     data class Date(
-        var value: LocalDate? = null,
+        var value: LocalDate = LocalDate.now(),
         var compare: Compare = Compare.LessThanOrEqualTo
     ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = value.toMillis() <= 0L
+
         fun set(year: Int, monthOfYear: Int, dayOfMonth: Int): LocalDate {
             val date = LocalDate(year, monthOfYear, dayOfMonth)
             value = date
@@ -82,10 +96,14 @@ sealed class SearchCriteria {
         var value: BigDecimal? = null,
         var match: NumericMatch? = null,
         var compare: Compare = Compare.EqualTo
-    ) : SearchCriteria()
+    ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = value == null
+    }
 
     data class Account(
         var value: org.gnucash.android.model.Account? = null,
         var compare: ComparisonType = ComparisonType.Any
-    ) : SearchCriteria()
+    ) : SearchCriteria() {
+        override fun isEmpty(): Boolean = (value == null) || value?.uid.isNullOrEmpty()
+    }
 }
