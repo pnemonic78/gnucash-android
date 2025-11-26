@@ -41,6 +41,7 @@ import org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
 import org.gnucash.android.db.bindBoolean
+import org.gnucash.android.db.forEach
 import org.gnucash.android.db.getBigDecimal
 import org.gnucash.android.db.getBoolean
 import org.gnucash.android.db.getString
@@ -58,7 +59,6 @@ import org.gnucash.android.util.set
 import timber.log.Timber
 import java.io.IOException
 import java.sql.Timestamp
-import kotlin.collections.associateBy
 
 /**
  * Manages persistence of [Account]s in the database
@@ -517,20 +517,16 @@ class AccountsDbAdapter(
      * @return List of [Account]s with unexported transactions
      */
     fun getExportableAccounts(lastExportTimeStamp: Timestamp): List<Account> {
-        val cursor = db.query(
-            TransactionEntry.TABLE_NAME + ", " + SplitEntry.TABLE_NAME +
-                    " ON " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = " +
-                    SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID + ", " +
-                    AccountEntry.TABLE_NAME + " ON " + AccountEntry.TABLE_NAME + "." +
-                    AccountEntry.COLUMN_UID + " = " + SplitEntry.TABLE_NAME + "." +
-                    SplitEntry.COLUMN_ACCOUNT_UID,
-            arrayOf<String?>(AccountEntry.TABLE_NAME + ".*"),
-            TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_MODIFIED_AT + " > ?",
-            arrayOf<String?>(getUtcStringFromTimestamp(lastExportTimeStamp)),
-            AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_UID,
-            null,
-            null
-        )
+        val table = TransactionEntry.TABLE_NAME + " t, " + SplitEntry.TABLE_NAME + " s ON " +
+                "t." + TransactionEntry.COLUMN_UID + " = " +
+                "s." + SplitEntry.COLUMN_TRANSACTION_UID + ", " +
+                AccountEntry.TABLE_NAME + " a ON a." + AccountEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_ACCOUNT_UID
+        val columns = arrayOf<String?>("a.*")
+        val selection = "t." + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
+        val selectionArgs = arrayOf<String?>(getUtcStringFromTimestamp(lastExportTimeStamp))
+        val groupBy = "a." + AccountEntry.COLUMN_UID
+        val orderBy = "a." + AccountEntry.COLUMN_FULL_NAME
+        val cursor = db.query(table, columns, selection, selectionArgs, groupBy, null, orderBy)
         return getRecords(cursor)
     }
 
@@ -591,14 +587,14 @@ class AccountsDbAdapter(
      * @param accountType Type to assign to all accounts created
      * @return String unique ID of the account at bottom of hierarchy
      */
-    fun createAccountHierarchy(fullName: String?, accountType: AccountType): String? {
+    fun createAccountHierarchy(fullName: String?, accountType: AccountType): String {
         require(!fullName.isNullOrEmpty()) { "Full name required" }
         val tokens = fullName.trim().split(ACCOUNT_NAME_SEPARATOR.toRegex())
             .dropLastWhile { it.isEmpty() }.toTypedArray()
         var uid = rootAccountUID
         var parentName: String? = ""
         val accountsList = ArrayList<Account>()
-        val commodity = commoditiesDbAdapter.getDefaultCommodity()
+        val commodity = commoditiesDbAdapter.defaultCommodity
         for (token in tokens) {
             parentName += token
             val parentUID = findAccountUidByFullName(parentName)
@@ -621,15 +617,14 @@ class AccountsDbAdapter(
         return uid
     }
 
-    val orCreateOpeningBalanceAccountUID: String?
+    val getOrCreateOpeningBalanceAccountUID: String
         /**
          * Returns the unique ID of the opening balance account or creates one if necessary
          *
          * @return String unique ID of the opening balance account
          */
         get() {
-            val openingBalanceAccountName: String? =
-                openingBalanceAccountFullName
+            val openingBalanceAccountName: String? = openingBalanceAccountFullName
             var uid = findAccountUidByFullName(openingBalanceAccountName)
             if (uid == null) {
                 uid = createAccountHierarchy(
@@ -676,7 +671,7 @@ class AccountsDbAdapter(
      *
      * @return [Cursor] to all account records
      */
-    override fun fetchAllRecords(): Cursor? {
+    override fun fetchAllRecords(): Cursor {
         Timber.v("Fetching all accounts from db")
         val where = AccountEntry.COLUMN_HIDDEN + " = 0 AND " + AccountEntry.COLUMN_TYPE + " != ?"
         val whereArgs = arrayOf<String?>(AccountType.ROOT.name)
@@ -693,7 +688,7 @@ class AccountsDbAdapter(
      * @param orderBy   orderBy clause
      * @return Cursor set of accounts which fulfill `where`
      */
-    fun fetchAccounts(where: String?, whereArgs: Array<String?>?, orderBy: String? = null): Cursor? {
+    fun fetchAccounts(where: String?, whereArgs: Array<String?>?, orderBy: String? = null): Cursor {
         var orderBy = orderBy
         if (orderBy.isNullOrEmpty()) {
             orderBy = AccountEntry.COLUMN_NAME + " ASC"
@@ -896,8 +891,7 @@ class AccountsDbAdapter(
                 val childCommodity = child!!.commodity
                 var childBalance = computeBalance(child, startTimestamp, endTimestamp, true)
                 if (childBalance.isAmountZero) continue
-                val price = pricesDbAdapter.getPrice(childCommodity, commodity)
-                if (price == null) continue
+                val price = pricesDbAdapter.getPrice(childCommodity, commodity) ?: continue
                 balance += childBalance * price
             }
         }
@@ -984,8 +978,7 @@ class AccountsDbAdapter(
             for (account in accounts) {
                 var accountBalance = getAccountBalance(account, startTimestamp, endTimestamp, false)
                 if (accountBalance.isAmountZero) continue
-                val price = pricesDbAdapter.getPrice(accountBalance.commodity, currency)
-                if (price == null) continue
+                val price = pricesDbAdapter.getPrice(accountBalance.commodity, currency) ?: continue
                 balance += accountBalance * price
             }
         } else {
@@ -993,8 +986,7 @@ class AccountsDbAdapter(
             for (account in accounts) {
                 var accountBalance = balances[account.uid]
                 if ((accountBalance == null) || accountBalance.isAmountZero) continue
-                val price = pricesDbAdapter.getPrice(accountBalance.commodity, currency)
-                if (price == null) continue
+                val price = pricesDbAdapter.getPrice(accountBalance.commodity, currency) ?: continue
                 balance += accountBalance * price
             }
         }
@@ -1026,24 +1018,18 @@ class AccountsDbAdapter(
 
         accountsLevel.add(accountUID)
         do {
-            val cursor: Cursor? = db.query(
+            val accountsLevelIn = accountsLevel.joinIn()
+            accountsLevel.clear()
+            db.query(
                 tableName,
                 projection,
-                AccountEntry.COLUMN_PARENT_ACCOUNT_UID + " IN " + accountsLevel.joinIn() + whereAnd,
+                AccountEntry.COLUMN_PARENT_ACCOUNT_UID + " IN " + accountsLevelIn + whereAnd,
                 whereArgs,
                 null,
                 null,
                 AccountEntry.COLUMN_FULL_NAME
-            )
-            accountsLevel.clear()
-            if (cursor != null && cursor.moveToFirst()) {
-                try {
-                    do {
-                        accountsLevel.add(cursor.getString(columnIndexUID))
-                    } while (cursor.moveToNext())
-                } finally {
-                    cursor.close()
-                }
+            ).forEach { cursor ->
+                accountsLevel.add(cursor.getString(columnIndexUID))
             }
             accounts.addAll(accountsLevel)
         } while (!accountsLevel.isEmpty())
@@ -1056,7 +1042,7 @@ class AccountsDbAdapter(
         val columnIndexUID = 0
         val where = AccountEntry.COLUMN_PARENT_ACCOUNT_UID + "=?"
         val whereArgs = arrayOf<String?>(accountUID)
-        val cursor = db.query(
+        db.query(
             tableName,
             projection,
             where,
@@ -1064,15 +1050,8 @@ class AccountsDbAdapter(
             null,
             null,
             AccountEntry.COLUMN_ID
-        )
-        try {
-            if (cursor.moveToFirst()) {
-                do {
-                    accounts.add(cursor.getString(columnIndexUID))
-                } while (cursor.moveToNext())
-            }
-        } finally {
-            cursor.close()
+        ).forEach { cursor ->
+            accounts.add(cursor.getString(columnIndexUID))
         }
         return accounts
     }
@@ -1190,7 +1169,7 @@ class AccountsDbAdapter(
             if (uid != null) {
                 return uid
             }
-            val where = AccountEntry.COLUMN_TYPE + "=?"
+            val where = AccountEntry.COLUMN_TYPE + "=? AND " + AccountEntry.COLUMN_TEMPLATE + "=0"
             val whereArgs = arrayOf<String?>(AccountType.ROOT.name)
             val cursor = fetchAccounts(where, whereArgs, null)
             if (cursor != null) {
@@ -1205,7 +1184,7 @@ class AccountsDbAdapter(
                 }
             }
             // No ROOT exits, create a new one
-            val commodity = commoditiesDbAdapter.getDefaultCommodity()
+            val commodity = commoditiesDbAdapter.defaultCommodity
             val rootAccount = Account(ROOT_ACCOUNT_NAME, commodity)
             rootAccount.accountType = AccountType.ROOT
             rootAccount.fullName = ROOT_ACCOUNT_FULL_NAME
@@ -1410,10 +1389,10 @@ class AccountsDbAdapter(
                 transaction.note = account.name
                 transaction.commodity = account.commodity
                 val transactionType = getTypeForBalance(account.accountType, balance.isNegative)
-                val split = Split(balance, account.uid)
+                val split = Split(balance, account)
                 split.type = transactionType
                 transaction.addSplit(split)
-                transaction.addSplit(split.createPair(this.orCreateOpeningBalanceAccountUID))
+                transaction.addSplit(split.createPair(getOrCreateOpeningBalanceAccountUID))
                 transaction.isExported = true
                 openingTransactions.add(transaction)
             }
@@ -1456,23 +1435,10 @@ class AccountsDbAdapter(
      */
     val commoditiesInUse: List<Commodity>
         get() {
-            val accountCommodities = mutableSetOf<Commodity>()
-            val columns = arrayOf<String?>(AccountEntry.COLUMN_COMMODITY_UID)
-            val where = AccountEntry.COLUMN_TEMPLATE + " = 0"
-            val cursor = db.query(true, tableName, columns, where, null, null, null, null, null)
-            try {
-                if (cursor.moveToFirst()) {
-                    do {
-                        val commodityUID = cursor.getString(0)
-                        accountCommodities.add(commoditiesDbAdapter.getRecord(commodityUID))
-                    } while (cursor.moveToNext())
-                }
-            } finally {
-                cursor.close()
-            }
-            val commodities = accountCommodities.toMutableList()
-            commodities.sortWith { o1, o2 -> o1.id.compareTo(o2.id) }
-            return commodities
+            return allRecords.filter { !it.isTemplate }
+                .map { it.commodity }
+                .distinctBy { it.uid }
+                .sortedBy { it.id }
         }
 
     val commoditiesInUseCount: Long

@@ -158,7 +158,7 @@ class GnuCashApplication : Application() {
             scheduledEventDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter!!, transactionDbAdapter!!)
             budgetAmountsDbAdapter = BudgetAmountsDbAdapter(dbHolder)
             budgetDbAdapter = BudgetsDbAdapter(budgetAmountsDbAdapter!!, recurrenceDbAdapter!!)
-            Commodity.DEFAULT_COMMODITY = commoditiesDbAdapter!!.getDefaultCommodity()
+            Commodity.DEFAULT_COMMODITY = commoditiesDbAdapter!!.defaultCommodity
         }
 
         private fun destroyDatabaseAdapters() {
