@@ -39,6 +39,7 @@ import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.Transaction.Companion.computeBalance
+import org.gnucash.android.util.TimestampHelper
 import org.gnucash.android.util.TimestampHelper.getTimestampFromUtcString
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import org.gnucash.android.util.TimestampHelper.timestampFromNow
@@ -340,7 +341,7 @@ class TransactionsDbAdapter(
         where: String?,
         whereArgs: Array<String?>?,
         orderBy: String?
-    ): Cursor? {
+    ): Cursor {
         val table = TransactionEntry.TABLE_NAME + " t, " + SplitEntry.TABLE_NAME + " s" +
                 " ON t." + TransactionEntry.COLUMN_UID +
                 " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
@@ -354,17 +355,14 @@ class TransactionsDbAdapter(
      * @param timestamp Timestamp in milliseconds (since Epoch)
      * @return Cursor to the results
      */
-    fun fetchTransactionsModifiedSince(timestamp: Timestamp): Cursor? {
-        val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.tables = TransactionEntry.TABLE_NAME
-        val where =
-            TransactionEntry.COLUMN_TEMPLATE + "=0 AND " + TransactionEntry.COLUMN_TIMESTAMP + " >= ?"
-        val whereArgs = arrayOf<String?>(timestamp.getTime().toString())
-        val orderBy =
-            TransactionEntry.COLUMN_TIMESTAMP + " ASC, " +
+    fun fetchTransactionsModifiedSince(timestamp: Timestamp?): Cursor {
+        val where = TransactionEntry.COLUMN_TEMPLATE + " = 0 AND " +
+                TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
+        val whereArgs = arrayOf<String?>(getUtcStringFromTimestamp(timestamp))
+        val orderBy = TransactionEntry.COLUMN_TIMESTAMP + " ASC, " +
                     TransactionEntry.COLUMN_NUMBER + " ASC, " +
                     TransactionEntry.COLUMN_ID + " ASC"
-        return queryBuilder.query(db, null, where, whereArgs, null, null, orderBy, null)
+        return fetchAllRecords(where, whereArgs, orderBy)
     }
 
     fun fetchTransactionsWithSplitsWithTransactionAccount(

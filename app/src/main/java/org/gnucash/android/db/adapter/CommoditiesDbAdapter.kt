@@ -118,7 +118,7 @@ class CommoditiesDbAdapter(
         return commodity
     }
 
-    override fun fetchAllRecords(): Cursor? {
+    override fun fetchAllRecords(): Cursor {
         return fetchAllRecords(CommodityEntry.COLUMN_MNEMONIC + " ASC")
     }
 
@@ -128,7 +128,7 @@ class CommoditiesDbAdapter(
      * @param orderBy SQL statement for orderBy without the ORDER_BY itself
      * @return Cursor holding all commodity records
      */
-    fun fetchAllRecords(orderBy: String?): Cursor? {
+    fun fetchAllRecords(orderBy: String?): Cursor {
         return db.query(tableName, null, null, null, null, null, orderBy)
     }
 

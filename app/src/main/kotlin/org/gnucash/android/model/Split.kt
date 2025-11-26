@@ -85,6 +85,7 @@ class Split : BaseModel, Parcelable {
     constructor(value: Money, quantity: Money, accountUID: String?) {
         this.value = value
         this.quantity = quantity
+        this.type = if (value.isNegative) TransactionType.CREDIT else TransactionType.DEBIT
         this.accountUID = accountUID
     }
 
@@ -99,7 +100,7 @@ class Split : BaseModel, Parcelable {
      * as both the value and the quantity of this split.
      * @param accountUID String UID of owning account
      */
-    constructor(amount: Money, accountUID: String?) : this(amount, Money(amount), accountUID)
+    constructor(amount: Money, accountUID: String?) : this(amount, amount, accountUID)
 
     /**
      * Clones the `sourceSplit` to create a new instance with same fields

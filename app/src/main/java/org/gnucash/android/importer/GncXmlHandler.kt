@@ -171,10 +171,6 @@ class GncXmlHandler(
     private val listener: GncProgressListener? = null,
     private val cancellationSignal: CancellationSignal = CancellationSignal()
 ) : DefaultHandler(), Closeable {
-    /**
-     * Adapter for saving the imported accounts
-     */
-    private var accountsDbAdapter: AccountsDbAdapter? = null
 
     /**
      * StringBuilder for accumulating characters between XML tags
@@ -245,12 +241,6 @@ class GncXmlHandler(
     private var budgetPeriod: Long? = null
 
     /**
-     * Flag which says to ignore template transactions until we successfully parse a split amount
-     * Is updated for each transaction template split parsed
-     */
-    private var ignoreTemplateTransaction = true
-
-    /**
      * Flag which notifies the handler to ignore a scheduled action because some error occurred during parsing
      */
     private var ignoreScheduledAction = false
@@ -264,11 +254,12 @@ class GncXmlHandler(
     private var recurrencePeriod: Long = 0
 
     private val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.instance
-    private var transactionsDbAdapter: TransactionsDbAdapter? = null
-    private var scheduledActionsDbAdapter: ScheduledActionDbAdapter? = null
-    private var commoditiesDbAdapter: CommoditiesDbAdapter? = null
-    private var pricesDbAdapter: PricesDbAdapter? = null
-    private var budgetsDbAdapter: BudgetsDbAdapter? = null
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
+    private lateinit var scheduledActionsDbAdapter: ScheduledActionDbAdapter
+    private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
+    private lateinit var pricesDbAdapter: PricesDbAdapter
+    private lateinit var budgetsDbAdapter: BudgetsDbAdapter
     private val currencyCount = mutableMapOf<String, Int>()
 
     /**
@@ -301,27 +292,27 @@ class GncXmlHandler(
         val holder = databaseHelper.holder
         this.holder = holder
         commoditiesDbAdapter = CommoditiesDbAdapter(holder)
-        pricesDbAdapter = PricesDbAdapter(commoditiesDbAdapter!!)
-        transactionsDbAdapter = TransactionsDbAdapter(commoditiesDbAdapter!!)
-        accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter!!, pricesDbAdapter!!)
+        pricesDbAdapter = PricesDbAdapter(commoditiesDbAdapter)
+        transactionsDbAdapter = TransactionsDbAdapter(commoditiesDbAdapter)
+        accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter, pricesDbAdapter)
         val recurrenceDbAdapter = RecurrenceDbAdapter(holder)
-        scheduledActionsDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter!!)
+        scheduledActionsDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
         budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
 
         Timber.d("before clean up db")
         // disable foreign key. The database structure should be ensured by the data inserted.
         // it will make insertion much faster.
-        accountsDbAdapter!!.enableForeignKey(false)
+        accountsDbAdapter.enableForeignKey(false)
 
         recurrenceDbAdapter.deleteAllRecords()
-        budgetsDbAdapter!!.deleteAllRecords()
-        pricesDbAdapter!!.deleteAllRecords()
-        scheduledActionsDbAdapter!!.deleteAllRecords()
-        transactionsDbAdapter!!.deleteAllRecords()
-        accountsDbAdapter!!.deleteAllRecords()
+        budgetsDbAdapter.deleteAllRecords()
+        pricesDbAdapter.deleteAllRecords()
+        scheduledActionsDbAdapter.deleteAllRecords()
+        transactionsDbAdapter.deleteAllRecords()
+        accountsDbAdapter.deleteAllRecords()
 
         commodities.clear()
-        val commoditiesDb = commoditiesDbAdapter!!.allRecords
+        val commoditiesDb = commoditiesDbAdapter.allRecords
         for (commodity in commoditiesDb) {
             commodities[commodity.key] = commodity
         }
@@ -469,12 +460,12 @@ class GncXmlHandler(
             if (currencyUID == null) continue
             var imbAccount = imbalanceAccounts[currencyUID]
             if (imbAccount == null) {
-                val commodity = commoditiesDbAdapter!!.getRecord(currencyUID)
+                val commodity = commoditiesDbAdapter.getRecord(currencyUID)
                 imbAccount = Account(imbalancePrefix + commodity.currencyCode, commodity)
                 imbAccount.parentUID = rootAccount!!.uid
                 imbAccount.accountType = AccountType.BANK
                 imbalanceAccounts[currencyUID] = imbAccount
-                accountsDbAdapter!!.insert(imbAccount)
+                accountsDbAdapter.insert(imbAccount)
                 listener?.onAccount(imbAccount)
             }
             split.accountUID = imbAccount.uid
@@ -489,7 +480,7 @@ class GncXmlHandler(
             }
         }
         if (mostCurrencyAppearance > 0) {
-            commoditiesDbAdapter!!.setDefaultCurrencyCode(mostAppearedCurrency)
+            commoditiesDbAdapter.setDefaultCurrencyCode(mostAppearedCurrency)
         }
 
         saveToDatabase()
@@ -503,7 +494,7 @@ class GncXmlHandler(
      * We on purpose do not set the book active. Only import. Caller should handle activation
      */
     private fun saveToDatabase() {
-        accountsDbAdapter!!.enableForeignKey(true)
+        accountsDbAdapter.enableForeignKey(true)
         maybeClose() //close it after import
     }
 
@@ -615,7 +606,7 @@ class GncXmlHandler(
                 accounts.add(account)
                 listener?.onAccount(account)
             }
-            accountsDbAdapter!!.insert(account)
+            accountsDbAdapter.insert(account)
             accountMap[account.uid] = account
             // prepare for next input
             this.account = null
@@ -675,7 +666,7 @@ class GncXmlHandler(
         val budget = budget ?: return
         if (!budget.budgetAmounts.isEmpty()) { //ignore if no budget amounts exist for the budget
             // TODO: 01.06.2016 Re-enable import of Budget stuff when the UI is complete */
-            budgetsDbAdapter!!.insert(budget)
+            budgetsDbAdapter.insert(budget)
             listener?.onBudget(budget)
         }
         this.budget = null
@@ -701,7 +692,7 @@ class GncXmlHandler(
             var commodity = getCommodity(commodity)
             if (commodity == null) {
                 commodity = this.commodity
-                commoditiesDbAdapter!!.insert(commodity!!)
+                commoditiesDbAdapter.insert(commodity!!)
                 commodities[commodity.key] = commodity
             }
             listener?.onCommodity(commodity)
@@ -762,10 +753,13 @@ class GncXmlHandler(
                 val tagParent = elementParent.localName
 
                 if (NS_TRANSACTION == uriParent) {
+                    val transaction = transaction!!
+                    val timestamp = Timestamp(date)
                     when (tagParent) {
-                        TAG_DATE_ENTERED -> transaction!!.createdTimestamp = Timestamp(date)
-                        TAG_DATE_POSTED -> transaction!!.time = date
+                        TAG_DATE_ENTERED -> transaction.createdTimestamp = timestamp
+                        TAG_DATE_POSTED -> transaction.time = date
                     }
+                    transaction.modifiedTimestamp = timestamp
                 } else if (NS_PRICE == uriParent) {
                     if (TAG_TIME == tagParent) {
                         price!!.date = date
@@ -960,7 +954,7 @@ class GncXmlHandler(
     private fun handleEndPrice() {
         val price = price
         if (price != null) {
-            pricesDbAdapter!!.insert(price)
+            pricesDbAdapter.insert(price)
             listener?.onPrice(price)
         }
         this.price = null
@@ -1011,13 +1005,13 @@ class GncXmlHandler(
                 // TODO: implement parsing of by days for scheduled actions
                 setMinimalScheduledActionByDays()
             }
-            scheduledActionsDbAdapter!!.insert(scheduledAction)
+            scheduledActionsDbAdapter.insert(scheduledAction)
             listener?.onSchedule(scheduledAction)
             if (scheduledAction.actionType == ScheduledAction.ActionType.TRANSACTION) {
                 val transactionUID = scheduledAction.actionUID
                 val txValues = ContentValues()
                 txValues[TransactionEntry.COLUMN_SCHEDX_ACTION_UID] = scheduledAction.uid
-                transactionsDbAdapter!!.updateRecord(transactionUID!!, txValues)
+                transactionsDbAdapter.updateRecord(transactionUID!!, txValues)
             }
             this.scheduledAction = null
         }
@@ -1107,7 +1101,6 @@ class GncXmlHandler(
 
                 split.value = Money(value, commodity)
                 split.type = splitType
-                ignoreTemplateTransaction = false //we have successfully parsed an amount
             }
         } catch (e: NumberFormatException) {
             Timber.e(e, "Error parsing template split formula [%s]", value)
@@ -1137,7 +1130,6 @@ class GncXmlHandler(
 
                 split.value = Money(splitAmount, commodity)
                 split.type = splitType
-                ignoreTemplateTransaction = false //we have successfully parsed an amount
             }
         } catch (e: NumberFormatException) {
             Timber.e(e, "Error parsing template split numeric [%s]", value)
@@ -1189,29 +1181,28 @@ class GncXmlHandler(
     }
 
     private fun handleEndTransaction() {
-        transaction!!.isTemplate = isInTemplates
-        val imbSplit = transaction!!.createAutoBalanceSplit()
+        val transaction = this.transaction!!
+        val imbSplit = transaction.createAutoBalanceSplit()
         if (imbSplit != null) {
             autoBalanceSplits.add(imbSplit)
         }
         if (isInTemplates) {
-            if (!ignoreTemplateTransaction) {
-                transactionsDbAdapter!!.insert(transaction!!)
-            }
+            transaction.isTemplate = true
         } else {
-            transactionsDbAdapter!!.insert(transaction!!)
-            listener?.onTransaction(transaction!!)
+            listener?.onTransaction(transaction)
+        }
+        if (transaction.splits.isNotEmpty()) {
+            transactionsDbAdapter.insert(transaction)
         }
         if (recurrencePeriod > 0) { //if we find an old format recurrence period, parse it
-            transaction!!.isTemplate = true
+            transaction.isTemplate = true
             val scheduledAction =
-                ScheduledAction.parseScheduledAction(transaction!!, recurrencePeriod)
-            scheduledActionsDbAdapter!!.insert(scheduledAction)
+                ScheduledAction.parseScheduledAction(transaction, recurrencePeriod)
+            scheduledActionsDbAdapter.insert(scheduledAction)
             listener?.onSchedule(scheduledAction)
         }
         recurrencePeriod = 0
-        ignoreTemplateTransaction = true
-        transaction = null
+        this.transaction = null
     }
 
     private fun handleEndType(uri: String, type: String) {
