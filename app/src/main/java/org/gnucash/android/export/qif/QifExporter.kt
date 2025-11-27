@@ -107,7 +107,6 @@ class QifExporter(
     @Throws(ExporterException::class, IOException::class)
     // TODO write each commodity to separate file here, instead of splitting the file afterwards.
     override fun writeExport(writer: Writer, exportParams: ExportParams) {
-        val lastExportTimeStamp = exportParams.exportStartTime.time.toString()
         val transactionsDbAdapter = transactionsDbAdapter
 
         val accounts = accountsDbAdapter.simpleAccounts.associateBy(Account::uid)
@@ -140,9 +139,12 @@ class QifExporter(
                     "(" + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_UID + " != account1." + AccountEntry.COLUMN_UID + " OR " +
                     // or if the transaction has only one split (the whole transaction would be lost if it is not selected)
                     "trans_split_count == 1)" +
-                    " AND " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_TIMESTAMP + " >= ?"
+                    " AND " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
         // trans_uid ASC  : put splits from the same transaction together
         // trans_time ASC : put transactions in time order
+        val whereArgs = arrayOf<String?>(
+            TimestampHelper.getUtcStringFromTimestamp(exportParams.exportStartTime)
+        )
         val orderBy = "acct1_uid ASC, trans_time ASC, trans_num ASC, trans_id ASC, split_id ASC"
 
         var cursor: Cursor? = null
@@ -150,7 +152,7 @@ class QifExporter(
             cursor = transactionsDbAdapter.fetchTransactionsWithSplitsWithTransactionAccount(
                 projection,
                 where,
-                arrayOf(lastExportTimeStamp),
+                whereArgs,
                 orderBy
             )
             if ((cursor == null) || !cursor.moveToFirst()) return

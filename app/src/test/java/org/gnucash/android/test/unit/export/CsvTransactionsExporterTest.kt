@@ -105,8 +105,7 @@ class CsvTransactionsExporterTest : BookHelperTest() {
             .replace("1,0753", "1 + 7/93")
             .replace("0,0067", "888/133253")
 
-        val expectedBytes = openResourceStream("expected.common_1.de.csv").readAllBytes()
-        val expected = String(expectedBytes, StandardCharsets.UTF_8)
+        val expected = readFile("expected.common_1.de.csv")
         assertThat(actual).isEqualTo(expected)
     }
 }

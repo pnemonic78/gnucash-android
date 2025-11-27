@@ -296,7 +296,7 @@ class TransactionsDbAdapter(
         where: String?,
         whereArgs: Array<String?>?,
         orderBy: String?
-    ): Cursor? {
+    ): Cursor {
         val table = TransactionEntry.TABLE_NAME + " t, " + SplitEntry.TABLE_NAME + " s" +
                 " ON t." + TransactionEntry.COLUMN_UID +
                 " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
@@ -310,15 +310,14 @@ class TransactionsDbAdapter(
      * @param timestamp Timestamp in milliseconds (since Epoch)
      * @return Cursor to the results
      */
-    fun fetchTransactionsModifiedSince(timestamp: Timestamp): Cursor? {
-        val where =
-            TransactionEntry.COLUMN_TEMPLATE + "=0 AND " + TransactionEntry.COLUMN_TIMESTAMP + " >= ?"
-        val whereArgs = arrayOf<String?>(timestamp.getTime().toString())
-        val orderBy =
-            TransactionEntry.COLUMN_TIMESTAMP + " ASC, " +
+    fun fetchTransactionsModifiedSince(timestamp: Timestamp?): Cursor {
+        val where = TransactionEntry.COLUMN_TEMPLATE + " = 0 AND " +
+                TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
+        val whereArgs = arrayOf<String?>(getUtcStringFromTimestamp(timestamp))
+        val orderBy = TransactionEntry.COLUMN_TIMESTAMP + " ASC, " +
                     TransactionEntry.COLUMN_NUMBER + " ASC, " +
                     TransactionEntry.COLUMN_ID + " ASC"
-        return db.query(tableName, null, where, whereArgs, null, null, orderBy, null)
+        return fetchAllRecords(where, whereArgs, orderBy)
     }
 
     fun fetchTransactionsWithSplitsWithTransactionAccount(
@@ -393,9 +392,9 @@ class TransactionsDbAdapter(
      * @param accountUID     GUID of the account
      * @return [Money] balance of the transaction for that account
      */
-    fun getBalance(transactionUID: String, accountUID: String): Money {
+    fun getBalance(transactionUID: String, accountUID: String, display: Boolean): Money {
         val splits = splitsDbAdapter.getSplitsForTransactionInAccount(transactionUID, accountUID)
-        return computeBalance(accountUID, splits)
+        return computeBalance(accountUID, splits, display)
     }
 
     /**

@@ -20,6 +20,7 @@ import com.opencsv.CSVWriterBuilder
 import com.opencsv.ICSVWriter
 import com.opencsv.ICSVWriter.RFC4180_LINE_END
 import org.gnucash.android.R
+import org.gnucash.android.db.forEach
 import org.gnucash.android.export.ExportParams
 import org.gnucash.android.export.Exporter
 import org.gnucash.android.gnc.GncProgressListener
@@ -62,6 +63,7 @@ class CsvTransactionsExporter(
             .build()
         writeExport(csvWriter)
         csvWriter.close()
+        setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
     }
 
     private fun writeSplitsToCsv(writer: ICSVWriter, fields: Array<String>, splits: List<Split>) {
@@ -106,20 +108,13 @@ class CsvTransactionsExporter(
         writer.writeNext(headers)
 
         val cursor =
-            transactionsDbAdapter.fetchTransactionsModifiedSince(exportParams.exportStartTime)!!
+            transactionsDbAdapter.fetchTransactionsModifiedSince(exportParams.exportStartTime)
         Timber.d("Exporting %d transactions to CSV", cursor.count)
         val fields = Array<String>(headers.size) { "" }
-        try {
-            if (cursor.moveToFirst()) {
-                do {
-                    cancellationSignal.throwIfCanceled()
-                    val transaction = transactionsDbAdapter.buildModelInstance(cursor)
-                    writeTransaction(writer, fields, transaction)
-                } while (cursor.moveToNext());
-            }
-            setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
-        } finally {
-            cursor.close()
+        cursor.forEach { cursor->
+            cancellationSignal.throwIfCanceled()
+            val transaction = transactionsDbAdapter.buildModelInstance(cursor)
+            writeTransaction(writer, fields, transaction)
         }
     }
 
