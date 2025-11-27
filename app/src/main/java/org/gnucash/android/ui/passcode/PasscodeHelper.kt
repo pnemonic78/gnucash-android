@@ -3,7 +3,7 @@ package org.gnucash.android.ui.passcode
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.SystemClock
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import android.text.format.DateUtils
 import androidx.core.content.edit
 import org.gnucash.android.ui.common.UxArgument

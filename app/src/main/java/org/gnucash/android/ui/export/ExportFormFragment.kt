@@ -19,10 +19,11 @@ import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -314,7 +315,8 @@ class ExportFormFragment : MenuFragment(),
         val bookUID = activeBookUID ?: return
         val position = binding.spinnerExportDestination.selectedItemPosition
 
-        ExportAsyncTask(requireActivity(), bookUID) { bookUri ->
+        val activity: Context = requireActivity()
+        ExportAsyncTask(activity, bookUID) { bookUri ->
             if (bookUri != null) {
                 PreferenceManager.getDefaultSharedPreferences(activity).edit {
                     putInt(getString(R.string.key_last_export_destination), position)

@@ -17,7 +17,7 @@ package org.gnucash.android.test.ui
 
 import android.Manifest
 import android.content.Intent
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import android.view.View
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView

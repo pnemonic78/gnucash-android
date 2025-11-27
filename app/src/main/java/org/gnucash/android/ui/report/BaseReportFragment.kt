@@ -20,7 +20,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.AsyncTask
 import android.os.Bundle
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -282,8 +282,9 @@ abstract class BaseReportFragment : MenuFragment(),
 
     override fun refresh() {
         generatorTask?.cancel(true)
-        generatorTask = GeneratorTask(reportsActivity)
-        generatorTask!!.execute()
+        val task = GeneratorTask(reportsActivity)
+        generatorTask = task
+        task.execute()
     }
 
     /**

@@ -22,7 +22,7 @@ import android.content.pm.ResolveInfo
 import android.database.SQLException
 import android.net.Uri
 import android.os.CancellationSignal
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import android.text.format.DateUtils
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
