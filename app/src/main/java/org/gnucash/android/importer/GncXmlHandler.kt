@@ -171,7 +171,6 @@ class GncXmlHandler(
     private val listener: GncProgressListener? = null,
     private val cancellationSignal: CancellationSignal = CancellationSignal()
 ) : DefaultHandler(), Closeable {
-
     /**
      * StringBuilder for accumulating characters between XML tags
      */
@@ -291,7 +290,7 @@ class GncXmlHandler(
         val databaseHelper = DatabaseHelper(context, bookUID)
         val holder = databaseHelper.holder
         this.holder = holder
-        commoditiesDbAdapter = CommoditiesDbAdapter(holder)
+        commoditiesDbAdapter = CommoditiesDbAdapter(holder, true)
         pricesDbAdapter = PricesDbAdapter(commoditiesDbAdapter)
         transactionsDbAdapter = TransactionsDbAdapter(commoditiesDbAdapter)
         accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter, pricesDbAdapter)
@@ -456,8 +455,7 @@ class GncXmlHandler(
         // Set the account for created balancing splits to correct imbalance accounts
         for (split in autoBalanceSplits) {
             // XXX: yes, getAccountUID() returns a currency UID in this case (see Transaction.createAutoBalanceSplit())
-            val currencyUID = split.accountUID
-            if (currencyUID == null) continue
+            val currencyUID = split.accountUID ?: continue
             var imbAccount = imbalanceAccounts[currencyUID]
             if (imbAccount == null) {
                 val commodity = commoditiesDbAdapter.getRecord(currencyUID)
@@ -535,12 +533,9 @@ class GncXmlHandler(
      * @return Commodity of the account
      */
     private fun getCommodityForAccount(accountUID: String): Commodity {
-        try {
-            return accountMap[accountUID]!!.commodity
-        } catch (e: Exception) {
-            Timber.e(e)
-            return Commodity.DEFAULT_COMMODITY
-        }
+        return accountMap[accountUID]?.commodity
+            ?: commoditiesDbAdapter?.defaultCommodity
+            ?: Commodity.DEFAULT_COMMODITY
     }
 
     /**
@@ -598,7 +593,7 @@ class GncXmlHandler(
                         throw SAXException("Multiple ROOT accounts exist in book")
                     }
                 } else if (rootAccount == null) {
-                    account = Account(AccountsDbAdapter.ROOT_ACCOUNT_NAME)
+                    account = Account(AccountsDbAdapter.ROOT_ACCOUNT_NAME, commoditiesDbAdapter.defaultCommodity)
                     rootAccount = account
                     rootAccount!!.accountType = AccountType.ROOT
                     importedBook.rootAccountUID = account.uid
@@ -684,7 +679,7 @@ class GncXmlHandler(
                 account.commodity = commodity
                 if (commodity.isCurrency) {
                     val currencyId = commodity.currencyCode
-                    var count = currencyCount[currencyId] ?: 0
+                    val count = currencyCount[currencyId] ?: 0
                     currencyCount[currencyId] = count + 1
                 }
             }
@@ -866,8 +861,7 @@ class GncXmlHandler(
 
             if (budget != null && KEY_NOTES != key) {
                 if (budgetAccount == null) {
-                    val accountUID: String? = key
-                    val account = accountMap[accountUID]
+                    val account = accountMap[key]
                     if (account != null) {
                         budgetAccount = account
                     }
@@ -1312,7 +1306,7 @@ class GncXmlHandler(
     private fun handleStartAccount(uri: String) {
         if (NS_GNUCASH == uri) {
             // dummy name, will be replaced when we find name tag
-            account = Account("")
+            account = Account("", commoditiesDbAdapter.defaultCommodity)
         }
     }
 

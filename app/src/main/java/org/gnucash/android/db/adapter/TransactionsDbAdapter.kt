@@ -80,7 +80,8 @@ class TransactionsDbAdapter(
      *
      * @param holder Database holder
      */
-    constructor(holder: DatabaseHolder) : this(SplitsDbAdapter(holder))
+    constructor(holder: DatabaseHolder) :
+            this(SplitsDbAdapter(holder))
 
     constructor(commoditiesDbAdapter: CommoditiesDbAdapter) :
             this(SplitsDbAdapter(commoditiesDbAdapter))
@@ -487,9 +488,11 @@ class TransactionsDbAdapter(
      */
     fun getTransactionsCount(accountUID: String): Int {
         val cursor = fetchAllTransactionsForAccount(accountUID) ?: return 0
-        var count = cursor.count
-        cursor.close()
-        return count
+        return try {
+            cursor.count
+        } finally {
+            cursor.close()
+        }
     }
 
     /**
@@ -573,7 +576,7 @@ class TransactionsDbAdapter(
      *
      * @param contentValues Values with which to update the record
      * @param whereClause   Conditions for updating formatted as SQL where statement
-     * @param whereArgs     Arguments for the SQL wehere statement
+     * @param whereArgs     Arguments for the SQL where statement
      * @return Number of records affected
      */
     fun updateTransaction(
@@ -720,7 +723,7 @@ class TransactionsDbAdapter(
                 + " = s2." + SplitEntry.COLUMN_TRANSACTION_UID
                 )
         val columns = arrayOf<String?>("t.*")
-        val selection = "(s1._id < s2._id) AND $where"
+        val selection = "(s1.${SplitEntry.COLUMN_ID} < s2.${SplitEntry.COLUMN_ID}) AND $where"
         val orderBy = "t." + TransactionEntry.COLUMN_TIMESTAMP + " DESC, " +
                 "t." + TransactionEntry.COLUMN_NUMBER + " DESC, " +
                 "t." + TransactionEntry.COLUMN_ID + " DESC"
