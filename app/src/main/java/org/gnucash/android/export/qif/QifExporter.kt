@@ -16,7 +16,6 @@
  */
 package org.gnucash.android.export.qif
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.os.OperationCanceledException
@@ -57,7 +56,6 @@ import org.gnucash.android.model.TransactionType
 import org.gnucash.android.util.FileUtils
 import org.gnucash.android.util.PreferencesHelper.setLastExportTime
 import org.gnucash.android.util.TimestampHelper
-import org.gnucash.android.util.set
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.File
@@ -307,12 +305,6 @@ class QifExporter(
             }
             writer.flush()
             writer.close()
-
-            val contentValues = ContentValues()
-            contentValues[TransactionEntry.COLUMN_EXPORTED] = 1
-            val where = TransactionEntry.COLUMN_TIMESTAMP + " >= ?"
-            val whereArgs = arrayOf<String?>(lastExportTimeStamp)
-            transactionsDbAdapter.updateTransaction(contentValues, where, whereArgs)
 
             /** export successful */
             setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
