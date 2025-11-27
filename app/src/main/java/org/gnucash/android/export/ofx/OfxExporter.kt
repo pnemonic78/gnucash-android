@@ -35,6 +35,7 @@ import org.gnucash.android.export.ofx.OfxHelper.TAG_BANK_ID
 import org.gnucash.android.export.ofx.OfxHelper.TAG_BANK_MESSAGES_V1
 import org.gnucash.android.export.ofx.OfxHelper.TAG_BANK_TRANSACTION_LIST
 import org.gnucash.android.export.ofx.OfxHelper.TAG_CC_ACCOUNT_FROM
+import org.gnucash.android.export.ofx.OfxHelper.TAG_CC_ACCOUNT_TO
 import org.gnucash.android.export.ofx.OfxHelper.TAG_CC_MESSAGES_V1
 import org.gnucash.android.export.ofx.OfxHelper.TAG_CC_STATEMENT_TRANSACTIONS
 import org.gnucash.android.export.ofx.OfxHelper.TAG_CC_STATEMENT_TRANSACTION_RESPONSE
@@ -59,9 +60,10 @@ import org.gnucash.android.export.ofx.OfxHelper.TAG_TRANSACTION_UID
 import org.gnucash.android.export.ofx.OfxHelper.UNSOLICITED_TRANSACTION_ID
 import org.gnucash.android.export.ofx.OfxHelper.formatTime
 import org.gnucash.android.export.ofx.OfxHelper.formattedCurrentTime
+import org.gnucash.android.export.ofx.OfxHelper.isBanking
+import org.gnucash.android.export.ofx.OfxHelper.isCreditCard
 import org.gnucash.android.gnc.GncProgressListener
 import org.gnucash.android.model.Account
-import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
@@ -159,17 +161,12 @@ class OfxExporter(
             throw ExporterException(exportParams, "No accounts to export")
         }
 
-        val accountsBank = accountsWithTransactions.filter {
-            val type = OfxAccountType.of(it.accountType)
-            (type == OfxAccountType.CHECKING) || (type == OfxAccountType.SAVINGS)
-        }
+        val accountsBank = accountsWithTransactions.filter { it.isBanking }
         if (accountsBank.isNotEmpty()) {
             writeBankAccounts(xmlSerializer, accountsBank, modifiedSince)
         }
 
-        val accountsCredit = accountsWithTransactions.filter {
-            it.accountType == AccountType.CREDIT
-        }
+        val accountsCredit = accountsWithTransactions.filter { it.isCreditCard }
         if (accountsCredit.isNotEmpty()) {
             writeCreditAccounts(xmlSerializer, accountsCredit, modifiedSince)
         }
@@ -191,7 +188,7 @@ class OfxExporter(
         accounts.forEach { account ->
             cancellationSignal.throwIfCanceled()
             // Add account details (transactions) to the XML document.
-            writeAccount(xmlSerializer, account, modifiedSince,false)
+            writeAccount(xmlSerializer, account, modifiedSince, false)
         }
 
         xmlSerializer.endTag(null, TAG_STATEMENT_TRANSACTION_RESPONSE)
@@ -396,8 +393,13 @@ class OfxExporter(
             }
         }
         if (transferAccount == account) return
+        val isCreditCard = account.isCreditCard
 
-        xmlSerializer.startTag(null, TAG_BANK_ACCOUNT_TO)
+        if (isCreditCard) {
+            xmlSerializer.startTag(null, TAG_CC_ACCOUNT_TO)
+        } else {
+            xmlSerializer.startTag(null, TAG_BANK_ACCOUNT_TO)
+        }
 
         xmlSerializer.startTag(null, TAG_BANK_ID)
         xmlSerializer.text(APP_ID)
@@ -411,6 +413,10 @@ class OfxExporter(
         xmlSerializer.text(OfxAccountType.of(transferAccount.accountType).value)
         xmlSerializer.endTag(null, TAG_ACCOUNT_TYPE)
 
-        xmlSerializer.endTag(null, TAG_BANK_ACCOUNT_TO)
+        if (isCreditCard) {
+            xmlSerializer.endTag(null, TAG_CC_ACCOUNT_TO)
+        } else {
+            xmlSerializer.endTag(null, TAG_BANK_ACCOUNT_TO)
+        }
     }
 }

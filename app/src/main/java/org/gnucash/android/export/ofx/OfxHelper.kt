@@ -17,6 +17,8 @@ package org.gnucash.android.export.ofx
 
 import android.text.format.DateUtils
 import org.gnucash.android.BuildConfig
+import org.gnucash.android.model.Account
+import org.gnucash.android.model.AccountType
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 import java.util.Locale
@@ -101,6 +103,7 @@ object OfxHelper {
     const val TAG_CC_STATEMENT_TRANSACTIONS: String = "CCSTMTRS"
     // Account from aggregate
     const val TAG_CC_ACCOUNT_FROM: String = "CCACCTFROM"
+    const val TAG_CC_ACCOUNT_TO: String = "CACCTTO"
 
     /**
      * ID which will be used as the bank ID for OFX from this app
@@ -149,5 +152,14 @@ object OfxHelper {
         val sign = if (offsetMillis > 0) "+" else if (offsetMillis < 0) "-" else ""
         val tzName = zone.getShortName(date, Locale.ROOT)
         return formatter.print(date) + "[" + sign + hours + ":" + tzName + "]"
+    }
+
+    val Account.isBanking: Boolean get() {
+        val type = OfxAccountType.of(accountType)
+        return (type == OfxAccountType.CHECKING) || (type == OfxAccountType.SAVINGS)
+    }
+
+    val Account.isCreditCard: Boolean get() {
+        return accountType == AccountType.CREDIT
     }
 }
