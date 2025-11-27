@@ -93,9 +93,13 @@ object OfxHelper {
     const val TAG_STATEMENT_TRANSACTION_RESPONSE: String = "STMTTRNRS"
     const val TAG_CHECK_NUMBER: String = "CHECKNUM"
 
-    //TODO Credit-card-download-response aggregate
-    const val TAG_CC_RESPONSE: String = "CCSTMTRS"
-    //TODO Account from aggregate
+    // Credit Card Message Set Response Messages
+    const val TAG_CC_MESSAGES_V1: String = "CREDITCARDMSGSRSV1"
+    // The credit card download response
+    const val TAG_CC_STATEMENT_TRANSACTION_RESPONSE: String = "CCSTMTTRNRS"
+    // Credit-card-download-response aggregate
+    const val TAG_CC_STATEMENT_TRANSACTIONS: String = "CCSTMTRS"
+    // Account from aggregate
     const val TAG_CC_ACCOUNT_FROM: String = "CCACCTFROM"
 
     /**
