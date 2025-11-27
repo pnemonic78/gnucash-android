@@ -90,6 +90,22 @@ class Split : BaseModel, Parcelable {
     }
 
     /**
+     * Initialize split with a value and quantity amounts and the owning account
+     *
+     * The transaction type is set to CREDIT. The amounts are stored unsigned.
+     *
+     * @param value      Money value amount of this split in the currency of the transaction.
+     * @param quantity   Money value amount of this split in the currency of the
+     * owning account.
+     * @param account The transfer account
+     */
+    constructor(value: Money, quantity: Money, account: Account) : this(
+        value,
+        quantity,
+        account.uid
+    )
+
+    /**
      * Initialize split with a value amount and the owning account
      *
      *
@@ -101,6 +117,19 @@ class Split : BaseModel, Parcelable {
      * @param accountUID String UID of owning account
      */
     constructor(amount: Money, accountUID: String?) : this(amount, amount, accountUID)
+
+    /**
+     * Initialize split with a value amount and the owning account
+     *
+     *
+     * The transaction type is set to CREDIT. The amount is stored unsigned.
+     *
+     * @param amount     Money value amount of this split. Value is always in the
+     * currency the owning transaction. This amount will be assigned
+     * as both the value and the quantity of this split.
+     * @param account The owning account
+     */
+    constructor(amount: Money, account: Account) : this(amount, account.uid)
 
     /**
      * Clones the `sourceSplit` to create a new instance with same fields
@@ -138,13 +167,26 @@ class Split : BaseModel, Parcelable {
      * @return New split pair of current split
      * @see TransactionType.invert
      */
-    fun createPair(accountUID: String?): Split {
+    fun createPair(accountUID: String): Split {
         val pair = Split(value, accountUID)
         pair.type = type.invert()
         pair.memo = memo
         pair.transactionUID = transactionUID
         pair.quantity = quantity
         return pair
+    }
+
+    /**
+     * Creates a split which is a pair of this instance.
+     * A pair split has all the same attributes except that the SplitType is inverted and it belongs
+     * to another account.
+     *
+     * @param account The account
+     * @return New split pair of current split
+     * @see TransactionType.invert
+     */
+    fun createPair(account: Account): Split {
+        return createPair(account.uid)
     }
 
     /**

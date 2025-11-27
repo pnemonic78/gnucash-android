@@ -222,33 +222,6 @@ class AccountsDbAdapter(
     }
 
     /**
-     * Marks all transactions for a given account as exported
-     *
-     * @param accountUID Unique ID of the record to be marked as exported
-     * @return Number of records marked as exported
-     */
-    fun markAsExported(accountUID: String): Int {
-        if (isCached) cache.clear()
-        val contentValues = ContentValues()
-        contentValues[TransactionEntry.COLUMN_EXPORTED] = 1
-        return db.update(
-            TransactionEntry.TABLE_NAME,
-            contentValues,
-            (TransactionEntry.COLUMN_UID + " IN ("
-                    + "SELECT DISTINCT " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID
-                    + " FROM " + TransactionEntry.TABLE_NAME + ", " + SplitEntry.TABLE_NAME + " ON "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID + ", "
-                    + AccountEntry.TABLE_NAME + " ON " + SplitEntry.TABLE_NAME + "."
-                    + SplitEntry.COLUMN_ACCOUNT_UID + " = " + AccountEntry.TABLE_NAME + "."
-                    + AccountEntry.COLUMN_UID + " WHERE " + AccountEntry.TABLE_NAME + "."
-                    + AccountEntry.COLUMN_UID + " = ?"
-                    + ")"),
-            arrayOf<String?>(accountUID)
-        )
-    }
-
-    /**
      * This feature goes through all the rows in the accounts and changes value for `columnKey` to `newValue`<br></br>
      * The `newValue` parameter is taken as string since SQLite typically stores everything as text.
      *
@@ -525,7 +498,8 @@ class AccountsDbAdapter(
         val selection = "t." + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
         val selectionArgs = arrayOf<String?>(getUtcStringFromTimestamp(lastExportTimeStamp))
         val groupBy = "a." + AccountEntry.COLUMN_UID
-        val cursor = db.query(table, columns, selection, selectionArgs, groupBy, null, null)
+        val orderBy = "a." + AccountEntry.COLUMN_FULL_NAME
+        val cursor = db.query(table, columns, selection, selectionArgs, groupBy, null, orderBy)
         return getRecords(cursor)
     }
 
@@ -586,7 +560,7 @@ class AccountsDbAdapter(
      * @param accountType Type to assign to all accounts created
      * @return String unique ID of the account at bottom of hierarchy
      */
-    fun createAccountHierarchy(fullName: String?, accountType: AccountType): String? {
+    fun createAccountHierarchy(fullName: String?, accountType: AccountType): String {
         require(!fullName.isNullOrEmpty()) { "Full name required" }
         val tokens = fullName.trim().split(ACCOUNT_NAME_SEPARATOR.toRegex())
             .dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -616,15 +590,14 @@ class AccountsDbAdapter(
         return uid
     }
 
-    val orCreateOpeningBalanceAccountUID: String?
+    val getOrCreateOpeningBalanceAccountUID: String
         /**
          * Returns the unique ID of the opening balance account or creates one if necessary
          *
          * @return String unique ID of the opening balance account
          */
         get() {
-            val openingBalanceAccountName: String? =
-                openingBalanceAccountFullName
+            val openingBalanceAccountName: String? = openingBalanceAccountFullName
             var uid = findAccountUidByFullName(openingBalanceAccountName)
             if (uid == null) {
                 uid = createAccountHierarchy(
@@ -1392,10 +1365,10 @@ class AccountsDbAdapter(
                 transaction.note = account.name
                 transaction.commodity = account.commodity
                 val transactionType = getTypeForBalance(account.accountType, balance.isNegative)
-                val split = Split(balance, account.uid)
+                val split = Split(balance, account)
                 split.type = transactionType
                 transaction.addSplit(split)
-                transaction.addSplit(split.createPair(this.orCreateOpeningBalanceAccountUID))
+                transaction.addSplit(split.createPair(getOrCreateOpeningBalanceAccountUID))
                 transaction.isExported = true
                 openingTransactions.add(transaction)
             }

@@ -63,6 +63,7 @@ class CsvTransactionsExporter(
             .build()
         writeExport(csvWriter)
         csvWriter.close()
+        setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
     }
 
     private fun writeSplitsToCsv(writer: ICSVWriter, fields: Array<String>, splits: List<Split>) {
@@ -115,7 +116,6 @@ class CsvTransactionsExporter(
             val transaction = transactionsDbAdapter.buildModelInstance(cursor)
             writeTransaction(writer, fields, transaction)
         }
-        setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
     }
 
     private fun writeTransaction(
