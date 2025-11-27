@@ -3,7 +3,6 @@ package org.gnucash.android.ui.search
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDate
 import java.math.BigDecimal
-import kotlin.text.isNullOrEmpty
 
 enum class ComparisonType {
     All,
@@ -80,10 +79,10 @@ sealed class SearchCriteria {
     }
 
     data class Date(
-        var value: LocalDate = LocalDate.now(),
+        var value: LocalDate? = null,
         var compare: Compare = Compare.LessThanOrEqualTo
     ) : SearchCriteria() {
-        override fun isEmpty(): Boolean = value.toMillis() <= 0L
+        override fun isEmpty(): Boolean = (value == null) || value.toMillis() <= 0L
 
         fun set(year: Int, monthOfYear: Int, dayOfMonth: Int): LocalDate {
             val date = LocalDate(year, monthOfYear, dayOfMonth)
