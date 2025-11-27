@@ -77,7 +77,7 @@ class OwnCloudDialogFragment : VolatileDialogFragment() {
         errorText.isVisible = false
 
         val dialog = AlertDialog.Builder(context, theme)
-            .setTitle("ownCloud")
+            .setTitle(R.string.owncloud_pref)
             .setView(binding.root)
             .setNegativeButton(R.string.btn_cancel) { _, _ ->
                 // Dismisses itself
