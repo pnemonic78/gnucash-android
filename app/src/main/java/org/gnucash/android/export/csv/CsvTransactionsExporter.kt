@@ -34,6 +34,7 @@ import org.gnucash.android.util.TimestampHelper
 import org.joda.time.format.ISODateTimeFormat
 import timber.log.Timber
 import java.io.Writer
+import java.sql.Timestamp
 import java.text.DecimalFormat
 import kotlin.math.max
 
@@ -61,7 +62,7 @@ class CsvTransactionsExporter(
             .withSeparator(exportParams.csvSeparator)
             .withLineEnd(RFC4180_LINE_END)
             .build()
-        writeExport(csvWriter)
+        writeExport(csvWriter, exportParams.exportStartTime)
         csvWriter.close()
         setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
     }
@@ -102,20 +103,20 @@ class CsvTransactionsExporter(
         }
     }
 
-    @Throws(ExporterException::class)
-    private fun writeExport(writer: ICSVWriter) {
+    private fun writeExport(writer: ICSVWriter, exportStartTime: Timestamp) {
         val headers = context.resources.getStringArray(R.array.csv_transaction_headers)
         writer.writeNext(headers)
 
         val cursor =
-            transactionsDbAdapter.fetchTransactionsModifiedSince(exportParams.exportStartTime)
+            transactionsDbAdapter.fetchTransactionsToExportSince(exportStartTime)
         Timber.d("Exporting %d transactions to CSV", cursor.count)
-        val fields = Array<String>(headers.size) { "" }
+        val fields = Array(headers.size) { "" }
         cursor.forEach { cursor->
             cancellationSignal.throwIfCanceled()
             val transaction = transactionsDbAdapter.buildModelInstance(cursor)
             writeTransaction(writer, fields, transaction)
         }
+        transactionsDbAdapter.markTransactionsExported(exportStartTime)
     }
 
     private fun writeTransaction(

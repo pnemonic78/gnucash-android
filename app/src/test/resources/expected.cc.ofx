@@ -7,7 +7,7 @@
       <CCSTMTRS>
         <CURDEF>USD</CURDEF>
         <CCACCTFROM>
-          <BANKID>org.gnucash.pocket.devel</BANKID>
+          <BANKID>org.gnucash.pocket</BANKID>
           <ACCTID>Visa</ACCTID>
           <ACCTTYPE>CREDITLINE</ACCTTYPE>
         </CCACCTFROM>

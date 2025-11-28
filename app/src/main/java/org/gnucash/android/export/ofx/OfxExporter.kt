@@ -94,6 +94,8 @@ class OfxExporter(
             throw ExporterException(exportParams, "No accounts to export")
         }
         writeDocument(writer, exportParams, accounts)
+
+        transactionsDbAdapter.markTransactionsExported(exportParams.exportStartTime)
         setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
     }
 
@@ -310,14 +312,21 @@ class OfxExporter(
         xmlSerializer.text(formattedCurrentTime)
         xmlSerializer.endTag(null, TAG_DATE_END)
 
-        transactionsDbAdapter.fetchTransactionsModifiedSince(modifiedSince).forEach { cursor ->
+        transactionsDbAdapter.fetchTransactionsToExportSince(modifiedSince).forEach { cursor ->
             val transaction = transactionsDbAdapter.buildModelInstance(cursor)
-            writeTransaction(xmlSerializer, account, transaction)
-            listener?.onTransaction(transaction)
+            if (transaction.hasAccount(account)) {
+                writeTransaction(xmlSerializer, account, transaction)
+                listener?.onTransaction(transaction)
+            }
         }
 
         xmlSerializer.endTag(null, TAG_BANK_TRANSACTION_LIST)
         //================= END TRANSACTIONS LIST =================================
+    }
+
+    private fun Transaction.hasAccount(account: Account): Boolean {
+        val accountUID = account.uid
+        return splits.any { it.accountUID == accountUID }
     }
 
     private fun writeTransaction(

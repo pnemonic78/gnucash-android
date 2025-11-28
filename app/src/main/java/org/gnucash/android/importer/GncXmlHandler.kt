@@ -755,7 +755,7 @@ class GncXmlHandler(
                         TAG_DATE_ENTERED -> transaction.createdTimestamp = timestamp
                         TAG_DATE_POSTED -> transaction.time = date
                     }
-                    transaction.modifiedTimestamp = timestamp
+                    transaction.isExported = true
                 } else if (NS_PRICE == uriParent) {
                     if (TAG_TIME == tagParent) {
                         price!!.date = date

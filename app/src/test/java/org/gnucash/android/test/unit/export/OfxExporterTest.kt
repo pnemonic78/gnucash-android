@@ -24,6 +24,7 @@ import org.gnucash.android.export.ExportParams
 import org.gnucash.android.export.Exporter.ExporterException
 import org.gnucash.android.export.ofx.OfxExporter
 import org.gnucash.android.export.ofx.OfxHelper
+import org.gnucash.android.export.ofx.OfxHelper.APP_ID
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Money
@@ -130,10 +131,7 @@ class OfxExporterTest : BookHelperTest() {
         val file = exportedFile!!.toFile()
         assertThat(file).exists().hasExtension("ofx")
         assertThat(file.length()).isGreaterThan(0L)
-        val actual = file.readText().trimEnd().replace("\r\n", "\n")
-            .replace(Regex("<DTASOF>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTASOF>"), "<DTASOF>20251126</DTASOF>")
-            .replace(Regex("<DTEND>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTEND>"), "<DTEND>20251126</DTEND>")
-            .replace(Regex("<DTUSER>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTUSER>"), "<DTUSER>20251126</DTUSER>")
+        val actual = file.readText().expect("20251126")
         file.delete()
 
         val expected = readFile("expected.one.ofx").trimEnd().replace("\r\n", "\n")
@@ -169,10 +167,7 @@ class OfxExporterTest : BookHelperTest() {
         val file = exportedFile!!.toFile()
         assertThat(file).exists().hasExtension("ofx")
         assertThat(file.length()).isGreaterThan(0L)
-        val actual = file.readText().trimEnd().replace("\r\n", "\n")
-            .replace(Regex("<DTASOF>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTASOF>"), "<DTASOF>20251126</DTASOF>")
-            .replace(Regex("<DTEND>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTEND>"), "<DTEND>20251126</DTEND>")
-            .replace(Regex("<DTUSER>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTUSER>"), "<DTUSER>20251126</DTUSER>")
+        val actual = file.readText().expect("20251126")
         file.delete()
 
         val expected = readFile("expected.pair.ofx").trimEnd().replace("\r\n", "\n")
@@ -206,13 +201,18 @@ class OfxExporterTest : BookHelperTest() {
         val file = exportedFile!!.toFile()
         assertThat(file).exists().hasExtension("ofx")
         assertThat(file.length()).isGreaterThan(0L)
-        val actual = file.readText().trimEnd().replace("\r\n", "\n")
-            .replace(Regex("<DTASOF>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTASOF>"), "<DTASOF>20251126</DTASOF>")
-            .replace(Regex("<DTEND>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTEND>"), "<DTEND>20251126</DTEND>")
-            .replace(Regex("<DTUSER>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTUSER>"), "<DTUSER>20251126</DTUSER>")
+        val actual = file.readText().expect("20251126")
         file.delete()
 
         val expected = readFile("expected.cc.ofx").trimEnd().replace("\r\n", "\n")
         assertThat(actual).isEqualTo(expected)
+    }
+
+    private fun String.expect(date: String): String {
+        return trimEnd().replace("\r\n", "\n")
+            .replace(Regex("<BANKID>${APP_ID}</BANKID>"), "<BANKID>org.gnucash.pocket</BANKID>")
+            .replace(Regex("<DTASOF>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTASOF>"), "<DTASOF>20251126</DTASOF>")
+            .replace(Regex("<DTEND>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTEND>"), "<DTEND>20251126</DTEND>")
+            .replace(Regex("<DTUSER>\\d+\\.\\d\\d\\d\\[0:UTC\\]</DTUSER>"), "<DTUSER>20251126</DTUSER>")
     }
 }

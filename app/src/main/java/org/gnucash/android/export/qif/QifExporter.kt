@@ -307,6 +307,7 @@ class QifExporter(
             writer.close()
 
             /** export successful */
+            transactionsDbAdapter.markTransactionsExported(exportParams.exportStartTime)
             setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
         } catch (e: IOException) {
             throw ExporterException(exportParams, e)

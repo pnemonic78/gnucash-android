@@ -7,7 +7,7 @@
       <STMTRS>
         <CURDEF>USD</CURDEF>
         <BANKACCTFROM>
-          <BANKID>org.gnucash.pocket.devel</BANKID>
+          <BANKID>org.gnucash.pocket</BANKID>
           <ACCTID>Basic Account</ACCTID>
           <ACCTTYPE>CHECKING</ACCTTYPE>
         </BANKACCTFROM>
