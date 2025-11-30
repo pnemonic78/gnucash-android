@@ -153,6 +153,8 @@ class ExportFormFragment : MenuFragment(),
                 expand(binding.exportDateLayout)
                 expand(binding.layoutCsvOptions)
             }
+
+            ExportFormat.SQLITE -> throw UnsupportedOperationException()
         }
     }
 
