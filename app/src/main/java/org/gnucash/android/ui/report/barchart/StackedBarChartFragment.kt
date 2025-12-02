@@ -205,21 +205,28 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
         return BarData(dataSet)
     }
 
+    private fun isEmpty(data: BarData): Boolean {
+        if ((data.dataSetCount == 0) ||
+            (data.entryCount == 0) ||
+            (getYValueSum(data) == 0f)
+        ) {
+            return true
+        }
+
+        val dataSet = data.dataSets[0]
+        return dataSet.entryCount == 0 ||
+                dataSet.stackLabels.isEmpty() ||
+                (getYValueSum<BarEntry>(dataSet) == 0f)
+    }
+
     override fun generateReport(context: Context): BarData {
         isChartDataPresent = false
-        val barData = getData(context)
-        if (barData.dataSetCount == 0 || barData.entryCount == 0) {
-            return getEmptyData(context)
-        }
-        val dataSet = barData.dataSets[0]
-        if (dataSet.entryCount == 0 || dataSet.stackLabels.isEmpty()) {
-            return getEmptyData(context)
-        }
-        if (getYValueSum<BarEntry>(dataSet) == 0f) {
+        val data = getData(context)
+        if (isEmpty(data)) {
             return getEmptyData(context)
         }
         isChartDataPresent = true
-        return barData
+        return data
     }
 
     override fun displayReport(data: BarData) {
@@ -324,9 +331,9 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
             index = 0
         }
         val value = entry.yVals[index]
-        val labels = entry.data as List<String>
+        val labels = entry.data as? List<String?> ?: return
         if (labels.isEmpty()) return
-        val label = labels[index]
+        val label = labels[index] ?: return
 
         val total: Float
         if (totalPercentageMode) {

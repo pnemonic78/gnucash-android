@@ -63,13 +63,12 @@ class PieChartFragment : BaseReportFragment<PieData>() {
         return binding.root
     }
 
-    override fun generateReport(context: Context): PieData? {
-        val pieData = getData(context)
-        return if (pieData.getDataSetCount() > 0 && pieData.dataSet.entryCount > 0) {
-            pieData
-        } else {
-            getEmptyData(context)
+    override fun generateReport(context: Context): PieData {
+        val data = getData(context)
+        if (isEmpty(data)) {
+            return getEmptyData(context)
         }
+        return data
     }
 
     private fun getData(context: Context): PieData {
@@ -129,16 +128,16 @@ class PieChartFragment : BaseReportFragment<PieData>() {
             }
             this.data = data
 
-            if (data.dataSetCount > 0 && data.dataSet.entryCount > 0) {
-                selectedValueTextView.setText(R.string.label_select_pie_slice_to_see_details)
-                centerText = formatTotalValue(data.yValueSum)
-                setTouchEnabled(true)
-                animateXY(ANIMATION_DURATION, ANIMATION_DURATION)
-            } else {
+            if (isEmpty(data)) {
                 selectedValueTextView.text = null
                 centerText = context.getString(R.string.label_chart_no_data)
                 setTouchEnabled(false)
                 clearAnimation()
+            } else {
+                selectedValueTextView.setText(R.string.label_select_pie_slice_to_see_details)
+                centerText = formatTotalValue(data.yValueSum)
+                setTouchEnabled(true)
+                animateXY(ANIMATION_DURATION, ANIMATION_DURATION)
             }
             highlightValues(null)
         }
@@ -163,10 +162,17 @@ class PieChartFragment : BaseReportFragment<PieData>() {
      */
     private fun getEmptyData(context: Context): PieData {
         val dataSet = PieDataSet(null, context.getString(R.string.label_chart_no_data))
-        dataSet.addEntry(PieEntry(1f, 0))
+        dataSet.addEntry(PieEntry(0.00001f, 0))
         dataSet.setColor(NO_DATA_COLOR)
         dataSet.setDrawValues(false)
         return PieData(dataSet)
+    }
+
+    private fun isEmpty(data: PieData): Boolean {
+        return (data.dataSetCount == 0) ||
+                (data.entryCount == 0) ||
+                (data.dataSet.entryCount == 0) ||
+                (getYValueSum(data) == 0f)
     }
 
     /**
@@ -255,7 +261,7 @@ class PieChartFragment : BaseReportFragment<PieData>() {
         val chart = chart ?: return
         if (e == null) return
         val entry = e as PieEntry
-        val label = entry.label
+        val label = entry.label ?: return
         val value = entry.value
         val data = chart.data
         val total = data.getYValueSum()

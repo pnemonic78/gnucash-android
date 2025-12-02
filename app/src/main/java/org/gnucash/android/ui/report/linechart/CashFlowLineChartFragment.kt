@@ -115,6 +115,12 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
         return LineData(dataSet)
     }
 
+    private fun isEmpty(data: LineData): Boolean {
+        return (data.dataSetCount == 0) ||
+                (data.entryCount == 0) ||
+                (getYValueSum(data) == 0f)
+    }
+
     /**
      * Returns entries which represent a user data of the specified account type
      *
@@ -225,10 +231,9 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
     override fun generateReport(context: Context): LineData {
         isChartDataPresent = false
         val data = getData(context, accountTypes)
-        if ((data.entryCount == 0) || getYValueSum<Entry, ILineDataSet>(data) == 0f) {
+        if (isEmpty(data)) {
             return getEmptyData(context)
         }
-
         isChartDataPresent = true
         return data
     }
@@ -317,7 +322,7 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
         val dataSetIndex = h.dataSetIndex
         val data = chart.data
         val dataSet = data.getDataSetByIndex(dataSetIndex) ?: return
-        val label = dataSet.label
+        val label = dataSet.label ?: return
         val total = getYValueSum<Entry>(dataSet)
         val percent = if (total != 0f) ((value * 100) / total) else 0f
         selectedValueTextView?.text = formatSelectedValue(label, value, percent)

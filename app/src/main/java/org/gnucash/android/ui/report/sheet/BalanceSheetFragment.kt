@@ -108,7 +108,7 @@ class BalanceSheetFragment : BaseReportFragment<BalanceSheet>() {
         return false
     }
 
-    override fun generateReport(context: Context): BalanceSheet? {
+    override fun generateReport(context: Context): BalanceSheet {
         return getData(context)
     }
 

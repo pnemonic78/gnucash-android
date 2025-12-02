@@ -162,7 +162,7 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
      *
      */
     @WorkerThread
-    protected abstract fun generateReport(context: Context): D?
+    protected abstract fun generateReport(context: Context): D
 
     /**
      * Update the view after the report chart has been generated <br></br>

@@ -90,16 +90,15 @@ class ReportsOverviewFragment : BaseReportFragment<PieData>() {
         menu.findItem(R.id.menu_group_reports_by).isVisible = false
     }
 
-    override fun generateReport(context: Context): PieData? {
+    override fun generateReport(context: Context): PieData {
         assetsBalance = accountsDbAdapter.getCurrentAccountsBalance(assetTypes, commodity)
         liabilitiesBalance = accountsDbAdapter.getCurrentAccountsBalance(liabilityTypes, commodity)
 
         val data = getData()
-        return if (data.dataSetCount > 0 && data.dataSet.entryCount > 0) {
-            PieChartFragment.groupSmallerSlices(context, data)
-        } else {
-            getEmptyData(context)
+        if (isEmpty(data)) {
+            return getEmptyData(context)
         }
+        return PieChartFragment.groupSmallerSlices(context, data)
     }
 
     private fun getData(): PieData {
@@ -152,21 +151,21 @@ class ReportsOverviewFragment : BaseReportFragment<PieData>() {
             }
             this.data = data
 
-            if (data.dataSetCount > 0 && data.dataSet.entryCount > 0) {
-                centerText = formatTotalValue(data.yValueSum)
-                legend.isEnabled = true
-                setTouchEnabled(true)
-                animateXY(ANIMATION_DURATION, ANIMATION_DURATION)
-            } else {
+            if (isEmpty(data)) {
                 centerText = context.getString(R.string.label_chart_no_data)
                 legend.isEnabled = false
                 setTouchEnabled(false)
                 clearAnimation()
+            } else {
+                centerText = formatTotalValue(data.yValueSum)
+                legend.isEnabled = true
+                setTouchEnabled(true)
+                animateXY(ANIMATION_DURATION, ANIMATION_DURATION)
             }
             highlightValues(null)
         }
 
-        val chartLayout = binding.chartLayout!!
+        val chartLayout = binding.chartLayout
         chartLayout.chartContainer.removeAllViews()
         chartLayout.chartContainer.addView(
             chart,
@@ -191,10 +190,17 @@ class ReportsOverviewFragment : BaseReportFragment<PieData>() {
      */
     private fun getEmptyData(context: Context): PieData {
         val dataSet = PieDataSet(null, context.getString(R.string.label_chart_no_data))
-        dataSet.addEntry(PieEntry(1f, 0))
+        dataSet.addEntry(PieEntry(0.00001f, 0))
         dataSet.setColor(NO_DATA_COLOR)
         dataSet.setDrawValues(false)
         return PieData(dataSet)
+    }
+
+    private fun isEmpty(data: PieData): Boolean {
+        return (data.dataSetCount == 0) ||
+                (data.entryCount == 0) ||
+                (data.dataSet.entryCount == 0) ||
+                (getYValueSum(data) == 0f)
     }
 
     fun onClickChartTypeButton(view: View) {
