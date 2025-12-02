@@ -120,7 +120,8 @@ class BudgetDetailFragment : MenuFragment(), Refreshable {
     override fun onResume() {
         super.onResume()
         refresh()
-        requireActivity().findViewById<View>(R.id.fab_create_budget)?.isVisible = false
+        val activity = requireActivity()
+        activity.findViewById<View>(R.id.fab_create_budget)?.isVisible = false
     }
 
     override fun refresh() {

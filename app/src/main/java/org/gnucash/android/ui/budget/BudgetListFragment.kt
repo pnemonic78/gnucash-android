@@ -115,7 +115,8 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
     override fun onResume() {
         super.onResume()
         refresh()
-        requireActivity().findViewById<View?>(R.id.fab_create_budget)?.isVisible = true
+        val activity = requireActivity()
+        activity.findViewById<View?>(R.id.fab_create_budget)?.isVisible = true
         val actionBar: ActionBar? = this.actionBar
         actionBar?.setTitle(R.string.title_budgets)
     }
