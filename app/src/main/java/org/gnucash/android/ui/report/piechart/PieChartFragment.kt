@@ -18,20 +18,22 @@ package org.gnucash.android.ui.report.piechart
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
+import androidx.core.view.get
+import androidx.core.view.isEmpty
+import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.highlight.Highlight
 import org.gnucash.android.R
-import org.gnucash.android.databinding.FragmentPieChartBinding
+import org.gnucash.android.databinding.FragmentChartBinding
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.isNullOrZero
@@ -45,112 +47,114 @@ import org.gnucash.android.util.toMillis
  * @author Oleksandr Tyshkovets <olexandr.tyshkovets@gmail.com>
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class PieChartFragment : BaseReportFragment() {
-    private var chartDataPresent = true
+class PieChartFragment : BaseReportFragment<PieData>() {
 
-    private var groupSmallerSlices = false
+    private var groupSmallerSlices = true
 
-    private var binding: FragmentPieChartBinding? = null
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val context = view.context
-        val binding = binding!!
-
-        @ColorInt val textColorPrimary = getTextColor(context)
-
-        binding.pieChart.apply {
-            setCenterTextSize(CENTER_TEXT_SIZE.toFloat())
-            setOnChartValueSelectedListener(this@PieChartFragment)
-            isDrawHoleEnabled = false
-            setCenterTextColor(textColorPrimary)
-            legend.apply {
-                textColor = textColorPrimary
-                isWordWrapEnabled = true
-            }
-        }
-    }
+    private var binding: FragmentChartBinding? = null
+    private var chart: PieChart? = null
 
     override val reportType: ReportType = ReportType.PIE_CHART
 
     override fun inflateView(inflater: LayoutInflater, container: ViewGroup?): View {
-        val binding = FragmentPieChartBinding.inflate(inflater, container, false)
+        val binding = FragmentChartBinding.inflate(inflater, container, false)
         this.binding = binding
+        this.selectedValueTextView = binding.selectedChartSlice
         return binding.root
     }
 
-    override fun generateReport(context: Context) {
-        val binding = binding ?: return
-        val pieData = this.data
-        if (pieData.getDataSetCount() > 0 && pieData.dataSet.entryCount > 0) {
-            chartDataPresent = true
-            binding.pieChart.data = if (groupSmallerSlices) {
-                groupSmallerSlices(context, pieData)
-            } else {
-                pieData
-            }
-            val sum = binding.pieChart.data.getYValueSum()
-            binding.pieChart.centerText = formatTotalValue(sum)
+    override fun generateReport(context: Context): PieData? {
+        val pieData = getData(context)
+        return if (pieData.getDataSetCount() > 0 && pieData.dataSet.entryCount > 0) {
+            pieData
         } else {
-            chartDataPresent = false
-            binding.pieChart.centerText = context.getString(R.string.label_chart_no_data)
-            binding.pieChart.data = getEmptyData(context)
+            getEmptyData(context)
         }
     }
 
-    override fun displayReport() {
+    private fun getData(context: Context): PieData {
+        val dataSet = PieDataSet(null, "")
+        val colors = mutableListOf<Int>()
+        val startTime = reportPeriodStart?.toMillis() ?: AccountsDbAdapter.Companion.ALWAYS
+        val endTime = reportPeriodEnd?.toMillis() ?: AccountsDbAdapter.Companion.ALWAYS
+        val commodity = this.commodity
+
+        val where = (AccountEntry.COLUMN_TYPE + "=?"
+                + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
+                + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0")
+        val whereArgs = arrayOf<String?>(accountType.name)
+        val orderBy = AccountEntry.COLUMN_FULL_NAME + " ASC"
+        val accounts = accountsDbAdapter.getAllRecords(where, whereArgs, orderBy)
+        val balances = accountsDbAdapter.getAccountsBalances(accounts, startTime, endTime)
+
+        for (account in accounts) {
+            var balance = balances[account.uid]
+            if (balance.isNullOrZero()) continue
+            val price = pricesDbAdapter.getPrice(balance.commodity, commodity) ?: continue
+            balance *= price
+            val value = balance.toFloat()
+            if (value > 0f) {
+                val count = dataSet.entryCount
+                @ColorInt val color = getAccountColor(account, count)
+                dataSet.addEntry(PieEntry(value, account.name))
+                colors.add(color)
+            }
+        }
+        dataSet.colors = colors
+        dataSet.setSliceSpace(SPACE_BETWEEN_SLICES)
+        val data = PieData(dataSet)
+
+        return if (groupSmallerSlices) {
+            groupSmallerSlices(context, data)
+        } else {
+            data
+        }
+    }
+
+    override fun displayReport(data: PieData) {
         val binding = binding ?: return
-        binding.pieChart.apply {
-            if (chartDataPresent) {
+        val context = binding.root.context
+        val selectedValueTextView = binding.selectedChartSlice
+        @ColorInt val textColorPrimary = getTextColor(context)
+
+        val chart = PieChart(context).apply {
+            id = R.id.chart
+            setCenterTextSize(CENTER_TEXT_SIZE.toFloat())
+            setCenterTextColor(textColorPrimary)
+            setOnChartValueSelectedListener(this@PieChartFragment)
+            isDrawHoleEnabled = false
+            legend.apply {
+                isWordWrapEnabled = true
+                textColor = textColorPrimary
+            }
+            this.data = data
+
+            if (data.dataSetCount > 0 && data.dataSet.entryCount > 0) {
+                selectedValueTextView.setText(R.string.label_select_pie_slice_to_see_details)
+                centerText = formatTotalValue(data.yValueSum)
+                setTouchEnabled(true)
                 animateXY(ANIMATION_DURATION, ANIMATION_DURATION)
+            } else {
+                selectedValueTextView.text = null
+                centerText = context.getString(R.string.label_chart_no_data)
+                setTouchEnabled(false)
+                clearAnimation()
             }
-            setTouchEnabled(chartDataPresent)
             highlightValues(null)
-            invalidate()
         }
+        this.chart = chart
 
-        selectedValueTextView?.setText(R.string.label_select_pie_slice_to_see_details)
-
+        binding.chartContainer.apply {
+            removeAllViews()
+            addView(
+                chart,
+                ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            )
+        }
     }
-
-    /**
-     * Returns `PieData` instance with data entries, colors and labels
-     *
-     * @return `PieData` instance
-     */
-    private val data: PieData
-        get() {
-            val dataSet = PieDataSet(null, "")
-            val colors = mutableListOf<Int>()
-            val startTime = reportPeriodStart?.toMillis() ?: AccountsDbAdapter.Companion.ALWAYS
-            val endTime = reportPeriodEnd?.toMillis() ?: AccountsDbAdapter.Companion.ALWAYS
-            val commodity = this.commodity
-
-            val where = (AccountEntry.COLUMN_TYPE + "=?"
-                    + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
-                    + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0")
-            val whereArgs = arrayOf<String?>(accountType.name)
-            val orderBy = AccountEntry.COLUMN_FULL_NAME + " ASC"
-            val accounts = accountsDbAdapter.getAllRecords(where, whereArgs, orderBy)
-            val balances = accountsDbAdapter.getAccountsBalances(accounts, startTime, endTime)
-
-            for (account in accounts) {
-                var balance = balances[account.uid]
-                if (balance.isNullOrZero()) continue
-                val price = pricesDbAdapter.getPrice(balance.commodity, commodity) ?: continue
-                balance *= price
-                val value = balance.toFloat()
-                if (value > 0f) {
-                    val count = dataSet.entryCount
-                    @ColorInt val color = getAccountColor(account, count)
-                    dataSet.addEntry(PieEntry(value, account.name))
-                    colors.add(color)
-                }
-            }
-            dataSet.colors = colors
-            dataSet.setSliceSpace(SPACE_BETWEEN_SLICES)
-            return PieData(dataSet)
-        }
 
     /**
      * Returns a data object that represents situation when no user data available
@@ -170,7 +174,10 @@ class PieChartFragment : BaseReportFragment() {
      */
     private fun sort() {
         val binding = binding ?: return
-        val data = binding.pieChart.data
+        val chartContainer = binding.chartContainer
+        if (chartContainer.isEmpty()) return
+        val pieChart = chartContainer[0] as PieChart
+        val data = pieChart.data
         val dataSet = data.getDataSetByIndex(0) as PieDataSet
         val size = dataSet.entryCount
         val entries = mutableListOf<PieChartEntry>()
@@ -187,16 +194,22 @@ class PieChartFragment : BaseReportFragment() {
         }
         dataSet.colors = colors
 
-        binding.pieChart.notifyDataSetChanged()
-        binding.pieChart.highlightValues(null)
-        binding.pieChart.invalidate()
+        pieChart.notifyDataSetChanged()
+        pieChart.highlightValues(null)
+        pieChart.invalidate()
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
+
+        val pieChart = chart
+        val chartDataPresent = (pieChart != null) &&
+                (pieChart.data.dataSetCount > 0) &&
+                (pieChart.data.dataSet.entryCount > 0)
         menu.findItem(R.id.menu_order_by_size).isVisible = chartDataPresent
         menu.findItem(R.id.menu_toggle_labels).isVisible = chartDataPresent
         menu.findItem(R.id.menu_group_other_slice).isVisible = chartDataPresent
+        menu.findItem(R.id.menu_group_other_slice).isChecked = groupSmallerSlices
         // hide line/bar chart specific menu items
         menu.findItem(R.id.menu_percentage_mode).isVisible = false
         menu.findItem(R.id.menu_toggle_average_lines).isVisible = false
@@ -212,19 +225,19 @@ class PieChartFragment : BaseReportFragment() {
             }
 
             R.id.menu_toggle_legend -> {
-                val binding = binding ?: return false
-                binding.pieChart.legend.isEnabled = !binding.pieChart.legend.isEnabled
-                binding.pieChart.notifyDataSetChanged()
-                binding.pieChart.invalidate()
+                val pieChart = chart ?: return false
+                pieChart.legend.isEnabled = !pieChart.legend.isEnabled
+                pieChart.notifyDataSetChanged()
+                pieChart.invalidate()
                 return true
             }
 
             R.id.menu_toggle_labels -> {
-                val binding = binding ?: return false
-                val draw = !binding.pieChart.isDrawEntryLabelsEnabled
-                binding.pieChart.data.setDrawValues(draw)
-                binding.pieChart.setDrawEntryLabels(draw)
-                binding.pieChart.invalidate()
+                val pieChart = chart ?: return false
+                val draw = !pieChart.isDrawEntryLabelsEnabled
+                pieChart.data.setDrawValues(draw)
+                pieChart.setDrawEntryLabels(draw)
+                pieChart.invalidate()
                 return true
             }
 
@@ -239,12 +252,12 @@ class PieChartFragment : BaseReportFragment() {
     }
 
     override fun onValueSelected(e: Entry?, h: Highlight) {
-        val binding = binding ?: return
+        val chart = chart ?: return
         if (e == null) return
         val entry = e as PieEntry
         val label = entry.label
         val value = entry.value
-        val data = binding.pieChart.data
+        val data = chart.data
         val total = data.getYValueSum()
         val percent = if (total != 0f) ((value * 100) / total) else 0f
         selectedValueTextView?.text = formatSelectedValue(label, value, percent)
