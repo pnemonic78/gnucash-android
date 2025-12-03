@@ -733,11 +733,7 @@ abstract class DatabaseAdapter<Model : BaseModel>(
             if (uid != null) cache.remove(uid)
         }
         val contentValues = ContentValues()
-        if (newValue == null) {
-            contentValues.putNull(columnKey)
-        } else {
-            contentValues[columnKey] = newValue
-        }
+        contentValues[columnKey] = newValue
         return db.update(
             tableName,
             contentValues,
@@ -755,13 +751,9 @@ abstract class DatabaseAdapter<Model : BaseModel>(
      * @return Number of records affected
      */
     fun updateRecord(uid: String, columnKey: String, newValue: String?): Int {
-        if (isCached) cache.remove(uid)
-        return updateRecords(
-            CommonColumns.COLUMN_UID + "=?",
-            arrayOf<String?>(uid),
-            columnKey,
-            newValue
-        )
+        val contentValues = ContentValues()
+        contentValues[columnKey] = newValue
+        return updateRecord(uid, contentValues)
     }
 
     /**
@@ -773,6 +765,18 @@ abstract class DatabaseAdapter<Model : BaseModel>(
      */
     fun updateRecord(uid: String, contentValues: ContentValues): Int {
         if (isCached) cache.remove(uid)
+        return updateRecord(tableName, uid, contentValues)
+    }
+
+    /**
+     * Overloaded method. Updates the record with GUID `uid` with the content values
+     *
+     * @param tableName     The table name.
+     * @param uid           GUID of the record
+     * @param contentValues Content values to update
+     * @return Number of records updated
+     */
+    protected fun updateRecord(tableName: String, uid: String, contentValues: ContentValues): Int {
         return db.update(
             tableName,
             contentValues,
@@ -812,11 +816,7 @@ abstract class DatabaseAdapter<Model : BaseModel>(
         newValue: String?
     ): Int {
         val contentValues = ContentValues()
-        if (newValue == null) {
-            contentValues.putNull(columnKey)
-        } else {
-            contentValues[columnKey] = newValue
-        }
+        contentValues[columnKey] = newValue
         return db.update(tableName, contentValues, where, whereArgs)
     }
 

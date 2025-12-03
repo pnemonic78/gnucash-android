@@ -179,9 +179,8 @@ class PieChartReportTest : GnuAndroidTest() {
         clickViewText(accountTypeAdapter[0].label)
 
         clickViewId(R.id.pie_chart)
-        onView(withId(R.id.selected_chart_slice)).check(
-            matches(withText(R.string.label_select_pie_slice_to_see_details))
-        )
+        onView(withId(R.id.selected_chart_slice))
+            .check(matches(withText(R.string.label_select_pie_slice_to_see_details)))
     }
 
     enum class Position {
