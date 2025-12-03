@@ -118,7 +118,7 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
     private fun isEmpty(data: LineData): Boolean {
         return (data.dataSetCount == 0) ||
                 (data.entryCount == 0) ||
-                (getYValueSum(data) == 0f)
+                ((data.yMin <= DATA_EMPTY) && (data.yMax <= DATA_EMPTY))
     }
 
     /**

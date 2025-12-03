@@ -393,6 +393,7 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
          * Color for chart with no data
          */
         const val NO_DATA_COLOR: Int = Color.LTGRAY
+        protected const val DATA_EMPTY = 1e-5f
 
         protected val COLORS: IntArray = intArrayOf(
             parseColor("#17ee4e")!!, parseColor("#cc1f09")!!, parseColor("#3940f7")!!,

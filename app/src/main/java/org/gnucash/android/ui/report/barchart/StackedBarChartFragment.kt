@@ -208,7 +208,7 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
     private fun isEmpty(data: BarData): Boolean {
         if ((data.dataSetCount == 0) ||
             (data.entryCount == 0) ||
-            (getYValueSum(data) == 0f)
+            ((data.yMin <= DATA_EMPTY) && (data.yMax <= DATA_EMPTY))
         ) {
             return true
         }

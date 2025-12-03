@@ -122,7 +122,7 @@ class PieChartReportTest : GnuAndroidTest() {
         onView(withId(R.id.chart))
             .check(matches(not(isClickable())))
         onView(withId(R.id.selected_chart_slice))
-            .check(matches(withText(R.string.label_select_pie_slice_to_see_details)))
+            .check(matches(withText("")))
     }
 
     @Test
@@ -185,7 +185,7 @@ class PieChartReportTest : GnuAndroidTest() {
         onView(withId(R.id.chart))
             .check(matches(not(isClickable())))
         onView(withId(R.id.selected_chart_slice))
-            .check(matches(withText(R.string.label_select_pie_slice_to_see_details)))
+            .check(matches(withText("")))
     }
 
     enum class Position {

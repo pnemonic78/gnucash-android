@@ -190,7 +190,7 @@ class ReportsOverviewFragment : BaseReportFragment<PieData>() {
      */
     private fun getEmptyData(context: Context): PieData {
         val dataSet = PieDataSet(null, context.getString(R.string.label_chart_no_data))
-        dataSet.addEntry(PieEntry(0.00001f, 0))
+        dataSet.addEntry(PieEntry(DATA_EMPTY, 0))
         dataSet.setColor(NO_DATA_COLOR)
         dataSet.setDrawValues(false)
         return PieData(dataSet)
@@ -200,7 +200,7 @@ class ReportsOverviewFragment : BaseReportFragment<PieData>() {
         return (data.dataSetCount == 0) ||
                 (data.entryCount == 0) ||
                 (data.dataSet.entryCount == 0) ||
-                (getYValueSum(data) == 0f)
+                ((data.yMin <= DATA_EMPTY) && (data.yMax <= DATA_EMPTY))
     }
 
     fun onClickChartTypeButton(view: View) {
