@@ -26,7 +26,6 @@ import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.clearText
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.scrollTo
-import androidx.test.espresso.action.ViewActions.swipeRight
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -154,7 +153,7 @@ class AccountsActivityTest : GnuAndroidTest() {
     @Test
     fun testCreateAccount() {
         assertThat(accountsDbAdapter.allRecords).hasSize(1)
-        clickViewId(R.id.fab_create_account)
+        clickViewId(R.id.fab_add)
         sleep(1000)
 
         val NEW_ACCOUNT_NAME = "A New Account"
@@ -235,12 +234,11 @@ class AccountsActivityTest : GnuAndroidTest() {
         val labelTrading = SpinnerItem(AccountType.TRADING, textTrading)
 
         clickViewText(SIMPLE_ACCOUNT_NAME)
-        onView(withId(R.id.fragment_transaction_list))
-            .perform(swipeRight())
-        clickViewId(R.id.fab_create_transaction)
-        sleep(1000)
+        clickViewText(R.string.section_header_subaccounts)
+        clickViewId(R.id.fab_add)
+
         onView(withId(R.id.checkbox_parent_account))
-            .check(matches(allOf(isChecked())))
+            .check(matches(isChecked()))
         onView(withId(R.id.input_account_name))
             .perform(typeText("Trading account"))
         closeSoftKeyboard()

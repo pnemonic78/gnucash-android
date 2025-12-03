@@ -94,12 +94,11 @@ class CalculatorEditTextTest : GnuAndroidTest() {
      */
     @Test
     fun testShowingHidingOfCalculatorKeyboard() {
-        clickViewId(R.id.fab_create_transaction)
+        clickViewId(R.id.fab_add)
 
         // Verify the input type is correct
-        onView(withId(R.id.input_transaction_amount)).check(
-            matches(allOf(withInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)))
-        )
+        onView(withId(R.id.input_transaction_amount))
+            .check(matches(withInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)))
 
         // Giving the focus to the amount field shows the keyboard
         clickViewId(R.id.input_transaction_amount)
