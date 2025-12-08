@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.ui.transaction
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -82,7 +81,7 @@ class TransactionsListFragment : MenuFragment(),
     private var useCompactView = false
     private var useDoubleEntry = true
 
-    private var transactionsAdapter: TransactionCursorAdapter? = null
+    private val transactionsAdapter: TransactionCursorAdapter = TransactionCursorAdapter(null)
 
     private var binding: FragmentTransactionsListBinding? = null
 
@@ -134,7 +133,6 @@ class TransactionsListFragment : MenuFragment(),
 
         val binding = this.binding!!
         val context = binding.list.context
-        transactionsAdapter = TransactionCursorAdapter(null)
 
         binding.list.setHasFixedSize(true)
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -233,13 +231,13 @@ class TransactionsListFragment : MenuFragment(),
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
         Timber.d("Transactions loader finished. Swapping in cursor")
-        transactionsAdapter?.changeCursor(cursor)
+        transactionsAdapter.changeCursor(cursor)
         scrollToTransaction(cursor, scrollTransactionUID)
     }
 
     override fun onLoaderReset(loader: Loader<Cursor>) {
         Timber.d("Resetting transactions loader")
-        transactionsAdapter?.changeCursor(null)
+        transactionsAdapter.changeCursor(null)
     }
 
     override fun onFragmentResult(requestKey: String, result: Bundle) {
@@ -259,9 +257,7 @@ class TransactionsListFragment : MenuFragment(),
         override fun loadInBackground(): Cursor? {
             val databaseAdapter = TransactionsDbAdapter.instance
             this.databaseAdapter = databaseAdapter
-            val c = databaseAdapter.fetchAllTransactionsForAccount(accountUID)
-            if (c != null) registerContentObserver(c)
-            return c
+            return databaseAdapter.fetchAllTransactionsForAccount(accountUID)
         }
     }
 
@@ -283,11 +279,12 @@ class TransactionsListFragment : MenuFragment(),
         private val primaryText: TextView = binding.listItem2Lines.primaryText
         private val secondaryText: TextView = binding.listItem2Lines.secondaryText
         private val transactionAmount: TextView = binding.transactionAmount
-        private val optionsMenu: ImageView = binding.optionsMenu
 
         //these views are not used in the compact view, hence the nullability
         private val transactionDate: TextView = binding.transactionDate
         private val editTransaction: ImageView = binding.editTransaction
+        private val optionsMenu: ImageView = binding.optionsMenu
+        private val popupMenu: PopupMenu = PopupMenu(optionsMenu.context, optionsMenu)
 
         private var transaction: Transaction? = null
 
@@ -295,12 +292,13 @@ class TransactionsListFragment : MenuFragment(),
         private val colorBalanceZero: Int = transactionAmount.currentTextColor
 
         init {
-            optionsMenu.setOnClickListener { v ->
-                val popupMenu = PopupMenu(v.context, v)
-                popupMenu.setOnMenuItemClickListener(this@TransactionViewHolder)
-                val inflater = popupMenu.menuInflater
+            popupMenu.setOnMenuItemClickListener(this)
+            val inflater = popupMenu.menuInflater
+            val menu = popupMenu.menu
+            inflater.inflate(R.menu.transactions_context_menu, menu)
+
+            optionsMenu.setOnClickListener { _ ->
                 val menu = popupMenu.menu
-                inflater.inflate(R.menu.transactions_context_menu, menu)
                 menu.findItem(R.id.menu_edit).isVisible = useCompactView || !useDoubleEntry
                 popupMenu.show()
             }

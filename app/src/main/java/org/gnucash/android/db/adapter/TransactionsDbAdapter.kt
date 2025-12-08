@@ -390,11 +390,15 @@ class TransactionsDbAdapter(
         transaction.isExported = cursor.getBoolean(TransactionEntry.COLUMN_EXPORTED)
         transaction.isTemplate = cursor.getBoolean(TransactionEntry.COLUMN_TEMPLATE)
         val commodityUID = cursor.getString(TransactionEntry.COLUMN_COMMODITY_UID)!!
-        transaction.commodity = commoditiesDbAdapter.getRecord(commodityUID)
         transaction.scheduledActionUID = cursor.getString(TransactionEntry.COLUMN_SCHEDX_ACTION_UID)
         transaction.number = cursor.getString(TransactionEntry.COLUMN_NUMBER)
-        transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction.uid)
-
+        try {
+            transaction.commodity = commoditiesDbAdapter.getRecord(commodityUID)
+            //FIXME get from the cursor
+            transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction.uid)
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
         return transaction
     }
 
