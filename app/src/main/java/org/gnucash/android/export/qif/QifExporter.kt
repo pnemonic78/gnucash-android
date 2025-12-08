@@ -116,32 +116,34 @@ class QifExporter(
         val quantityFormatter = NumberFormat.getNumberInstance(Locale.ROOT) as DecimalFormat
         quantityFormatter.isGroupingUsed = false
 
+        val t = transactionsDbAdapter.tableName
+        val s = splitsDbAdapter.tableName
+        val a = accountsDbAdapter.tableName
         val projection = arrayOf<String?>(
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_ID + " AS trans_id",
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID + " AS trans_uid",
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_TIMESTAMP + " AS trans_time",
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_DESCRIPTION + " AS trans_desc",
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_NOTES + " AS trans_notes",
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_NUMBER + " AS trans_num",
-            SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_ID + " AS split_id",
-            SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_UID + " AS split_uid",
-            SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_QUANTITY_NUM + " AS split_quantity_num",
-            SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_QUANTITY_DENOM + " AS split_quantity_denom",
-            SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_TYPE + " AS split_type",
-            SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_MEMO + " AS split_memo",
+            t + "_" + TransactionEntry.COLUMN_ID + " AS trans_id",
+            t + "_" + TransactionEntry.COLUMN_UID + " AS trans_uid",
+            t + "_" + TransactionEntry.COLUMN_TIMESTAMP + " AS trans_time",
+            t + "_" + TransactionEntry.COLUMN_DESCRIPTION + " AS trans_desc",
+            t + "_" + TransactionEntry.COLUMN_NOTES + " AS trans_notes",
+            t + "_" + TransactionEntry.COLUMN_NUMBER + " AS trans_num",
+            s + "_" + SplitEntry.COLUMN_ID + " AS split_id",
+            s + "_" + SplitEntry.COLUMN_UID + " AS split_uid",
+            s + "_" + SplitEntry.COLUMN_QUANTITY_NUM + " AS split_quantity_num",
+            s + "_" + SplitEntry.COLUMN_QUANTITY_DENOM + " AS split_quantity_denom",
+            s + "_" + SplitEntry.COLUMN_TYPE + " AS split_type",
+            s + "_" + SplitEntry.COLUMN_MEMO + " AS split_memo",
             "trans_extra_info.trans_acct_balance AS trans_acct_balance",
             "trans_extra_info.trans_split_count AS trans_split_count",
             "account1." + AccountEntry.COLUMN_UID + " AS acct1_uid",
-            AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_UID + " AS acct2_uid"
+            a + "_" + AccountEntry.COLUMN_UID + " AS acct2_uid"
         )
         // no recurrence transactions
-        val where =
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_TEMPLATE + " == 0 AND " +
-                    // in qif, split from the one account entry is not recorded (will be auto balanced)
-                    "(" + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_UID + " != account1." + AccountEntry.COLUMN_UID + " OR " +
-                    // or if the transaction has only one split (the whole transaction would be lost if it is not selected)
-                    "trans_split_count == 1)" +
-                    " AND " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
+        val where = t + "_" + TransactionEntry.COLUMN_TEMPLATE + " = 0 AND " +
+                // in qif, split from the one account entry is not recorded (will be auto balanced)
+                "(" + a + "_" + AccountEntry.COLUMN_UID + " != account1." + AccountEntry.COLUMN_UID + " OR " +
+                // or if the transaction has only one split (the whole transaction would be lost if it is not selected)
+                "trans_split_count = 1)" +
+                " AND " + t + "_" + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
         // trans_uid ASC  : put splits from the same transaction together
         // trans_time ASC : put transactions in time order
         val whereArgs = arrayOf<String?>(

@@ -24,7 +24,20 @@ import android.database.sqlite.SQLiteStatement
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
-import org.gnucash.android.db.DatabaseSchema.SplitEntry
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_ACCOUNT_UID
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_CREATED_AT
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_ID
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_MEMO
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_QUANTITY_DENOM
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_QUANTITY_NUM
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_RECONCILE_DATE
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_RECONCILE_STATE
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_TRANSACTION_UID
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_TYPE
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_VALUE_DENOM
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.COLUMN_VALUE_NUM
+import org.gnucash.android.db.DatabaseSchema.SplitEntry.TABLE_NAME
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
 import org.gnucash.android.db.forEach
 import org.gnucash.android.db.getLong
@@ -56,20 +69,20 @@ class SplitsDbAdapter(
     val commoditiesDbAdapter: CommoditiesDbAdapter
 ) : DatabaseAdapter<Split>(
     commoditiesDbAdapter.holder,
-    SplitEntry.TABLE_NAME,
+    TABLE_NAME,
     arrayOf(
-        SplitEntry.COLUMN_MEMO,
-        SplitEntry.COLUMN_TYPE,
-        SplitEntry.COLUMN_VALUE_NUM,
-        SplitEntry.COLUMN_VALUE_DENOM,
-        SplitEntry.COLUMN_QUANTITY_NUM,
-        SplitEntry.COLUMN_QUANTITY_DENOM,
-        SplitEntry.COLUMN_CREATED_AT,
-        SplitEntry.COLUMN_RECONCILE_STATE,
-        SplitEntry.COLUMN_RECONCILE_DATE,
-        SplitEntry.COLUMN_ACCOUNT_UID,
-        SplitEntry.COLUMN_TRANSACTION_UID,
-        SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID
+        COLUMN_MEMO,
+        COLUMN_TYPE,
+        COLUMN_VALUE_NUM,
+        COLUMN_VALUE_DENOM,
+        COLUMN_QUANTITY_NUM,
+        COLUMN_QUANTITY_DENOM,
+        COLUMN_CREATED_AT,
+        COLUMN_RECONCILE_STATE,
+        COLUMN_RECONCILE_DATE,
+        COLUMN_ACCOUNT_UID,
+        COLUMN_TRANSACTION_UID,
+        COLUMN_SCHEDX_ACTION_ACCOUNT_UID
     )
 ) {
     private val accountCommodities = mutableMapOf<String, Commodity>()
@@ -137,17 +150,17 @@ class SplitsDbAdapter(
      * @return [Split] instance
      */
     override fun buildModelInstance(cursor: Cursor): Split {
-        val valueNum = cursor.getLong(SplitEntry.COLUMN_VALUE_NUM)
-        val valueDenom = cursor.getLong(SplitEntry.COLUMN_VALUE_DENOM)
-        val quantityNum = cursor.getLong(SplitEntry.COLUMN_QUANTITY_NUM)
-        val quantityDenom = cursor.getLong(SplitEntry.COLUMN_QUANTITY_DENOM)
-        val typeName = cursor.getString(SplitEntry.COLUMN_TYPE)!!
-        val accountUID = cursor.getString(SplitEntry.COLUMN_ACCOUNT_UID)!!
-        val transxUID = cursor.getString(SplitEntry.COLUMN_TRANSACTION_UID)!!
-        val memo = cursor.getString(SplitEntry.COLUMN_MEMO)
-        val reconcileState = cursor.getString(SplitEntry.COLUMN_RECONCILE_STATE)
-        val reconcileDate = cursor.getString(SplitEntry.COLUMN_RECONCILE_DATE)
-        val schedxAccountUID = cursor.getString(SplitEntry.COLUMN_SCHEDX_ACTION_ACCOUNT_UID)
+        val valueNum = cursor.getLong(COLUMN_VALUE_NUM)
+        val valueDenom = cursor.getLong(COLUMN_VALUE_DENOM)
+        val quantityNum = cursor.getLong(COLUMN_QUANTITY_NUM)
+        val quantityDenom = cursor.getLong(COLUMN_QUANTITY_DENOM)
+        val typeName = cursor.getString(COLUMN_TYPE)!!
+        val accountUID = cursor.getString(COLUMN_ACCOUNT_UID)!!
+        val transxUID = cursor.getString(COLUMN_TRANSACTION_UID)!!
+        val memo = cursor.getString(COLUMN_MEMO)
+        val reconcileState = cursor.getString(COLUMN_RECONCILE_STATE)
+        val reconcileDate = cursor.getString(COLUMN_RECONCILE_DATE)
+        val schedxAccountUID = cursor.getString(COLUMN_SCHEDX_ACTION_ACCOUNT_UID)
 
         val transactionCurrencyUID = getAttribute(
             TransactionEntry.TABLE_NAME,
@@ -203,7 +216,7 @@ class SplitsDbAdapter(
         endTimestamp: Long
     ): Map<String, Money> {
         var selection = ("t." + TransactionEntry.COLUMN_TEMPLATE + " = 0"
-                + " AND s." + SplitEntry.COLUMN_QUANTITY_DENOM + " > 0")
+                + " AND s." + COLUMN_QUANTITY_DENOM + " > 0")
 
         if (!accountsWhere.isNullOrEmpty()) {
             selection += " AND ($accountsWhere)"
@@ -222,19 +235,19 @@ class SplitsDbAdapter(
         val sql = SQLiteQueryBuilder.buildQueryString(
             false,
             TransactionEntry.TABLE_NAME + " t" +
-                    " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
-                    " INNER JOIN " + AccountEntry.TABLE_NAME + " a ON s." + SplitEntry.COLUMN_ACCOUNT_UID + " = a." + AccountEntry.COLUMN_UID,
+                    " INNER JOIN " + tableName + " s ON t." + TransactionEntry.COLUMN_UID + " = s." + COLUMN_TRANSACTION_UID +
+                    " INNER JOIN " + AccountEntry.TABLE_NAME + " a ON s." + COLUMN_ACCOUNT_UID + " = a." + AccountEntry.COLUMN_UID,
             arrayOf<String?>(
-                "SUM(s." + SplitEntry.COLUMN_QUANTITY_NUM + ")",
-                "s." + SplitEntry.COLUMN_QUANTITY_DENOM,
-                "s." + SplitEntry.COLUMN_TYPE,
+                "SUM(s.$COLUMN_QUANTITY_NUM)",
+                "s.$COLUMN_QUANTITY_DENOM",
+                "s.$COLUMN_TYPE",
                 "a." + AccountEntry.COLUMN_UID,
                 "a." + AccountEntry.COLUMN_COMMODITY_UID
             ),
             selection,
             "a." + AccountEntry.COLUMN_UID
-                    + ", s." + SplitEntry.COLUMN_TYPE
-                    + ", s." + SplitEntry.COLUMN_QUANTITY_DENOM,
+                    + ", s." + COLUMN_TYPE
+                    + ", s." + COLUMN_QUANTITY_DENOM,
             null,
             null,
             null
@@ -242,16 +255,16 @@ class SplitsDbAdapter(
         val totals = mutableMapOf<String, Money>()
         db.rawQuery(sql, accountsWhereArgs).forEach { cursor ->
             //FIXME beware of 64-bit overflow - get as BigInteger
-            var amount_num = cursor.getLong(0)
-            val amount_denom = cursor.getLong(1)
+            var amountNumer = cursor.getLong(0)
+            val amountDenom = cursor.getLong(1)
             val splitType = cursor.getString(2)
             val accountUID = cursor.getString(3)
             val commodityUID = cursor.getString(4)
 
             if (credit == splitType) {
-                amount_num = -amount_num
+                amountNumer = -amountNumer
             }
-            val amount = toBigDecimal(amount_num, amount_denom)
+            val amount = toBigDecimal(amountNumer, amountDenom)
             val commodity = commoditiesDbAdapter.getRecord(commodityUID)
             val balance = Money(amount, commodity)
             var total = totals[accountUID]
@@ -292,8 +305,8 @@ class SplitsDbAdapter(
     }
 
     private val sqlForTransaction: String by lazy {
-        val selection = SplitEntry.COLUMN_TRANSACTION_UID + " = ?"
-        val orderBy = SplitEntry.COLUMN_ID + " ASC"
+        val selection = "$COLUMN_TRANSACTION_UID = ?"
+        val orderBy = "$COLUMN_ID ASC"
         SQLiteQueryBuilder.buildQueryString(
             false,
             tableName,
@@ -321,9 +334,9 @@ class SplitsDbAdapter(
     }
 
     private val sqlForTransactionAndAccount: String by lazy {
-        val selection = SplitEntry.COLUMN_TRANSACTION_UID + " = ? AND " +
-                SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
-        val orderBy = SplitEntry.COLUMN_VALUE_NUM + " ASC"
+        val selection = COLUMN_TRANSACTION_UID + " = ? AND " +
+                COLUMN_ACCOUNT_UID + " = ?"
+        val orderBy = "$COLUMN_VALUE_NUM ASC"
         SQLiteQueryBuilder.buildQueryString(
             false,
             tableName,
@@ -403,9 +416,9 @@ class SplitsDbAdapter(
 
     fun reassignAccount(oldAccountUID: String, newAccountUID: String) {
         updateRecords(
-            SplitEntry.COLUMN_ACCOUNT_UID + " = ?",
+            "$COLUMN_ACCOUNT_UID = ?",
             arrayOf<String?>(oldAccountUID),
-            SplitEntry.COLUMN_ACCOUNT_UID,
+            COLUMN_ACCOUNT_UID,
             newAccountUID
         )
     }

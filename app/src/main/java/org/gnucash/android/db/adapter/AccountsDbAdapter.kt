@@ -379,7 +379,7 @@ class AccountsDbAdapter(
      * @param cursor Cursor pointing to account record in database
      * @return [Account] object constructed from database record
      */
-    fun buildFullModelInstance(cursor: Cursor): Account {
+    fun buildModelWithTransactions(cursor: Cursor): Account {
         val account = buildModelInstance(cursor)
         account.transactions = transactionsDbAdapter.getAllTransactionsForAccount(account.uid)
         return account
@@ -396,29 +396,37 @@ class AccountsDbAdapter(
      * @return [Account] object constructed from database record
      */
     override fun buildModelInstance(cursor: Cursor): Account {
-        val account = Account(cursor.getString(AccountEntry.COLUMN_NAME)!!)
-        populateBaseModelAttributes(cursor, account)
-
-        account.code = cursor.getString(AccountEntry.COLUMN_CODE)
-        account.description = cursor.getString(AccountEntry.COLUMN_DESCRIPTION)
-        account.parentUID = cursor.getString(AccountEntry.COLUMN_PARENT_ACCOUNT_UID)
-        account.accountType = AccountType.valueOf(cursor.getString(AccountEntry.COLUMN_TYPE)!!)
+        val name = cursor.getString(AccountEntry.COLUMN_NAME)!!
+        val code = cursor.getString(AccountEntry.COLUMN_CODE)
+        val description = cursor.getString(AccountEntry.COLUMN_DESCRIPTION)
+        val parentUID = cursor.getString(AccountEntry.COLUMN_PARENT_ACCOUNT_UID)
+        val accountType = AccountType.valueOf(cursor.getString(AccountEntry.COLUMN_TYPE)!!)
         val commodityUID = cursor.getString(AccountEntry.COLUMN_COMMODITY_UID)!!
-        account.commodity = commoditiesDbAdapter.getRecord(commodityUID)
-        account.isPlaceholder = cursor.getBoolean(AccountEntry.COLUMN_PLACEHOLDER)
-        account.defaultTransferAccountUID =
+        val commodity = commoditiesDbAdapter.getRecord(commodityUID)
+        val isPlaceholder = cursor.getBoolean(AccountEntry.COLUMN_PLACEHOLDER)
+        val defaultTransferAccountUID =
             cursor.getString(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID)
         val color = cursor.getString(AccountEntry.COLUMN_COLOR_CODE)
-        account.setColor(color)
-        account.isFavorite = cursor.getBoolean(AccountEntry.COLUMN_FAVORITE)
-        account.fullName = cursor.getString(AccountEntry.COLUMN_FULL_NAME)
-        account.isHidden = cursor.getBoolean(AccountEntry.COLUMN_HIDDEN)
-        if (account.isRoot) {
-            account.isHidden = false
-        }
-        account.note = cursor.getString(AccountEntry.COLUMN_NOTES)
-        account.isTemplate = cursor.getBoolean(AccountEntry.COLUMN_TEMPLATE)
+        val isFavorite = cursor.getBoolean(AccountEntry.COLUMN_FAVORITE)
+        val fullName = cursor.getString(AccountEntry.COLUMN_FULL_NAME)
+        val isHidden = cursor.getBoolean(AccountEntry.COLUMN_HIDDEN)
+        val note = cursor.getString(AccountEntry.COLUMN_NOTES)
+        val isTemplate = cursor.getBoolean(AccountEntry.COLUMN_TEMPLATE)
 
+        val account = Account(name, commodity)
+        populateBaseModelAttributes(cursor, account)
+        account.code = code
+        account.description = description
+        account.parentUID = parentUID
+        account.accountType = accountType
+        account.isPlaceholder = isPlaceholder
+        account.defaultTransferAccountUID = defaultTransferAccountUID
+        account.setColor(color)
+        account.isFavorite = isFavorite
+        account.fullName = fullName
+        account.isHidden = isHidden
+        account.note = note
+        account.isTemplate = isTemplate
         if (account.isRoot) {
             account.isHidden = false
             account.isPlaceholder = false
@@ -1496,7 +1504,7 @@ class AccountsDbAdapter(
         val cursor = fetchRecord(uid) ?: return null
         try {
             if (cursor.moveToFirst()) {
-                return buildFullModelInstance(cursor)
+                return buildModelWithTransactions(cursor)
             }
         } finally {
             cursor.close()

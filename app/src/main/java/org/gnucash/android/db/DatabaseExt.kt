@@ -114,3 +114,7 @@ fun Cursor.toValues(): ContentValues {
 fun SQLiteDatabase.insert(table: String, values: ContentValues): Long {
     return insertWithOnConflict(table, null, values, CONFLICT_NONE)
 }
+
+fun Array<String>.alias(prefix: String): Array<String> {
+    return map { "${prefix}.$it AS ${prefix}_$it" }.toTypedArray()
+}

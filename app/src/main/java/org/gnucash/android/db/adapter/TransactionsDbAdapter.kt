@@ -27,7 +27,21 @@ import org.gnucash.android.db.DatabaseHelper.Companion.sqlEscapeLike
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
-import org.gnucash.android.db.DatabaseSchema.TransactionEntry
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_COMMODITY_UID
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_CREATED_AT
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_CURRENCY
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_DESCRIPTION
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_EXPORTED
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_ID
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_MODIFIED_AT
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_NOTES
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_NUMBER
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_SCHEDX_ACTION_UID
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_TEMPLATE
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_TIMESTAMP
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.COLUMN_UID
+import org.gnucash.android.db.DatabaseSchema.TransactionEntry.TABLE_NAME
+import org.gnucash.android.db.alias
 import org.gnucash.android.db.bindBoolean
 import org.gnucash.android.db.forEach
 import org.gnucash.android.db.getBoolean
@@ -60,18 +74,18 @@ class TransactionsDbAdapter(
     val splitsDbAdapter: SplitsDbAdapter
 ) : DatabaseAdapter<Transaction>(
     splitsDbAdapter.holder,
-    TransactionEntry.TABLE_NAME,
+    TABLE_NAME,
     arrayOf(
-        TransactionEntry.COLUMN_DESCRIPTION,
-        TransactionEntry.COLUMN_NOTES,
-        TransactionEntry.COLUMN_TIMESTAMP,
-        TransactionEntry.COLUMN_EXPORTED,
-        TransactionEntry.COLUMN_CURRENCY,
-        TransactionEntry.COLUMN_COMMODITY_UID,
-        TransactionEntry.COLUMN_CREATED_AT,
-        TransactionEntry.COLUMN_SCHEDX_ACTION_UID,
-        TransactionEntry.COLUMN_TEMPLATE,
-        TransactionEntry.COLUMN_NUMBER
+        COLUMN_DESCRIPTION,
+        COLUMN_NOTES,
+        COLUMN_TIMESTAMP,
+        COLUMN_EXPORTED,
+        COLUMN_CURRENCY,
+        COLUMN_COMMODITY_UID,
+        COLUMN_CREATED_AT,
+        COLUMN_SCHEDX_ACTION_UID,
+        COLUMN_TEMPLATE,
+        COLUMN_NUMBER
     )
 ) {
     val commoditiesDbAdapter: CommoditiesDbAdapter = splitsDbAdapter.commoditiesDbAdapter
@@ -144,7 +158,7 @@ class TransactionsDbAdapter(
     private val deleteEmptyTransaction: SQLiteStatement by lazy {
         db.compileStatement(
             "DELETE FROM $tableName WHERE NOT EXISTS ( SELECT * FROM " + SplitEntry.TABLE_NAME +
-                    " WHERE " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID +
+                    " WHERE " + tableName + "." + COLUMN_UID +
                     " = " + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID + " ) "
         )
     }
@@ -198,19 +212,20 @@ class TransactionsDbAdapter(
 
     private val sqlAllTransactionsForAccount: String by lazy {
         val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.tables = TransactionEntry.TABLE_NAME + " t" +
+        queryBuilder.tables = tableName + " t" +
                 " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON " +
-                "t." + TransactionEntry.COLUMN_UID + " = " +
-                "s." + SplitEntry.COLUMN_TRANSACTION_UID
-        queryBuilder.isDistinct = true
-        val projectionIn = arrayOf<String?>("t.*")
-        val selection = ("s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
-                + " AND t." + TransactionEntry.COLUMN_TEMPLATE + " = 0")
-        val sortOrder = "t." + TransactionEntry.COLUMN_TIMESTAMP + " DESC, " +
-                "t." + TransactionEntry.COLUMN_NUMBER + " DESC, " +
-                "t." + TransactionEntry.COLUMN_ID + " DESC"
+                "t." + COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
+                " INNER JOIN " + AccountEntry.TABLE_NAME + " a ON " +
+                "a." + AccountEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_ACCOUNT_UID
+        val projectionIn = arrayOf("t.*")
+        val selection = "t." + COLUMN_TEMPLATE + " = 0" +
+                " AND s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
+        val sortOrder = "t." + COLUMN_TIMESTAMP + " DESC, " +
+                "t." + COLUMN_NUMBER + " DESC, " +
+                "t." + COLUMN_ID + " DESC"
+        val groupBy = "t.$COLUMN_UID"
 
-        queryBuilder.buildQuery(projectionIn, selection, null, null, sortOrder, null)
+        queryBuilder.buildQuery(projectionIn, selection, groupBy, null, sortOrder, null)
     }
 
     /**
@@ -238,16 +253,14 @@ class TransactionsDbAdapter(
     fun fetchScheduledTransactionsForAccount(accountUID: String): Cursor? {
         val queryBuilder = SQLiteQueryBuilder()
         queryBuilder.isDistinct = true
-        queryBuilder.tables = TransactionEntry.TABLE_NAME +
-                " INNER JOIN " + SplitEntry.TABLE_NAME + " ON " +
-                TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " = " +
-                SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID
-        val projectionIn = arrayOf<String?>(TransactionEntry.TABLE_NAME + ".*")
-        val selection = (SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
-                + " AND " + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TEMPLATE + " = 1")
+        queryBuilder.tables = tableName + " t" +
+                " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON " +
+                "t." + COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID
+        val projectionIn = arrayOf<String?>("t.*")
+        val selection = "s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?" +
+                " AND t." + COLUMN_TEMPLATE + " = 1"
         val selectionArgs = arrayOf<String?>(accountUID)
-        val sortOrder =
-            TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TIMESTAMP + " DESC"
+        val sortOrder = "t.$COLUMN_TIMESTAMP DESC"
 
         return queryBuilder.query(
             db,
@@ -260,8 +273,8 @@ class TransactionsDbAdapter(
         )
     }
 
-    private val sqlDeleteTransactionsForAccount = "DELETE FROM " + TransactionEntry.TABLE_NAME +
-            " WHERE " + TransactionEntry.COLUMN_UID + " IN " +
+    private val sqlDeleteTransactionsForAccount = "DELETE FROM " + tableName +
+            " WHERE " + COLUMN_UID + " IN " +
             " (SELECT " + SplitEntry.COLUMN_TRANSACTION_UID +
             " FROM " + SplitEntry.TABLE_NAME + " WHERE " +
             SplitEntry.COLUMN_ACCOUNT_UID + " = ?)"
@@ -305,10 +318,10 @@ class TransactionsDbAdapter(
         whereArgs: Array<String?>?,
         orderBy: String?
     ): Cursor {
-        val table = TransactionEntry.TABLE_NAME + " t, " + SplitEntry.TABLE_NAME + " s" +
-                " ON t." + TransactionEntry.COLUMN_UID +
+        val table = tableName + " t, " + SplitEntry.TABLE_NAME + " s" +
+                " ON t." + COLUMN_UID +
                 " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
-                ", trans_extra_info ON trans_extra_info.trans_acct_t_uid = t." + TransactionEntry.COLUMN_UID
+                ", trans_extra_info ON trans_extra_info.trans_acct_t_uid = t." + COLUMN_UID
         return db.query(table, columns, where, whereArgs, null, null, orderBy)
     }
 
@@ -319,21 +332,20 @@ class TransactionsDbAdapter(
      * @return Cursor to the results
      */
     fun fetchTransactionsToExportSince(timestamp: Timestamp): Cursor {
-        val where = TransactionEntry.COLUMN_TEMPLATE + " = 0 AND " +
-                TransactionEntry.COLUMN_EXPORTED + " = 0 AND " +
-                TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
+        val where = COLUMN_TEMPLATE + " = 0 AND " +
+                COLUMN_EXPORTED + " = 0 AND " +
+                COLUMN_MODIFIED_AT + " >= ?"
         val whereArgs = arrayOf<String?>(getUtcStringFromTimestamp(timestamp))
-        val orderBy = TransactionEntry.COLUMN_TIMESTAMP + " ASC, " +
-                TransactionEntry.COLUMN_NUMBER + " ASC, " +
-                TransactionEntry.COLUMN_ID + " ASC"
+        val orderBy = COLUMN_TIMESTAMP + " ASC, " +
+                COLUMN_NUMBER + " ASC, " +
+                COLUMN_ID + " ASC"
         return fetchAllRecords(where, whereArgs, orderBy)
     }
 
     fun markTransactionsExported(timestamp: Timestamp, exported: Boolean = true) {
         val values = ContentValues()
-        values[TransactionEntry.COLUMN_EXPORTED] = exported
-        val where = TransactionEntry.COLUMN_TEMPLATE + " = 0 AND " +
-                TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
+        values[COLUMN_EXPORTED] = exported
+        val where = "$COLUMN_TEMPLATE = 0 AND $COLUMN_MODIFIED_AT >= ?"
         val whereArgs = arrayOf<String?>(getUtcStringFromTimestamp(timestamp))
         db.update(tableName, values, where, whereArgs)
     }
@@ -356,7 +368,7 @@ class TransactionsDbAdapter(
         // Account, transaction and split Information can be retrieve in a single query.
         val table =
             "trans_split_acct, trans_extra_info ON trans_extra_info.trans_acct_t_uid = trans_split_acct." +
-                    TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID + ", " +
+                    tableName + "_" + COLUMN_UID + ", " +
                     AccountEntry.TABLE_NAME + " AS account1 ON account1." + AccountEntry.COLUMN_UID +
                     " = trans_extra_info.trans_acct_a_uid"
         return db.query(table, columns, where, whereArgs, null, null, orderBy)
@@ -366,12 +378,12 @@ class TransactionsDbAdapter(
         get() = DatabaseUtils.queryNumEntries(
             db,
             tableName,
-            TransactionEntry.COLUMN_TEMPLATE + "=0"
+            "$COLUMN_TEMPLATE = 0"
         )
 
     override fun getRecordsCount(where: String?, whereArgs: Array<String?>?): Long {
-        val table = (tableName + ", trans_extra_info ON "
-                + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID
+        val table = (tableName + " t, trans_extra_info ON "
+                + "t." + COLUMN_UID
                 + " = trans_extra_info.trans_acct_t_uid")
         return DatabaseUtils.queryNumEntries(db, table, where, whereArgs)
     }
@@ -384,14 +396,14 @@ class TransactionsDbAdapter(
      * @return [Transaction] object constructed from database record
      */
     override fun buildModelInstance(cursor: Cursor): Transaction {
-        val name = cursor.getString(TransactionEntry.COLUMN_DESCRIPTION)!!
-        val time = cursor.getLong(TransactionEntry.COLUMN_TIMESTAMP)
-        val notes = cursor.getString(TransactionEntry.COLUMN_NOTES)
-        val isExported = cursor.getBoolean(TransactionEntry.COLUMN_EXPORTED)
-        val isTemplate = cursor.getBoolean(TransactionEntry.COLUMN_TEMPLATE)
-        val commodityUID = cursor.getString(TransactionEntry.COLUMN_COMMODITY_UID)!!
-        val scheduledActionUID = cursor.getString(TransactionEntry.COLUMN_SCHEDX_ACTION_UID)
-        val number = cursor.getString(TransactionEntry.COLUMN_NUMBER)
+        val name = cursor.getString(COLUMN_DESCRIPTION)!!
+        val time = cursor.getLong(COLUMN_TIMESTAMP)
+        val notes = cursor.getString(COLUMN_NOTES)
+        val isExported = cursor.getBoolean(COLUMN_EXPORTED)
+        val isTemplate = cursor.getBoolean(COLUMN_TEMPLATE)
+        val commodityUID = cursor.getString(COLUMN_COMMODITY_UID)!!
+        val scheduledActionUID = cursor.getString(COLUMN_SCHEDX_ACTION_UID)
+        val number = cursor.getString(COLUMN_NUMBER)
         val commodity = commoditiesDbAdapter.getRecord(commodityUID)
 
         val transaction = Transaction(name)
@@ -403,8 +415,11 @@ class TransactionsDbAdapter(
         transaction.commodity = commodity
         transaction.scheduledActionUID = scheduledActionUID
         transaction.number = number.orEmpty()
-        transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction.uid)
-
+        try {
+            transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction.uid)
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
         return transaction
     }
 
@@ -473,7 +488,7 @@ class TransactionsDbAdapter(
         get() = DatabaseUtils.queryNumEntries(
             db,
             tableName,
-            TransactionEntry.COLUMN_TEMPLATE + "=1"
+            "$COLUMN_TEMPLATE = 1"
         )
 
     /**
@@ -498,19 +513,17 @@ class TransactionsDbAdapter(
      */
     fun fetchTransactionSuggestions(prefix: String, accountUID: String): Cursor? {
         val queryBuilder = SQLiteQueryBuilder()
-        queryBuilder.setTables(
-            (TransactionEntry.TABLE_NAME + " t"
-                    + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON "
-                    + "t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID)
-        )
+        queryBuilder.tables = tableName + " t" +
+                " INNER JOIN " + SplitEntry.TABLE_NAME + " s" +
+                " ON t." + COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID
         val projectionIn =
-            arrayOf<String?>("t.*", "MAX(t." + TransactionEntry.COLUMN_TIMESTAMP + ")")
+            arrayOf<String?>("t.*", "MAX(t.$COLUMN_TIMESTAMP)")
         val selection = ("s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
-                + " AND t." + TransactionEntry.COLUMN_TEMPLATE + " = 0"
-                + " AND t." + TransactionEntry.COLUMN_DESCRIPTION + " LIKE " + sqlEscapeLike(prefix))
+                + " AND t." + COLUMN_TEMPLATE + " = 0"
+                + " AND t." + COLUMN_DESCRIPTION + " LIKE " + sqlEscapeLike(prefix))
         val selectionArgs = arrayOf<String?>(accountUID)
-        val groupBy = TransactionEntry.COLUMN_DESCRIPTION
-        val sortOrder = "t." + TransactionEntry.COLUMN_TIMESTAMP + " DESC"
+        val groupBy = COLUMN_DESCRIPTION
+        val sortOrder = "t.$COLUMN_TIMESTAMP DESC"
         val limit = 10.toString()
         return queryBuilder.query(
             db,
@@ -548,7 +561,7 @@ class TransactionsDbAdapter(
      * @return Number of records deleted
      */
     fun deleteAllNonTemplateTransactions(): Int {
-        val where = TransactionEntry.COLUMN_TEMPLATE + "=0"
+        val where = "$COLUMN_TEMPLATE = 0"
         return db.delete(tableName, where, null)
     }
 
@@ -586,7 +599,7 @@ class TransactionsDbAdapter(
     private fun getTimestampModification(mod: String): Timestamp {
         val cursor = db.query(
             tableName,
-            arrayOf<String?>(mod + "(" + TransactionEntry.COLUMN_MODIFIED_AT + ")"),
+            arrayOf<String?>("$mod($COLUMN_MODIFIED_AT)"),
             null, null, null, null, null
         )
 
@@ -615,15 +628,15 @@ class TransactionsDbAdapter(
      * @see .getTimestampOfEarliestTransaction
      */
     private fun getTimestamp(mod: String, type: AccountType, commodityUID: String): Long {
-        val sql = ("SELECT " + mod + "(t." + TransactionEntry.COLUMN_TIMESTAMP + ")"
-                + " FROM " + TransactionEntry.TABLE_NAME + " t"
+        val sql = ("SELECT " + mod + "(t." + COLUMN_TIMESTAMP + ")"
+                + " FROM " + tableName + " t"
                 + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON"
-                + " s." + SplitEntry.COLUMN_TRANSACTION_UID + " = t." + TransactionEntry.COLUMN_UID
+                + " s." + SplitEntry.COLUMN_TRANSACTION_UID + " = t." + COLUMN_UID
                 + " INNER JOIN " + AccountEntry.TABLE_NAME + " a ON"
                 + " a." + AccountEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_ACCOUNT_UID
                 + " WHERE a." + AccountEntry.COLUMN_TYPE + " = ?"
                 + " AND a." + AccountEntry.COLUMN_COMMODITY_UID + " = ?"
-                + " AND t." + TransactionEntry.COLUMN_TEMPLATE + " = 0")
+                + " AND t." + COLUMN_TEMPLATE + " = 0")
         val args = arrayOf<String?>(type.name, commodityUID)
         val cursor = db.rawQuery(sql, args)
         var timestamp: Long = INVALID_DATE
@@ -638,9 +651,9 @@ class TransactionsDbAdapter(
     }
 
     fun getTransactionsCountForAccount(accountUID: String): Long {
-        val table = (TransactionEntry.TABLE_NAME + " t "
-                + " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON"
-                + " t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID)
+        val table = tableName + " t " +
+                " INNER JOIN " + SplitEntry.TABLE_NAME + " s" +
+                " ON t." + COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID
         val selection = "s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
         val selectionArgs = arrayOf<String?>(accountUID)
         return DatabaseUtils.queryNumEntries(db, table, selection, selectionArgs)
@@ -655,22 +668,21 @@ class TransactionsDbAdapter(
 
     fun fetchSearch(where: String): Cursor? {
         if (where.isEmpty()) {
-            val orderBy = TransactionEntry.COLUMN_TIMESTAMP + " DESC, " +
-                    TransactionEntry.COLUMN_NUMBER + " DESC, " +
-                    TransactionEntry.COLUMN_ID + " DESC"
+            val orderBy = COLUMN_TIMESTAMP + " DESC, " +
+                    COLUMN_NUMBER + " DESC, " +
+                    COLUMN_ID + " DESC"
             return fetchAllRecords(null, null, orderBy)
         }
-        val table = (TransactionEntry.TABLE_NAME + " t"
-                + " INNER JOIN " + SplitEntry.TABLE_NAME + " s1" + " ON t." + TransactionEntry.COLUMN_UID
-                + " = s1." + SplitEntry.COLUMN_TRANSACTION_UID
-                + " INNER JOIN " + SplitEntry.TABLE_NAME + " s2" + " ON t." + TransactionEntry.COLUMN_UID
-                + " = s2." + SplitEntry.COLUMN_TRANSACTION_UID
-                )
+        val table = tableName + " t" +
+                " INNER JOIN " + SplitEntry.TABLE_NAME + " s1" + " ON t." + COLUMN_UID +
+                " = s1." + SplitEntry.COLUMN_TRANSACTION_UID +
+                " INNER JOIN " + SplitEntry.TABLE_NAME + " s2" + " ON t." + COLUMN_UID +
+                " = s2." + SplitEntry.COLUMN_TRANSACTION_UID
         val columns = arrayOf<String?>("t.*")
         val selection = "(s1.${SplitEntry.COLUMN_ID} < s2.${SplitEntry.COLUMN_ID}) AND $where"
-        val orderBy = "t." + TransactionEntry.COLUMN_TIMESTAMP + " DESC, " +
-                "t." + TransactionEntry.COLUMN_NUMBER + " DESC, " +
-                "t." + TransactionEntry.COLUMN_ID + " DESC"
+        val orderBy = "t." + COLUMN_TIMESTAMP + " DESC, " +
+                "t." + COLUMN_NUMBER + " DESC, " +
+                "t." + COLUMN_ID + " DESC"
         return db.query(true, table, columns, selection, null, null, null, orderBy, null)
     }
 
@@ -686,90 +698,41 @@ class TransactionsDbAdapter(
         // in the queries
 
         //todo: would it be useful to add the split reconciled_state and reconciled_date to this view?
+        val accountsDbAdapter = AccountsDbAdapter(this, PricesDbAdapter(commoditiesDbAdapter))
+        val t = tableName
+        val s = splitsDbAdapter.tableName
+        val a = accountsDbAdapter.tableName
+        val sql = "CREATE TEMP VIEW IF NOT EXISTS trans_split_acct AS SELECT " +
+                allColumns.alias(t).joinToString(",") + "," +
+                splitsDbAdapter.allColumns.alias(s).joinToString(",") + "," +
+                accountsDbAdapter.allColumns.alias(a).joinToString(",") +
+                " FROM " + tableName + ", " + s + " ON " +
+                t + "." + COLUMN_UID + "=" + s + "." + SplitEntry.COLUMN_TRANSACTION_UID +
+                ", " + a + " ON " +
+                s + "." + SplitEntry.COLUMN_ACCOUNT_UID + "=" + a + "." + AccountEntry.COLUMN_UID
+        db.execSQL(sql)
 
-        db.execSQL(
-            ("CREATE TEMP VIEW IF NOT EXISTS trans_split_acct AS SELECT "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_ID + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_ID + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_MODIFIED_AT + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_MODIFIED_AT + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_DESCRIPTION + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_DESCRIPTION + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_NOTES + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_NOTES + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TIMESTAMP + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_TIMESTAMP + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_EXPORTED + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_EXPORTED + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_TEMPLATE + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_TEMPLATE + ", "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_NUMBER + " AS "
-                    + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_NUMBER + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_ID + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_ID + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_UID + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_UID + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TYPE + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_TYPE + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_VALUE_NUM + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_VALUE_NUM + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_VALUE_DENOM + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_VALUE_DENOM + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_QUANTITY_NUM + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_QUANTITY_NUM + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_QUANTITY_DENOM + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_QUANTITY_DENOM + ", "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_MEMO + " AS "
-                    + SplitEntry.TABLE_NAME + "_" + SplitEntry.COLUMN_MEMO + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_UID + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_UID + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_NAME + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_NAME + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_COMMODITY_UID + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_COMMODITY_UID + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_PARENT_ACCOUNT_UID + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_PARENT_ACCOUNT_UID + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_PLACEHOLDER + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_PLACEHOLDER + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_COLOR_CODE + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_COLOR_CODE + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_FAVORITE + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_FAVORITE + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_FULL_NAME + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_FULL_NAME + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_TYPE + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_TYPE + ", "
-                    + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID + " AS "
-                    + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID
-                    + " FROM " + TransactionEntry.TABLE_NAME + ", " + SplitEntry.TABLE_NAME + " ON "
-                    + TransactionEntry.TABLE_NAME + "." + TransactionEntry.COLUMN_UID + "=" + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_TRANSACTION_UID
-                    + ", " + AccountEntry.TABLE_NAME + " ON "
-                    + SplitEntry.TABLE_NAME + "." + SplitEntry.COLUMN_ACCOUNT_UID + "=" + AccountEntry.TABLE_NAME + "." + AccountEntry.COLUMN_UID)
-        )
-
-        db.execSQL(
-            "CREATE TEMP VIEW IF NOT EXISTS trans_extra_info AS SELECT " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID +
-                    " AS trans_acct_t_uid, SUBSTR ( MIN ( ( CASE WHEN IFNULL ( " + SplitEntry.TABLE_NAME + "_" +
+        val sqlExtra =
+            "CREATE TEMP VIEW IF NOT EXISTS trans_extra_info AS SELECT " + t + "_" + COLUMN_UID +
+                    " AS trans_acct_t_uid, SUBSTR ( MIN ( ( CASE WHEN IFNULL ( " + s + "_" +
                     SplitEntry.COLUMN_MEMO + ", '' ) == '' THEN 'a' ELSE 'b' END ) || " +
-                    AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_UID +
-                    " ), 2 ) AS trans_acct_a_uid, TOTAL ( CASE WHEN " + SplitEntry.TABLE_NAME + "_" +
-                    SplitEntry.COLUMN_TYPE + " = 'DEBIT' THEN " + SplitEntry.TABLE_NAME + "_" +
-                    SplitEntry.COLUMN_VALUE_NUM + " ELSE - " + SplitEntry.TABLE_NAME + "_" +
-                    SplitEntry.COLUMN_VALUE_NUM + " END ) * 1.0 / " + SplitEntry.TABLE_NAME + "_" +
+                    a + "_" + AccountEntry.COLUMN_UID +
+                    " ), 2 ) AS trans_acct_a_uid, TOTAL ( CASE WHEN " + s + "_" +
+                    SplitEntry.COLUMN_TYPE + " = 'DEBIT' THEN " + s + "_" +
+                    SplitEntry.COLUMN_VALUE_NUM + " ELSE - " + s + "_" +
+                    SplitEntry.COLUMN_VALUE_NUM + " END ) * 1.0 / " + s + "_" +
                     SplitEntry.COLUMN_VALUE_DENOM + " AS trans_acct_balance, COUNT ( DISTINCT " +
-                    AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_COMMODITY_UID +
+                    a + "_" + AccountEntry.COLUMN_COMMODITY_UID +
                     " ) AS trans_currency_count, COUNT (*) AS trans_split_count FROM trans_split_acct " +
-                    " GROUP BY " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID
-        )
+                    " GROUP BY " + t + "_" + COLUMN_UID
+        db.execSQL(sqlExtra)
     }
 
     fun getTransactionMaxSplitNum(accountUID: String): Int {
         val cursor = db.query(
             "trans_extra_info",
             arrayOf<String?>("MAX(trans_split_count)"),
-            "trans_acct_t_uid IN ( SELECT DISTINCT " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID +
+            "trans_acct_t_uid IN ( SELECT DISTINCT " + tableName + "_" + COLUMN_UID +
                     " FROM trans_split_acct WHERE " + AccountEntry.TABLE_NAME + "_" + AccountEntry.COLUMN_UID +
                     " = ? )",
             arrayOf<String?>(accountUID),
@@ -793,13 +756,13 @@ class TransactionsDbAdapter(
         modifiedSince: Timestamp = timestampFromEpochZero
     ): List<Commodity> {
         val result = mutableListOf<Commodity>()
-        val table = TransactionEntry.TABLE_NAME + " t INNER JOIN " + SplitEntry.TABLE_NAME + " s" +
-                " ON t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
+        val table = TABLE_NAME + " t INNER JOIN " + SplitEntry.TABLE_NAME + " s" +
+                " ON t." + COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
                 " INNER JOIN " + AccountEntry.TABLE_NAME + " a" +
                 " ON a." + AccountEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_ACCOUNT_UID
         val projection = arrayOf("a." + AccountEntry.COLUMN_COMMODITY_UID)
-        val where = "t." + TransactionEntry.COLUMN_TEMPLATE + " = ?" +
-                " AND t." + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?" +
+        val where = "t." + COLUMN_TEMPLATE + " = ?" +
+                " AND t." + COLUMN_MODIFIED_AT + " >= ?" +
                 " AND a." + AccountEntry.COLUMN_TEMPLATE + " = ?"
         val whereArgs = arrayOf<String?>(
             if (isTemplate) "1" else "0",

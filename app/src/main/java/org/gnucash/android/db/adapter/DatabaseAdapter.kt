@@ -48,14 +48,20 @@ abstract class DatabaseAdapter<Model : BaseModel>(
     /**
      * SQLite database
      */
-    val holder: DatabaseHolder,
-    protected val tableName: String,
-    protected val columns: Array<String>,
+    internal val holder: DatabaseHolder,
+    internal val tableName: String,
+    internal val columns: Array<String>,
     protected val isCached: Boolean = false
 ) : Closeable {
     protected val db: SQLiteDatabase
 
     protected val cache: MutableMap<String, Model> = ConcurrentHashMap<String, Model>()
+    internal val allColumns = arrayOf(
+        CommonColumns.COLUMN_ID,
+        CommonColumns.COLUMN_UID,
+        CommonColumns.COLUMN_CREATED_AT,
+        CommonColumns.COLUMN_MODIFIED_AT,
+    ) + columns
 
     enum class UpdateMethod {
         Insert,
