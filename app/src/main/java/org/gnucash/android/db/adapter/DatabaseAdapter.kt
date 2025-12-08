@@ -24,10 +24,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteStatement
 import org.gnucash.android.db.BookDbHelper.Companion.getBookPreferences
 import org.gnucash.android.db.DatabaseHolder
-import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.DatabaseSchema.CommonColumns
-import org.gnucash.android.db.DatabaseSchema.SplitEntry
-import org.gnucash.android.db.DatabaseSchema.TransactionEntry
 import org.gnucash.android.db.forEach
 import org.gnucash.android.db.getLong
 import org.gnucash.android.db.getString
@@ -51,14 +48,20 @@ abstract class DatabaseAdapter<Model : BaseModel>(
     /**
      * SQLite database
      */
-    val holder: DatabaseHolder,
-    protected val tableName: String,
-    protected val columns: Array<String>,
+    internal val holder: DatabaseHolder,
+    internal val tableName: String,
+    internal val columns: Array<String>,
     protected val isCached: Boolean = false
 ) : Closeable {
     protected val db: SQLiteDatabase
 
     protected val cache: MutableMap<String, Model> = ConcurrentHashMap<String, Model>()
+    internal val allColumns = arrayOf(
+        CommonColumns.COLUMN_ID,
+        CommonColumns.COLUMN_UID,
+        CommonColumns.COLUMN_CREATED_AT,
+        CommonColumns.COLUMN_MODIFIED_AT,
+    ) + columns
 
     enum class UpdateMethod {
         Insert,

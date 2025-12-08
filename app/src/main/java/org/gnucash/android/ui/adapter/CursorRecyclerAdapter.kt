@@ -47,7 +47,7 @@ abstract class CursorRecyclerAdapter<VH : RecyclerView.ViewHolder>(cursor: Curso
     init {
         _cursor = cursor
         isDataValid = false
-        rowIDColumn = cursor?.getColumnIndexOrThrow(BaseColumns._ID) ?: -1
+        rowIDColumn = cursor?.getColumnIndex(BaseColumns._ID)  ?: -1
 
         changeObserver = ChangeObserver()
         dataSetObserver = CursorDataSetObserver()
@@ -96,7 +96,7 @@ abstract class CursorRecyclerAdapter<VH : RecyclerView.ViewHolder>(cursor: Curso
      */
     override fun getItemId(position: Int): Long {
         val cursor = cursor ?: return 0
-        return if (isDataValid && cursor.moveToPosition(position)) {
+        return if (isDataValid && (rowIDColumn >= 0) && cursor.moveToPosition(position)) {
             cursor.getLong(rowIDColumn)
         } else {
             0
@@ -138,7 +138,7 @@ abstract class CursorRecyclerAdapter<VH : RecyclerView.ViewHolder>(cursor: Curso
         if (newCursor != null) {
             if (changeObserver != null) newCursor.registerContentObserver(changeObserver)
             if (dataSetObserver != null) newCursor.registerDataSetObserver(dataSetObserver)
-            rowIDColumn = newCursor.getColumnIndexOrThrow(BaseColumns._ID)
+            rowIDColumn = newCursor.getColumnIndex(BaseColumns._ID)
             isDataValid = true
             // notify the observers about the new cursor
             notifyDataSetChanged()

@@ -36,11 +36,12 @@ class SearchResultViewHolder(
     private val primaryText: TextView = binding.listItem2Lines.primaryText
     private val secondaryText: TextView = binding.listItem2Lines.secondaryText
     private val transactionAmount: TextView = binding.transactionAmount
-    private val optionsMenu: ImageView = binding.optionsMenu
 
     //these views are not used in the compact view, hence the nullability
     private val transactionDate: TextView = binding.transactionDate
     private val editTransaction: ImageView = binding.editTransaction
+    private val optionsMenu: ImageView = binding.optionsMenu
+    private val popupMenu = PopupMenu(optionsMenu.context, optionsMenu)
 
     private var transaction: Transaction? = null
     private val accountsDbAdapter: AccountsDbAdapter = AccountsDbAdapter.instance
@@ -51,14 +52,14 @@ class SearchResultViewHolder(
     private val colorBalanceZero: Int = transactionAmount.currentTextColor
 
     init {
-        optionsMenu.setOnClickListener { v ->
-            val popupMenu = PopupMenu(v.context, v)
-            popupMenu.setOnMenuItemClickListener(this@SearchResultViewHolder)
-            val inflater = popupMenu.menuInflater
-            val menu = popupMenu.menu
-            inflater.inflate(R.menu.transactions_context_menu, menu)
-            menu.findItem(R.id.menu_edit).isVisible = false
-            menu.findItem(R.id.menu_move).isVisible = false
+        popupMenu.setOnMenuItemClickListener(this)
+        val inflater = popupMenu.menuInflater
+        val menu = popupMenu.menu
+        inflater.inflate(R.menu.transactions_context_menu, menu)
+        menu.findItem(R.id.menu_edit).isVisible = false
+        menu.findItem(R.id.menu_move).isVisible = false
+
+        optionsMenu.setOnClickListener { _ ->
             popupMenu.show()
         }
 
