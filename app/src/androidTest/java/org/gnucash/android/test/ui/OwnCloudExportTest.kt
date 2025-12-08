@@ -46,6 +46,7 @@ import org.gnucash.android.model.Money
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
+import org.gnucash.android.test.ui.util.PerformEnableAction.Companion.enable
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.ui.settings.OwnCloudPreferences
 import org.junit.Assume
@@ -183,9 +184,11 @@ class OwnCloudExportTest : GnuAndroidTest() {
         clickViewText(R.string.nav_menu_export)
         clickViewId(R.id.spinner_export_destination)
         val destinations = context.resources.getStringArray(R.array.export_destinations)
-        clickViewText(destinations[2])
+        clickViewText(destinations[2]) // ownCloud
 
         // Close the dialog
+        onView(withId(BUTTON_POSITIVE))
+            .perform(enable())
         clickViewId(BUTTON_POSITIVE)
         // Export
         clickViewId(R.id.menu_save)
