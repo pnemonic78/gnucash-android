@@ -42,7 +42,6 @@ import org.gnucash.android.app.actionBar
 import org.gnucash.android.databinding.FragmentAccountFormBinding
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.db.joinIn
 import org.gnucash.android.model.Account
@@ -256,8 +255,8 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         descendantAccounts.addAll(descendants)
 
         setSelectedCurrency(binding, account.commodity)
-        setAccountTypeSelection(binding, account.accountType)
-        loadParentAccountList(binding, account.accountType)
+        setAccountTypeSelection(binding, account.type)
+        loadParentAccountList(binding, account.type)
         setParentAccountSelection(binding, account.parentUID)
 
         if (accountsDbAdapter.getTransactionMaxSplitNum(account.uid) > 1) {
@@ -267,7 +266,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
 
         binding.inputAccountName.setTextToEnd(account.name)
         binding.inputAccountDescription.setText(account.description)
-        binding.notes.setText(account.note)
+        binding.notes.setText(account.notes)
 
         if (useDoubleEntry) {
             var defaultTransferAccountUID = account.defaultTransferAccountUID
@@ -307,7 +306,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
             val parentAccount = accountsDbAdapter.getRecordOrNull(parentUID)
             if (parentAccount != null) {
                 setSelectedCurrency(binding, parentAccount.commodity)
-                val parentAccountType = parentAccount.accountType
+                val parentAccountType = parentAccount.type
                 setAccountTypeSelection(binding, parentAccountType)
                 loadParentAccountList(binding, parentAccountType)
                 setParentAccountSelection(binding, parentUID)
@@ -637,9 +636,9 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
             account.commodity = selectedCommodity
         }
 
-        account.accountType = selectedAccountType
+        account.type = selectedAccountType
         account.description = binding.inputAccountDescription.getText().toString().trim()
-        account.note = binding.notes.getText().toString().trim()
+        account.notes = binding.notes.getText().toString().trim()
         account.isPlaceholder = binding.placeholderStatus.isChecked
         account.isFavorite = binding.favoriteStatus.isChecked
         account.isHidden = binding.hiddenStatus.isChecked
