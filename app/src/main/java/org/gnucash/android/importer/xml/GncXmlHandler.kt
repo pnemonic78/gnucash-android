@@ -18,6 +18,7 @@ package org.gnucash.android.importer.xml
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.SQLException
 import android.os.CancellationSignal
 import androidx.annotation.ColorInt
 import org.gnucash.android.app.GnuCashApplication
@@ -287,6 +288,15 @@ class GncXmlHandler(
         val holder = databaseHelper.holder
         this.holder = holder
         val db = holder.db
+        try {
+            // Nice to have for performance, but not critical.
+            db.enableWriteAheadLogging()
+        } catch (e: SQLException) {
+            Timber.e(e)
+        }
+        // disable foreign key. The database structure should be ensured by the data inserted.
+        // it will make insertion much faster.
+        db.setForeignKeyConstraintsEnabled(false)
 
         book = booksDbAdapter.getRecordOrNull(bookUID) ?: book
 
@@ -300,11 +310,6 @@ class GncXmlHandler(
         budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
 
         Timber.d("before clean up db")
-        // disable foreign key. The database structure should be ensured by the data inserted.
-        // it will make insertion much faster.
-        db.setForeignKeyConstraintsEnabled(false)
-        db.enableWriteAheadLogging()
-
         budgetsDbAdapter.deleteAllRecords()
         pricesDbAdapter.deleteAllRecords()
         scheduledActionsDbAdapter.deleteAllRecords()
