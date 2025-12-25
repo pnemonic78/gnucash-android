@@ -25,8 +25,8 @@ class TransactionTest : GnuCashTest() {
         assertThat(transaction.uid).isNotEqualTo(clone2.uid)
         assertThat(transaction.currencyCode).isEqualTo(clone2.currencyCode)
         assertThat(transaction.description).isEqualTo(clone2.description)
-        assertThat(transaction.note).isEqualTo(clone2.note)
-        assertThat(transaction.time).isEqualTo(clone2.time)
+        assertThat(transaction.notes).isEqualTo(clone2.notes)
+        assertThat(transaction.datePosted).isEqualTo(clone2.datePosted)
         //TODO: Clone the created_at and modified_at times?
     }
 

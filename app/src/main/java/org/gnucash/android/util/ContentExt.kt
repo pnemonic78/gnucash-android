@@ -7,10 +7,12 @@ import android.content.res.AssetManager
 import android.content.res.Resources
 import android.net.Uri
 import android.provider.DocumentsContract
+import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import timber.log.Timber
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.math.BigDecimal
+import java.sql.Timestamp
 import java.util.Locale
 
 private val PROJECTION_DOCUMENT_NAME = arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
@@ -77,15 +79,19 @@ fun Uri.getAssetPath(): String {
 @Throws(FileNotFoundException::class)
 fun Uri.openStream(context: Context): InputStream? {
     if (isAsset()) {
-        val assets: AssetManager = context.getAssets()
+        val assets: AssetManager = context.assets
         return assets.open(getAssetPath())
     }
-    val contentResolver: ContentResolver = context.getContentResolver()
+    val contentResolver: ContentResolver = context.contentResolver
     return contentResolver.openInputStream(this)
 }
 
 operator fun ContentValues.set(key: String, value: Boolean) {
     put(key, value)
+}
+
+operator fun ContentValues.set(key: String, value: Char) {
+    put(key, value.toString())
 }
 
 operator fun ContentValues.set(key: String, value: Double) {
@@ -102,6 +108,10 @@ operator fun ContentValues.set(key: String, value: Int) {
 
 operator fun ContentValues.set(key: String, value: Long) {
     put(key, value)
+}
+
+operator fun ContentValues.set(key: String, value: Timestamp) {
+    put(key, getUtcStringFromTimestamp(value))
 }
 
 operator fun ContentValues.set(key: String, value: String?) {

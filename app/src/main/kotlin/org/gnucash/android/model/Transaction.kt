@@ -18,9 +18,11 @@ package org.gnucash.android.model
 import android.content.Intent
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.db.adapter.AccountsDbAdapter
+import org.gnucash.android.export.csv.CsvTransactionsExporter.Companion.toCsv
 import org.gnucash.android.model.Transaction.Companion.computeBalance
 import org.gnucash.android.util.formatShortDate
 import java.math.BigDecimal
+import java.sql.Timestamp
 import java.util.Date
 
 /**
@@ -40,7 +42,7 @@ class Transaction : BaseModel {
     /**
      * An extra note giving details about the transaction
      */
-    var note: String? = ""
+    var notes: String = ""
 
     /**
      * Flag indicating if this transaction has been exported before or not
@@ -50,7 +52,7 @@ class Transaction : BaseModel {
     /**
      * Timestamp when this transaction occurred
      */
-    var time: Long = 0
+    var datePosted: Long = 0
 
     /**
      * Flag indicating that this transaction is a template
@@ -62,7 +64,7 @@ class Transaction : BaseModel {
      */
     var scheduledActionUID: String? = null
 
-    var number: String? = null
+    var number: String = ""
 
     /**
      * Overloaded constructor. Creates a new transaction instance with the
@@ -70,7 +72,7 @@ class Transaction : BaseModel {
      *
      * @param description Description of the transaction
      */
-    constructor(description: String?) {
+    constructor(description: String) {
         this.description = description
     }
 
@@ -94,10 +96,10 @@ class Transaction : BaseModel {
             clone.setUID(uid)
         }
         clone.commodity = commodity
-        clone.note = note
+        clone.notes = notes
         clone.number = number
         clone.splits = splits.map { it.copy(generateNewUID) }
-        clone.time = time
+        clone.datePosted = datePosted
         return clone
     }
 
@@ -106,7 +108,7 @@ class Transaction : BaseModel {
      */
     private fun initDefaults() {
         commodity = Commodity.DEFAULT_COMMODITY
-        time = System.currentTimeMillis()
+        datePosted = System.currentTimeMillis()
     }
 
     /**
@@ -158,6 +160,12 @@ class Transaction : BaseModel {
             }
         }
 
+    var dateEntered: Long
+        get() = createdTimestamp.time
+        set(value) {
+            createdTimestamp = Timestamp(value)
+        }
+
     /**
      * Returns the list of splits belonging to a specific account
      *
@@ -178,6 +186,9 @@ class Transaction : BaseModel {
     fun addSplit(split: Split) {
         //sets the currency of the split to the currency of the transaction
         split.transactionUID = uid
+        if (splits.isEmpty() && (commodity === Commodity.DEFAULT_COMMODITY)) {
+            commodity = split.value.commodity
+        }
         if (splits.none { it.uid == split.uid || it == split }) {
             _splits.add(split)
         }
@@ -262,9 +273,9 @@ class Transaction : BaseModel {
     /**
      * A description of the transaction
      */
-    var description: String? = ""
+    var description: String = ""
         set(value) {
-            field = value?.trim().orEmpty()
+            field = value.trim()
         }
 
     /**
@@ -273,11 +284,11 @@ class Transaction : BaseModel {
      * @param timestamp Time when transaction occurred as [Date]
      */
     fun setTime(timestamp: Date) {
-        time = timestamp.time
+        datePosted = timestamp.time
     }
 
     override fun toString(): String {
-        return "{description: $description, date: ${formatShortDate(time)}}"
+        return "{description: $description, date: ${formatShortDate(datePosted)}}"
     }
 
     fun getTransferSplit(accountUID: String): Split? {
@@ -382,7 +393,7 @@ class Transaction : BaseModel {
          */
         fun computeBalance(account: Account, splits: List<Split>, display: Boolean = false): Money {
             val accountUID = account.uid
-            val accountType = account.accountType
+            val accountType = account.type
             val accountCommodity = account.commodity
             val isDebitAccount = if (display) {
                 accountType.hasDebitDisplayBalance
@@ -443,7 +454,7 @@ class Transaction : BaseModel {
             return Intent(Intent.ACTION_INSERT)
                 .setType(MIME_TYPE)
                 .putExtra(Intent.EXTRA_TITLE, transaction.description)
-                .putExtra(Intent.EXTRA_TEXT, transaction.note)
+                .putExtra(Intent.EXTRA_TEXT, transaction.notes)
                 .putExtra(Account.EXTRA_CURRENCY_CODE, transaction.currencyCode)
                 .putExtra(EXTRA_SPLITS, stringBuilder.toString())
         }

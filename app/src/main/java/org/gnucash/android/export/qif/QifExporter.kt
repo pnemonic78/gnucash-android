@@ -27,6 +27,7 @@ import org.gnucash.android.db.getDouble
 import org.gnucash.android.db.getInt
 import org.gnucash.android.db.getLong
 import org.gnucash.android.db.getString
+import org.gnucash.android.export.ExportException
 import org.gnucash.android.export.ExportParams
 import org.gnucash.android.export.Exporter
 import org.gnucash.android.export.qif.QifHelper.ACCOUNT_DESCRIPTION_PREFIX
@@ -56,6 +57,7 @@ import org.gnucash.android.model.TransactionType
 import org.gnucash.android.util.FileUtils
 import org.gnucash.android.util.PreferencesHelper.setLastExportTime
 import org.gnucash.android.util.TimestampHelper
+import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.File
@@ -83,7 +85,7 @@ class QifExporter(
     bookUID: String,
     listener: GncProgressListener? = null
 ) : Exporter(context, params, bookUID, listener) {
-    @Throws(ExporterException::class, IOException::class)
+    @Throws(ExportException::class, IOException::class)
     override fun writeToFile(exportParams: ExportParams): File? {
         val isCompressed = exportParams.isCompressed
         // Disable compression for files that will be zipped afterwards.
@@ -102,7 +104,7 @@ class QifExporter(
         return splitByCurrency[0]
     }
 
-    @Throws(ExporterException::class, IOException::class)
+    @Throws(ExportException::class, IOException::class)
     // TODO write each commodity to separate file here, instead of splitting the file afterwards.
     override fun writeExport(writer: Writer, exportParams: ExportParams) {
         val transactionsDbAdapter = transactionsDbAdapter
@@ -115,7 +117,7 @@ class QifExporter(
         val projection = arrayOf<String?>(
             TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_ID + " AS trans_id",
             TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_UID + " AS trans_uid",
-            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_TIMESTAMP + " AS trans_time",
+            TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_DATE_POSTED + " AS trans_date_posted",
             TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_DESCRIPTION + " AS trans_desc",
             TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_NOTES + " AS trans_notes",
             TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_NUMBER + " AS trans_num",
@@ -139,11 +141,11 @@ class QifExporter(
                     "trans_split_count == 1)" +
                     " AND " + TransactionEntry.TABLE_NAME + "_" + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?"
         // trans_uid ASC  : put splits from the same transaction together
-        // trans_time ASC : put transactions in time order
+        // trans_date_posted ASC : put transactions in time order
         val whereArgs = arrayOf<String?>(
-            TimestampHelper.getUtcStringFromTimestamp(exportParams.exportStartTime)
+            getUtcStringFromTimestamp(exportParams.exportStartTime)
         )
-        val orderBy = "acct1_uid ASC, trans_time ASC, trans_num ASC, trans_id ASC, split_id ASC"
+        val orderBy = "acct1_uid ASC, trans_date_posted ASC, trans_num ASC, trans_id ASC, split_id ASC"
 
         var cursor: Cursor? = null
         try {
@@ -165,7 +167,7 @@ class QifExporter(
                 val accountUID = cursor.getString("acct1_uid") ?: continue
                 val transactionUID = cursor.getString("trans_uid") ?: continue
                 val description = cursor.getString("trans_desc").toSingleLine() ?: continue
-                val time = cursor.getLong("trans_time")
+                val time = cursor.getLong("trans_date_posted")
                 val number = cursor.getString("trans_num").toSingleLine()
                 val notes = cursor.getString("trans_notes").toSingleLine()
                 val imbalance = cursor.getDouble("trans_acct_balance")
@@ -174,7 +176,7 @@ class QifExporter(
                 val account1: Account = accounts[accountUID] ?: continue
                 val accountFullName = account1.fullName
                 val accountDescription = account1.description
-                val accountType = account1.accountType
+                val accountType = account1.type
                 val commodity = account1.commodity
                 val commodityUID = commodity.uid
                 quantityFormatter.maximumFractionDigits = commodity.smallestFractionDigits
@@ -310,9 +312,9 @@ class QifExporter(
             transactionsDbAdapter.markTransactionsExported(exportParams.exportStartTime)
             setLastExportTime(context, TimestampHelper.timestampFromNow, bookUID)
         } catch (e: IOException) {
-            throw ExporterException(exportParams, e)
+            throw ExportException(exportParams, e)
         } catch (e: OperationCanceledException) {
-            throw ExporterException(exportParams, e)
+            throw ExportException(exportParams, e)
         } finally {
             cursor?.close()
         }

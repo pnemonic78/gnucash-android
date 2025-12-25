@@ -14,11 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gnucash.android.importer
+package org.gnucash.android.importer.xml
 
 import android.content.ContentValues
 import android.content.Context
 import android.os.CancellationSignal
+import androidx.annotation.ColorInt
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.appContext
 import org.gnucash.android.db.DatabaseHelper
@@ -34,9 +35,6 @@ import org.gnucash.android.db.adapter.RecurrenceDbAdapter
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.export.xml.GncXmlHelper.ATTR_KEY_TYPE
-import org.gnucash.android.export.xml.GncXmlHelper.ATTR_VALUE_FRAME
-import org.gnucash.android.export.xml.GncXmlHelper.ATTR_VALUE_NUMERIC
-import org.gnucash.android.export.xml.GncXmlHelper.ATTR_VALUE_STRING
 import org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_ACCOUNT
 import org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_BOOK
 import org.gnucash.android.export.xml.GncXmlHelper.CD_TYPE_BUDGET
@@ -137,6 +135,7 @@ import org.gnucash.android.model.Budget
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Money.Companion.createZeroInstance
+import org.gnucash.android.model.Numeric
 import org.gnucash.android.model.PeriodType
 import org.gnucash.android.model.Price
 import org.gnucash.android.model.Recurrence
@@ -146,6 +145,8 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.model.WeekendAdjust
+import org.gnucash.android.util.NotSet
+import org.gnucash.android.util.parseColor
 import org.gnucash.android.util.set
 import org.xml.sax.Attributes
 import org.xml.sax.SAXException
@@ -153,7 +154,6 @@ import org.xml.sax.helpers.DefaultHandler
 import timber.log.Timber
 import java.io.Closeable
 import java.math.BigDecimal
-import java.sql.Timestamp
 import java.text.ParseException
 import java.util.Calendar
 import java.util.Stack
@@ -237,7 +237,7 @@ class GncXmlHandler(
     private val slots = Stack<Slot>()
 
     private var budgetAccount: Account? = null
-    private var budgetPeriod: Long? = null
+    private var budgetPeriod: Int? = null
 
     /**
      * Flag which notifies the handler to ignore a scheduled action because some error occurred during parsing
@@ -261,12 +261,8 @@ class GncXmlHandler(
     private lateinit var budgetsDbAdapter: BudgetsDbAdapter
     private val currencyCount = mutableMapOf<String, Int>()
 
-    /**
-     * Returns the just-imported book
-     *
-     * @return the newly imported book
-     */
-    val importedBook: Book = Book()
+    val importedBooks = mutableListOf<Book>()
+    private var book: Book = Book()
     private var holder: DatabaseHolder? = null
     private var countDataType: String? = null
     private var isValidRoot = false
@@ -283,30 +279,36 @@ class GncXmlHandler(
      * Creates a handler for handling XML stream events when parsing the XML backup file
      */
     init {
-        initDb(importedBook.uid)
+        initDb(book.uid)
     }
 
     private fun initDb(bookUID: String) {
         val databaseHelper = DatabaseHelper(context, bookUID)
         val holder = databaseHelper.holder
         this.holder = holder
+        val db = holder.db
+
+        book = booksDbAdapter.getRecordOrNull(bookUID) ?: book
+
         commoditiesDbAdapter = CommoditiesDbAdapter(holder, true)
         pricesDbAdapter = PricesDbAdapter(commoditiesDbAdapter)
         transactionsDbAdapter = TransactionsDbAdapter(commoditiesDbAdapter)
         accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter, pricesDbAdapter)
         val recurrenceDbAdapter = RecurrenceDbAdapter(holder)
-        scheduledActionsDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
+        scheduledActionsDbAdapter =
+            ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
         budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
 
         Timber.d("before clean up db")
         // disable foreign key. The database structure should be ensured by the data inserted.
         // it will make insertion much faster.
-        accountsDbAdapter.enableForeignKey(false)
+        db.setForeignKeyConstraintsEnabled(false)
+        db.enableWriteAheadLogging()
 
-        recurrenceDbAdapter.deleteAllRecords()
         budgetsDbAdapter.deleteAllRecords()
         pricesDbAdapter.deleteAllRecords()
         scheduledActionsDbAdapter.deleteAllRecords()
+        recurrenceDbAdapter.deleteAllRecords()
         transactionsDbAdapter.deleteAllRecords()
         accountsDbAdapter.deleteAllRecords()
 
@@ -461,7 +463,7 @@ class GncXmlHandler(
                 val commodity = commoditiesDbAdapter.getRecord(currencyUID)
                 imbAccount = Account(imbalancePrefix + commodity.currencyCode, commodity)
                 imbAccount.parentUID = rootAccount!!.uid
-                imbAccount.accountType = AccountType.BANK
+                imbAccount.type = AccountType.BANK
                 imbalanceAccounts[currencyUID] = imbAccount
                 accountsDbAdapter.insert(imbAccount)
                 listener?.onAccount(imbAccount)
@@ -492,7 +494,7 @@ class GncXmlHandler(
      * We on purpose do not set the book active. Only import. Caller should handle activation
      */
     private fun saveToDatabase() {
-        accountsDbAdapter.enableForeignKey(true)
+        holder!!.db.setForeignKeyConstraintsEnabled(true)
         maybeClose() //close it after import
     }
 
@@ -506,7 +508,7 @@ class GncXmlHandler(
             activeBookUID = GnuCashApplication.activeBookUID
         } catch (_: NoActiveBookFoundException) {
         }
-        val newBookUID = importedBook.uid
+        val newBookUID = book.uid
         if (activeBookUID == null || activeBookUID != newBookUID) {
             close()
         }
@@ -517,14 +519,6 @@ class GncXmlHandler(
     }
 
     /**
-     * Returns the unique identifier of the just-imported book
-     *
-     * @return GUID of the newly imported book
-     */
-    val importedBookUID: String
-        get() = importedBook.uid
-
-    /**
      * Returns the currency for an account which has been parsed (but not yet saved to the db)
      *
      * This is used when parsing splits to assign the right currencies to the splits
@@ -533,9 +527,7 @@ class GncXmlHandler(
      * @return Commodity of the account
      */
     private fun getCommodityForAccount(accountUID: String): Commodity {
-        return accountMap[accountUID]?.commodity
-            ?: commoditiesDbAdapter?.defaultCommodity
-            ?: Commodity.DEFAULT_COMMODITY
+        return accountMap[accountUID]?.commodity ?: commoditiesDbAdapter.defaultCommodity
     }
 
     /**
@@ -548,8 +540,8 @@ class GncXmlHandler(
     private fun setMinimalScheduledActionByDays() {
         val scheduledAction = scheduledAction!!
         val calendar = Calendar.getInstance()
-        calendar.timeInMillis = scheduledAction.startTime
-        scheduledAction.recurrence!!.byDays = listOf(calendar.get(Calendar.DAY_OF_WEEK))
+        calendar.timeInMillis = scheduledAction.startDate
+        scheduledAction.recurrence.byDays = listOf(calendar.get(Calendar.DAY_OF_WEEK))
     }
 
     private fun getCommodity(commodity: Commodity?): Commodity? {
@@ -578,25 +570,30 @@ class GncXmlHandler(
                     } else {
                         throw SAXException("Multiple ROOT Template accounts exist in book")
                     }
+                    book.rootTemplateUID = account.uid
                 } else if (rootTemplateAccount == null) {
                     account = Account(AccountsDbAdapter.TEMPLATE_ACCOUNT_NAME, Commodity.template)
                     rootTemplateAccount = account
-                    rootTemplateAccount!!.accountType = AccountType.ROOT
+                    rootTemplateAccount!!.type = AccountType.ROOT
+                    book.rootTemplateUID = account.uid
                 }
             } else {
                 // check ROOT account
                 if (account.isRoot) {
                     if (rootAccount == null) {
                         rootAccount = account
-                        importedBook.rootAccountUID = account.uid
+                        book.rootAccountUID = account.uid
                     } else {
                         throw SAXException("Multiple ROOT accounts exist in book")
                     }
                 } else if (rootAccount == null) {
-                    account = Account(AccountsDbAdapter.ROOT_ACCOUNT_NAME, commoditiesDbAdapter.defaultCommodity)
+                    account = Account(
+                        AccountsDbAdapter.ROOT_ACCOUNT_NAME,
+                        commoditiesDbAdapter.defaultCommodity
+                    )
                     rootAccount = account
-                    rootAccount!!.accountType = AccountType.ROOT
-                    importedBook.rootAccountUID = account.uid
+                    rootAccount!!.type = AccountType.ROOT
+                    book.rootAccountUID = account.uid
                 }
                 accounts.add(account)
                 listener?.onAccount(account)
@@ -648,12 +645,14 @@ class GncXmlHandler(
     private fun handleEndBook(localName: String) {
         if (hasBookElement) {
             if (TAG_BOOK == localName) {
-                booksDbAdapter.replace(this.importedBook)
-                listener?.onBook(this.importedBook)
+                booksDbAdapter.replace(book)
+                listener?.onBook(book)
+                importedBooks.add(book)
             }
         } else {
-            booksDbAdapter.replace(this.importedBook)
-            listener?.onBook(this.importedBook)
+            booksDbAdapter.replace(book)
+            listener?.onBook(book)
+            importedBooks.add(book)
         }
     }
 
@@ -673,9 +672,7 @@ class GncXmlHandler(
             val account = account
             if (account != null) {
                 val commodity = getCommodity(commodity)
-                if (commodity == null) {
-                    throw SAXException("Commodity with '${this.commodity}' not found in the database for account")
-                }
+                    ?: throw SAXException("Commodity with '${this.commodity}' not found in the database for account")
                 account.commodity = commodity
                 if (commodity.isCurrency) {
                     val currencyId = commodity.currencyCode
@@ -695,9 +692,7 @@ class GncXmlHandler(
             val price = price
             if (price != null) {
                 val commodity = getCommodity(commodity)
-                if (commodity == null) {
-                    throw SAXException("Commodity with '" + this.commodity + "' not found in the database for price")
-                }
+                    ?: throw SAXException("Commodity with '" + this.commodity + "' not found in the database for price")
                 price.commodity = commodity
             }
         }
@@ -749,10 +744,9 @@ class GncXmlHandler(
 
                 if (NS_TRANSACTION == uriParent) {
                     val transaction = transaction!!
-                    val timestamp = Timestamp(date)
                     when (tagParent) {
-                        TAG_DATE_ENTERED -> transaction.createdTimestamp = timestamp
-                        TAG_DATE_POSTED -> transaction.time = date
+                        TAG_DATE_ENTERED -> transaction.dateEntered = date
+                        TAG_DATE_POSTED -> transaction.datePosted = date
                     }
                     transaction.isExported = true
                 } else if (NS_PRICE == uriParent) {
@@ -802,7 +796,7 @@ class GncXmlHandler(
 
             if (NS_SLOT == uriParent) {
                 val slot = slots.peek()
-                if (slot.type == Slot.TYPE_GDATE) {
+                if (slot.type == Slot.Type.GDATE) {
                     slot.value = date
                 }
             } else if (NS_RECURRENCE == uriParent) {
@@ -813,11 +807,11 @@ class GncXmlHandler(
                 }
             } else if (NS_SX == uriParent) {
                 if (TAG_START == tagParent) {
-                    scheduledAction!!.startTime = date
+                    scheduledAction!!.startDate = date
                 } else if (TAG_END == tagParent) {
-                    scheduledAction!!.endTime = date
+                    scheduledAction!!.endDate = date
                 } else if (TAG_LAST == tagParent) {
-                    scheduledAction!!.lastRunTime = date
+                    scheduledAction!!.lastRunDate = date
                 }
             }
         } catch (e: ParseException) {
@@ -830,8 +824,8 @@ class GncXmlHandler(
         if (NS_ACCOUNT == uri) {
             account!!.setUID(id)
         } else if (NS_BOOK == uri) {
-            maybeInitDb(importedBook.uid, id)
-            importedBook.setUID(id)
+            maybeInitDb(book.uid, id)
+            book.setUID(id)
         } else if (NS_BUDGET == uri) {
             budget!!.setUID(id)
         } else if (NS_COMMODITY == uri) {
@@ -867,7 +861,7 @@ class GncXmlHandler(
                     }
                 } else {
                     try {
-                        budgetPeriod = key.toLong()
+                        budgetPeriod = key.toInt()
                     } catch (e: NumberFormatException) {
                         Timber.e(e, "Invalid budget period: %s", key)
                     }
@@ -915,7 +909,7 @@ class GncXmlHandler(
 
     private fun handleEndNumPeriods(uri: String, periods: String) {
         if (NS_BUDGET == uri) {
-            budget!!.numberOfPeriods = periods.toLong()
+            budget!!.numberOfPeriods = periods.toInt()
         }
     }
 
@@ -980,7 +974,7 @@ class GncXmlHandler(
 
     private fun handleEndRecurrence(uri: String) {
         if (NS_BUDGET == uri) {
-            budget!!.recurrence = recurrence
+            budget!!.recurrence = recurrence!!
         } else if (NS_GNUCASH == uri) {
             scheduledAction?.setRecurrence(recurrence)
         }
@@ -995,7 +989,7 @@ class GncXmlHandler(
     private fun handleEndScheduledAction() {
         val scheduledAction = scheduledAction!!
         if (scheduledAction.actionUID != null && !ignoreScheduledAction) {
-            if (scheduledAction.recurrence!!.periodType == PeriodType.WEEK) {
+            if (scheduledAction.recurrence.periodType == PeriodType.WEEK) {
                 // TODO: implement parsing of by days for scheduled actions
                 setMinimalScheduledActionByDays()
             }
@@ -1017,14 +1011,19 @@ class GncXmlHandler(
             KEY_PLACEHOLDER -> account?.isPlaceholder = slot.asString.toBoolean()
 
             KEY_COLOR -> {
-                val color = slot.asString
-                //GnuCash exports the account color in format #rrrgggbbb, but we need only #rrggbb.
-                //so we trim the last digit in each block, doesn't affect the color much
+                val colorCode = slot.asString
                 try {
-                    account?.setColor(color)
+                    @ColorInt var color = Account.DEFAULT_COLOR
+                    //sometimes the color entry in the account file is "Not set" instead of just blank.
+                    if (!colorCode.isEmpty() && colorCode != NotSet) {
+                        color = parseColor(colorCode) ?: Account.DEFAULT_COLOR
+                        if (color == Account.SILVER_COLOR) {
+                            color = Account.DEFAULT_COLOR
+                        }
+                    }
+                    account?.color = color
                 } catch (e: IllegalArgumentException) {
-                    //sometimes the color entry in the account file is "Not set" instead of just blank. So catch!
-                    Timber.e(e, "Invalid color code \"%s\" for account %s", color, account)
+                    Timber.e(e, "Invalid color code \"%s\" for account %s", colorCode, account)
                 }
             }
 
@@ -1062,7 +1061,7 @@ class GncXmlHandler(
 
             else -> if (!slots.isEmpty()) {
                 val head = slots.peek()
-                if (head.type == Slot.TYPE_FRAME) {
+                if (head.type == Slot.Type.FRAME) {
                     head.add(slot)
                 }
             }
@@ -1108,21 +1107,19 @@ class GncXmlHandler(
      */
     private fun handleEndSlotTemplateNumeric(
         split: Split,
-        value: String,
+        value: Numeric,
         splitType: TransactionType
     ) {
-        if (value.isEmpty()) return
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
             if (split.value.isAmountZero) {
-                val splitAmount = parseSplitAmount(value)
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
                     accountUID = split.accountUID!!
                 }
                 val commodity = getCommodityForAccount(accountUID)
 
-                split.value = Money(splitAmount, commodity)
+                split.value = Money(value, commodity)
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {
@@ -1159,7 +1156,7 @@ class GncXmlHandler(
                 val transactionUID = templateAccountToTransaction[uid]
                 scheduledAction.actionUID = transactionUID
             } else {
-                scheduledAction.actionUID = importedBook.uid
+                scheduledAction.actionUID = book.uid
             }
         }
     }
@@ -1170,7 +1167,7 @@ class GncXmlHandler(
 
     private fun handleEndTitle(uri: String, title: String) {
         if (NS_GNUCASH_ACCOUNT == uri) {
-            importedBook.displayName = title
+            book.displayName = title
         }
     }
 
@@ -1202,7 +1199,7 @@ class GncXmlHandler(
     private fun handleEndType(uri: String, type: String) {
         if (NS_ACCOUNT == uri) {
             val accountType = AccountType.valueOf(type)
-            account!!.accountType = accountType
+            account!!.type = accountType
         } else if (NS_PRICE == uri) {
             price!!.type = Price.Type.of(type)
         }
@@ -1223,27 +1220,32 @@ class GncXmlHandler(
         } else if (NS_SLOT == uri) {
             val slot = slots.peek()
             when (slot.type) {
-                Slot.TYPE_GUID, Slot.TYPE_NUMERIC, Slot.TYPE_STRING -> slot.value = value
+                Slot.Type.GUID,
+                Slot.Type.STRING -> slot.value = value
+
+                Slot.Type.NUMERIC -> slot.value = Numeric.parse(value)
+
+                else -> Unit
             }
             val budget = budget
             if (budget != null) {
                 var isNote = false
                 if (slots.size >= 3) {
                     val parent = slots[slots.size - 2]
-                    val isParentSlotIsFrame = parent.type == Slot.TYPE_FRAME
+                    val isParentSlotIsFrame = parent.type == Slot.Type.FRAME
                     val grandparent = slots[slots.size - 3]
                     val isGrandparentIsNotes =
-                        (grandparent.type == Slot.TYPE_FRAME) && (KEY_NOTES == grandparent.key)
+                        (grandparent.type == Slot.Type.FRAME) && (KEY_NOTES == grandparent.key)
                     isNote = isParentSlotIsFrame && isGrandparentIsNotes
                 }
 
                 when (slot.type) {
-                    ATTR_VALUE_FRAME -> {
+                    Slot.Type.FRAME -> {
                         budgetAccount = null
                         budgetPeriod = null
                     }
 
-                    ATTR_VALUE_NUMERIC -> {
+                    Slot.Type.NUMERIC -> {
                         if (!isNote && (budgetAccount != null) && (budgetPeriod != null)) {
                             try {
                                 val amount = parseSplitAmount(value)
@@ -1255,7 +1257,7 @@ class GncXmlHandler(
                         budgetPeriod = null
                     }
 
-                    ATTR_VALUE_STRING -> {
+                    Slot.Type.STRING -> {
                         if (isNote && (budgetAccount != null) && (budgetPeriod != null)) {
                             var budgetAmount =
                                 budget.getBudgetAmount(budgetAccount!!, budgetPeriod!!)
@@ -1270,10 +1272,12 @@ class GncXmlHandler(
                         }
                         budgetPeriod = null
                     }
+
+                    else -> Unit
                 }
-            } else if (KEY_NOTES == slot.key && ATTR_VALUE_STRING == slot.type) {
-                transaction?.note = value
-                account?.note = value
+            } else if (KEY_NOTES == slot.key && slot.type == Slot.Type.STRING) {
+                transaction?.notes = value
+                account?.notes = value
             }
         } else if (NS_SPLIT == uri) {
             val split = split!!
@@ -1313,6 +1317,7 @@ class GncXmlHandler(
     private fun handleStartBook(uri: String) {
         if (NS_GNUCASH == uri) {
             hasBookElement = true
+            book = Book()
         }
     }
 
@@ -1361,7 +1366,7 @@ class GncXmlHandler(
     private fun handleStartValue(uri: String, attributes: Attributes) {
         if (NS_SLOT == uri) {
             val slot = slots.peek()
-            slot.type = attributes.getValue(ATTR_KEY_TYPE)
+            slot.type = Slot.Type.of(attributes.getValue(ATTR_KEY_TYPE))
         }
     }
 

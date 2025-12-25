@@ -22,7 +22,6 @@ import org.gnucash.android.db.adapter.AccountsDbAdapter.Companion.ALWAYS
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Split
-import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
@@ -105,7 +104,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         val accountBalance =
             accountsDbAdapter.getAccountBalance(accountUID, ALWAYS, timeMillis, true)
         val balanceTextView =
-            if (account.accountType.hasDebitDisplayBalance) binding.balanceDebit else binding.balanceCredit
+            if (account.type.hasDebitDisplayBalance) binding.balanceDebit else binding.balanceCredit
         balanceTextView.displayBalance(accountBalance, balanceTextView.currentTextColor)
     }
 
@@ -143,22 +142,22 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         }
 
         val balanceBinding = RowBalanceBinding.inflate(inflater, binding.transactionItems, true)
-        bind(balanceBinding, accountUID!!, transaction.time)
+        bind(balanceBinding, accountUID!!, transaction.datePosted)
 
-        val timeAndDate = formatFullDate(transaction.time)
+        val timeAndDate = formatFullDate(transaction.datePosted)
         binding.trnTimeAndDate.text = timeAndDate
 
-        if (transaction.number.isNullOrEmpty()) {
+        if (transaction.number.isEmpty()) {
             binding.rowTrnNumber.isVisible = false
         } else {
             binding.number.text = transaction.number
             binding.rowTrnNumber.isVisible = true
         }
 
-        if (transaction.note.isNullOrEmpty()) {
+        if (transaction.notes.isEmpty()) {
             binding.rowTrnNotes.isVisible = false
         } else {
-            binding.notes.text = transaction.note
+            binding.notes.text = transaction.notes
             binding.rowTrnNotes.isVisible = true
         }
 
@@ -264,7 +263,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
 
         val transaction = transactionsDbAdapter.getRecord(transactionUID)
         val duplicate = transaction.copy()
-        duplicate.time = System.currentTimeMillis()
+        duplicate.datePosted = System.currentTimeMillis()
         try {
             transactionsDbAdapter.insert(duplicate)
             if (duplicate.id <= 0) return

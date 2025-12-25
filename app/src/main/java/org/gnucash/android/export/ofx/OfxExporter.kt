@@ -21,9 +21,11 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.adapter.AccountsDbAdapter.Companion.ALWAYS
 import org.gnucash.android.db.forEach
+import org.gnucash.android.export.ExportException
 import org.gnucash.android.export.ExportParams
 import org.gnucash.android.export.Exporter
 import org.gnucash.android.export.ofx.OfxHelper.APP_ID
+import org.gnucash.android.export.ofx.OfxHelper.IGNORE_IMBALANCE
 import org.gnucash.android.export.ofx.OfxHelper.OFX_HEADER
 import org.gnucash.android.export.ofx.OfxHelper.OFX_SGML_HEADER
 import org.gnucash.android.export.ofx.OfxHelper.TAG_ACCOUNT_ID
@@ -64,6 +66,7 @@ import org.gnucash.android.export.ofx.OfxHelper.isBanking
 import org.gnucash.android.export.ofx.OfxHelper.isCreditCard
 import org.gnucash.android.gnc.GncProgressListener
 import org.gnucash.android.model.Account
+import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
@@ -88,10 +91,14 @@ class OfxExporter(
     listener: GncProgressListener? = null
 ) : Exporter(context, params, bookUID, listener) {
 
+    private val isDoubleEntryEnabled = GnuCashApplication.isDoubleEntryEnabled(context)
+    private val nameImbalance = context.getString(R.string.imbalance_account_name)
+    private val ignoreImbalanceAccounts = IGNORE_IMBALANCE
+
     override fun writeExport(writer: Writer, exportParams: ExportParams) {
         val accounts = accountsDbAdapter.getExportableAccounts(exportParams.exportStartTime)
         if (accounts.isEmpty()) {
-            throw ExporterException(exportParams, "No accounts to export")
+            throw ExportException(exportParams, "No accounts to export")
         }
         writeDocument(writer, exportParams, accounts)
 
@@ -103,9 +110,9 @@ class OfxExporter(
      * Generate OFX export file from the transactions in the database.
      *
      * @param accounts List of accounts to export.
-     * @throws ExporterException if an XML builder could not be created.
+     * @throws ExportException if an XML builder could not be created.
      */
-    @Throws(ExporterException::class)
+    @Throws(ExportException::class)
     private fun writeDocument(writer: Writer, exportParams: ExportParams, accounts: List<Account>) {
         val useXmlHeader = PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean(context.getString(R.string.key_xml_ofx_header), true)
@@ -147,20 +154,11 @@ class OfxExporter(
         exportParams: ExportParams,
         accounts: List<Account>
     ) {
-        val isDoubleEntryEnabled = GnuCashApplication.isDoubleEntryEnabled(context)
-        val nameImbalance = context.getString(R.string.imbalance_account_name)
         val modifiedSince = exportParams.exportStartTime
 
-        val accountsWithTransactions = accounts
-            .filter { it.commodity.isCurrency }
-            .filter { transactionsDbAdapter.getTransactionsCount(it.uid) > 0 }
-            .filter {
-                // TODO: investigate whether skipping the imbalance accounts makes sense.
-                // Also, using locale-dependant names here is error-prone.
-                isDoubleEntryEnabled || !it.name.contains(nameImbalance)
-            }
+        val accountsWithTransactions = accounts.filter { allowAccount(it) }
         if (accountsWithTransactions.isEmpty()) {
-            throw ExporterException(exportParams, "No accounts to export")
+            throw ExportException(exportParams, "No accounts to export")
         }
 
         val accountsBank = accountsWithTransactions.filter { it.isBanking }
@@ -252,7 +250,7 @@ class OfxExporter(
         xmlSerializer.endTag(null, TAG_ACCOUNT_ID)
 
         xmlSerializer.startTag(null, TAG_ACCOUNT_TYPE)
-        xmlSerializer.text(OfxAccountType.of(account.accountType).value)
+        xmlSerializer.text(OfxAccountType.of(account.type).value)
         xmlSerializer.endTag(null, TAG_ACCOUNT_TYPE)
 
         if (isCreditCard) {
@@ -348,7 +346,7 @@ class OfxExporter(
         xmlSerializer.endTag(null, TAG_TRANSACTION_TYPE)
 
         xmlSerializer.startTag(null, TAG_DATE_POSTED)
-        xmlSerializer.text(formatTime(transaction.time))
+        xmlSerializer.text(formatTime(transaction.datePosted))
         xmlSerializer.endTag(null, TAG_DATE_POSTED)
 
         xmlSerializer.startTag(null, TAG_DATE_USER)
@@ -364,7 +362,7 @@ class OfxExporter(
         xmlSerializer.text(transaction.uid)
         xmlSerializer.endTag(null, TAG_TRANSACTION_FITID)
 
-        if (!transaction.number.isNullOrEmpty()) {
+        if (transaction.number.isNotEmpty()) {
             xmlSerializer.startTag(null, TAG_CHECK_NUMBER)
             xmlSerializer.text(transaction.number)
             xmlSerializer.endTag(null, TAG_CHECK_NUMBER)
@@ -374,9 +372,9 @@ class OfxExporter(
         xmlSerializer.text(transaction.description)
         xmlSerializer.endTag(null, TAG_NAME)
 
-        if (!transaction.note.isNullOrEmpty()) {
+        if (transaction.notes.isNotEmpty()) {
             xmlSerializer.startTag(null, TAG_MEMO)
-            xmlSerializer.text(transaction.note)
+            xmlSerializer.text(transaction.notes)
             xmlSerializer.endTag(null, TAG_MEMO)
         }
 
@@ -402,6 +400,7 @@ class OfxExporter(
             }
         }
         if (transferAccount == account) return
+        if (!allowTransfer(transferAccount, transaction)) return
         val isCreditCard = account.isCreditCard
 
         if (isCreditCard) {
@@ -419,7 +418,7 @@ class OfxExporter(
         xmlSerializer.endTag(null, TAG_ACCOUNT_ID)
 
         xmlSerializer.startTag(null, TAG_ACCOUNT_TYPE)
-        xmlSerializer.text(OfxAccountType.of(transferAccount.accountType).value)
+        xmlSerializer.text(OfxAccountType.of(transferAccount.type).value)
         xmlSerializer.endTag(null, TAG_ACCOUNT_TYPE)
 
         if (isCreditCard) {
@@ -427,5 +426,38 @@ class OfxExporter(
         } else {
             xmlSerializer.endTag(null, TAG_BANK_ACCOUNT_TO)
         }
+    }
+
+    private fun allowAccount(account: Account): Boolean {
+        if (account.isHidden || account.isRoot) {
+            return false
+        }
+        if (!account.commodity.isCurrency) {
+            return false
+        }
+        if (ignoreImbalanceAccounts || !isDoubleEntryEnabled) {
+            if (account.name.contains(nameImbalance) /* && account parent is root*/) {
+                return false
+            }
+        }
+        return transactionsDbAdapter.getTransactionsCount(account.uid) > 0
+    }
+
+    private fun allowTransfer(account: Account, transaction: Transaction): Boolean {
+        if (isDoubleEntryEnabled) {
+            // Double-entry must always have at least 2 splits!
+            if (transaction.splits.size < 2) {
+                return false
+            }
+            if (transaction.splits.size == 2 &&
+                ignoreImbalanceAccounts &&
+                account.name.contains(nameImbalance) &&
+                account.type == AccountType.BANK /* && account parent is root*/
+            ) {
+                return false
+            }
+            return true
+        }
+        return false
     }
 }
