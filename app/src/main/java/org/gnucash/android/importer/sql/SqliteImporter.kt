@@ -255,6 +255,7 @@ class SqliteImporter(context: Context, inputStream: InputStream, listener: GncPr
         val type = cursor.getString("account_type")!!
         val commodityGuid = cursor.getString("commodity_guid")
         val parentGuid = cursor.getString("parent_guid")
+        val code = cursor.getString("code")
         val description = cursor.getString("description")
         val hidden = cursor.getBoolean("hidden")
         val placeholder = cursor.getBoolean("placeholder")
@@ -265,6 +266,7 @@ class SqliteImporter(context: Context, inputStream: InputStream, listener: GncPr
         account.setUID(guid)
         account.type = AccountType.valueOf(type)
         account.parentUID = parentGuid
+        account.code = code
         account.description = description
         account.isHidden = hidden
         account.isPlaceholder = placeholder

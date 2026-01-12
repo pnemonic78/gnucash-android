@@ -77,6 +77,7 @@ import org.gnucash.android.export.xml.GncXmlHelper.TAG_AUTO_CREATE
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_AUTO_CREATE_NOTIFY
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_BOOK
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_BUDGET
+import org.gnucash.android.export.xml.GncXmlHelper.TAG_CODE
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_COMMODITY
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_COUNT_DATA
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_CURRENCY
@@ -398,6 +399,7 @@ class GncXmlHandler(
             TAG_QUOTE_SOURCE -> handleEndQuoteSource(characterString)
             TAG_QUOTE_TZ -> handleEndQuoteTz(characterString)
             TAG_XCODE -> handleEndXcode(characterString)
+            TAG_CODE -> handleEndCode(uri, characterString)
             TAG_DESCRIPTION -> handleEndDescription(uri, characterString)
             TAG_COMMODITY -> handleEndCommodity(uri)
             TAG_CURRENCY -> handleEndCurrency(uri)
@@ -767,6 +769,12 @@ class GncXmlHandler(
                 val message = "Unable to parse transaction date $dateString"
                 throw SAXException(message, e)
             }
+        }
+    }
+
+    private fun handleEndCode(uri: String, code: String) {
+        if (NS_ACCOUNT == uri) {
+            account!!.code = code
         }
     }
 

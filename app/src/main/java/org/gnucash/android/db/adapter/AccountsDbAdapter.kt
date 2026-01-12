@@ -159,6 +159,9 @@ class AccountsDbAdapter(
             stmt.bindString(1 + INDEX_COLUMN_NOTES, account.notes)
         }
         stmt.bindBoolean(1 + INDEX_COLUMN_TEMPLATE, account.isTemplate)
+        if (account.code != null) {
+            stmt.bindString(1 + INDEX_COLUMN_CODE, account.code)
+        }
 
         return stmt
     }
@@ -324,6 +327,7 @@ class AccountsDbAdapter(
         val account = Account(cursor.getString(INDEX_COLUMN_NAME)!!)
         populateBaseModelAttributes(cursor, account)
 
+        account.code = cursor.getString(INDEX_COLUMN_CODE)
         account.description = cursor.getString(INDEX_COLUMN_DESCRIPTION)
         account.parentUID = cursor.getString(INDEX_COLUMN_PARENT_ACCOUNT_UID)
         account.type = AccountType.valueOf(cursor.getString(INDEX_COLUMN_TYPE)!!)
@@ -1508,7 +1512,8 @@ class AccountsDbAdapter(
             AccountEntry.COLUMN_PARENT_ACCOUNT_UID,
             AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID,
             AccountEntry.COLUMN_NOTES,
-            AccountEntry.COLUMN_TEMPLATE
+            AccountEntry.COLUMN_TEMPLATE,
+            AccountEntry.COLUMN_CODE
         )
         private const val INDEX_COLUMN_NAME = 0
         private const val INDEX_COLUMN_DESCRIPTION = INDEX_COLUMN_NAME + 1
@@ -1525,6 +1530,7 @@ class AccountsDbAdapter(
             INDEX_COLUMN_PARENT_ACCOUNT_UID + 1
         private const val INDEX_COLUMN_NOTES = INDEX_COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID + 1
         private const val INDEX_COLUMN_TEMPLATE = INDEX_COLUMN_NOTES + 1
+        private const val INDEX_COLUMN_CODE = INDEX_COLUMN_TEMPLATE + 1
 
         /**
          * Separator used for account name hierarchies between parent and child accounts

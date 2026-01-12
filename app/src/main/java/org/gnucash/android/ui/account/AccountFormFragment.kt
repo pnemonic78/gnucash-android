@@ -44,6 +44,7 @@ import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.db.joinIn
+import org.gnucash.android.lang.trim
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Commodity
@@ -265,6 +266,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         }
 
         binding.inputAccountName.setTextToEnd(account.name)
+        binding.accountCode.setText(account.code.orEmpty())
         binding.inputAccountDescription.setText(account.description)
         binding.notes.setText(account.notes)
 
@@ -637,8 +639,9 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         }
 
         account.type = selectedAccountType
-        account.description = binding.inputAccountDescription.getText().toString().trim()
-        account.notes = binding.notes.getText().toString().trim()
+        account.code = binding.accountCode.trim()
+        account.description = binding.inputAccountDescription.trim()
+        account.notes = binding.notes.trim()
         account.isPlaceholder = binding.placeholderStatus.isChecked
         account.isFavorite = binding.favoriteStatus.isChecked
         account.isHidden = binding.hiddenStatus.isChecked

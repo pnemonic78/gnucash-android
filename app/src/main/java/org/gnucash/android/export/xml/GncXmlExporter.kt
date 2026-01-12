@@ -119,6 +119,7 @@ import org.gnucash.android.export.xml.GncXmlHelper.TAG_AUTO_CREATE
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_AUTO_CREATE_NOTIFY
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_BOOK
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_BUDGET
+import org.gnucash.android.export.xml.GncXmlHelper.TAG_CODE
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_COMMODITY
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_COMMODITY_SCU
 import org.gnucash.android.export.xml.GncXmlHelper.TAG_COUNT_DATA
@@ -393,6 +394,13 @@ class GncXmlExporter(
         serializer.startTag(NS_ACCOUNT, TAG_COMMODITY_SCU)
         serializer.text(commodity.smallestFraction.toString())
         serializer.endTag(NS_ACCOUNT, TAG_COMMODITY_SCU)
+        // account code
+        val code = account.code
+        if (!code.isNullOrEmpty()) {
+            serializer.startTag(NS_ACCOUNT, TAG_CODE)
+            serializer.text(code)
+            serializer.endTag(NS_ACCOUNT, TAG_CODE)
+        }
         // account description
         val description = account.description
         if (!description.isNullOrEmpty()) {
