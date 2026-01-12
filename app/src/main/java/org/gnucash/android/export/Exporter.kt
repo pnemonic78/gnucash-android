@@ -137,7 +137,8 @@ abstract class Exporter protected constructor(
         accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter, pricesDbAdapter)
         val recurrenceDbAdapter = RecurrenceDbAdapter(holder)
         budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
-        scheduledActionDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
+        scheduledActionDbAdapter =
+            ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
 
         exportCacheFile = null
         cacheDir = File(context.cacheDir, exportParams.exportFormat.name)
@@ -569,10 +570,14 @@ abstract class Exporter protected constructor(
             val name: StringBuilder = StringBuilder(sanitizeFilename(bookName))
             if (format == ExportFormat.CSVA) name.append(".accounts")
             if (format == ExportFormat.CSVT) name.append(".transactions")
-            name.append(".")
+            name.append('.')
                 .append(formatter.print(System.currentTimeMillis()))
                 .append(format.extension)
-            if (isCompressed && format != ExportFormat.XML) name.append(".gz")
+            if (format == ExportFormat.QIF) {
+                name.append(".zip")
+            } else if (isCompressed && format != ExportFormat.XML) {
+                name.append(".gz")
+            }
             return name.toString()
         }
 

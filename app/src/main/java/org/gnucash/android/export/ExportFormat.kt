@@ -37,7 +37,7 @@ enum class ExportFormat(
      */
     private val description: String,
     /** The label id. */
-    @StringRes val labelId: Int
+    @field:StringRes val labelId: Int
 ) {
     CSVA("CSVA", ".csv", "text/csv", "GnuCash accounts CSV", R.string.file_format_csv),
     CSVT("CSVT", ".csv", "text/csv", "GnuCash transactions CSV", R.string.file_format_csv),
