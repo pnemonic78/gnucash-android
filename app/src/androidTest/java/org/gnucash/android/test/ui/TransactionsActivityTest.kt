@@ -21,6 +21,7 @@ import android.content.Intent
 import androidx.core.content.edit
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.clearText
+import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.pressBack
 import androidx.test.espresso.action.ViewActions.replaceText
@@ -313,7 +314,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         val trnName = "Pasta"
         onView(withId(R.id.input_transaction_name))
-            .perform(clearText(), typeText(trnName))
+            .perform(click(), clearText(), typeText(trnName))
         clickViewId(R.id.menu_save)
 
         val editedTransaction = transactionsDbAdapter.getRecord(transaction.uid)

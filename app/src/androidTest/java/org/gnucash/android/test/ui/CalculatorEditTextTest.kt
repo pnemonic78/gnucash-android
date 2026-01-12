@@ -90,7 +90,7 @@ class CalculatorEditTextTest : GnuAndroidTest() {
     }
 
     /**
-     * Checks the calculator keyboard is showed/hided as expected.
+     * Checks the calculator keyboard is shown/hidden as expected.
      */
     @Test
     fun testShowingHidingOfCalculatorKeyboard() {
