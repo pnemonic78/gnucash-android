@@ -432,7 +432,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
         assertThat(files!!).isNotNull()
         assertThat(files).hasSize(1)
         assertThat(files[0]).isNotNull()
-        assertThat(files[0].name).endsWith(".qif")
+        assertThat(files[0].name).endsWith(".qif.zip")
     }
 
     @Test

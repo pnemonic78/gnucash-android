@@ -41,10 +41,13 @@ import org.junit.Before
 import org.junit.Test
 import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
+import java.io.FileInputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.util.Calendar
 import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 
 class QifExporterTest : BookHelperTest() {
     private lateinit var bookUID: String
@@ -111,7 +114,8 @@ class QifExporterTest : BookHelperTest() {
 
         assertThat(exportedFile).isNotNull()
         val file = File(exportedFile!!.path!!)
-        assertThat(file).exists().hasExtension("qif")
+        assertThat(file).exists()
+        assertThat(file.name).endsWith(".qif.zip")
         assertThat(file.length()).isGreaterThan(0L)
         file.delete()
     }
@@ -198,8 +202,9 @@ class QifExporterTest : BookHelperTest() {
 
         assertThat(exportedFile).isNotNull()
         val file = File(exportedFile!!.path!!)
-        assertThat(file).exists().hasExtension("qif")
-        val fileContent = readFileContent(file)
+        assertThat(file).exists()
+        assertThat(file.name).endsWith(".qif.zip")
+        val fileContent = readZippedFileContent(file)
         assertThat(fileContent).isNotEmpty()
         val lines = fileContent.split(QifHelper.NEW_LINE.toRegex()).dropLastWhile { it.isEmpty() }
             .toTypedArray()
@@ -244,8 +249,9 @@ class QifExporterTest : BookHelperTest() {
 
         assertThat(exportedFile).isNotNull()
         val file = File(exportedFile!!.path!!)
-        assertThat(file).exists().hasExtension("qif")
-        val fileContent = readFileContent(file)
+        assertThat(file).exists()
+        assertThat(file.name).endsWith(".qif.zip")
+        val fileContent = readZippedFileContent(file)
         assertThat(fileContent).isNotEmpty()
         val lines = fileContent.split(QifHelper.NEW_LINE.toRegex()).dropLastWhile { it.isEmpty() }
             .toTypedArray()
@@ -294,8 +300,9 @@ class QifExporterTest : BookHelperTest() {
 
         assertThat(exportedFile).isNotNull()
         val file = File(exportedFile!!.path!!)
-        assertThat(file).exists().hasExtension("qif")
-        val fileContent = readFileContent(file)
+        assertThat(file).exists()
+        assertThat(file.name).endsWith(".qif.zip")
+        val fileContent = readZippedFileContent(file)
         assertThat(fileContent).isNotEmpty()
         val lines = fileContent.split(QifHelper.NEW_LINE.toRegex()).dropLastWhile { it.isEmpty() }
             .toTypedArray()
@@ -366,8 +373,9 @@ class QifExporterTest : BookHelperTest() {
 
         assertThat(exportedFile).isNotNull()
         val file = File(exportedFile!!.path!!)
-        assertThat(file).exists().hasExtension("qif")
-        val fileContent = readFileContent(file)
+        assertThat(file).exists()
+        assertThat(file.name).endsWith(".qif.zip")
+        val fileContent = readZippedFileContent(file)
         assertThat(fileContent).isNotEmpty()
         val lines = fileContent.split(QifHelper.NEW_LINE.toRegex()).dropLastWhile { it.isEmpty() }
             .toTypedArray()
@@ -389,14 +397,24 @@ class QifExporterTest : BookHelperTest() {
     }
 
     @Throws(IOException::class)
-    fun readFileContent(file: File?): String {
+    private fun readFileContent(input: InputStream): String {
+        val reader = BufferedReader(InputStreamReader(input))
         val fileContentsBuilder = StringBuilder()
-        val reader = BufferedReader(FileReader(file))
         var line: String?
         while ((reader.readLine().also { line = it }) != null) {
             fileContentsBuilder.append(line).append('\n')
         }
 
         return fileContentsBuilder.toString()
+    }
+
+    @Throws(IOException::class)
+    private fun readZippedFileContent(file: File): String {
+        val fileInput = FileInputStream(file)
+        val zipInput = ZipInputStream(fileInput)
+        val entry = zipInput.nextEntry
+        assertThat(entry.size).isNotZero()
+        assertThat(entry.name).endsWith(".qif")
+        return readFileContent(zipInput)
     }
 }
