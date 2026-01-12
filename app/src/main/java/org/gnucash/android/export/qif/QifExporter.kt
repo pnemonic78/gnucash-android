@@ -96,7 +96,10 @@ class QifExporter(
             return null
         }
         if (isCompressed || (splitByCurrency.size > 1)) {
-            val zipFile = File(cacheFile.path + ".zip")
+            val zipFile = if (cacheFile.path.endsWith(SUFFIX_ZIP))
+                cacheFile
+            else
+                File(cacheFile.path + SUFFIX_ZIP)
             return zipFiles(splitByCurrency, zipFile)
         }
         return splitByCurrency[0]
@@ -153,7 +156,7 @@ class QifExporter(
                 whereArgs,
                 orderBy
             )
-            if ((cursor == null) || !cursor.moveToFirst()) return
+            if (!cursor.moveToFirst()) return
 
             var currentCommodityUID = ""
             var currentAccountUID = ""
@@ -333,10 +336,16 @@ class QifExporter(
      */
     @Throws(IOException::class)
     private fun splitByCurrency(file: File): List<File> {
+        val suffix = exportParams.exportFormat.extension
+        val parent = file.parent
+        val name = file.name
         // split only at the last dot
-        val path = file.path
-        val pathParts: Array<String> =
-            path.split("(?=\\.[^\\.]+$)".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val indexSuffix = name.lastIndexOf(suffix)
+        val pathParts: Array<String> = if (indexSuffix > 0) {
+            arrayOf(name.take(indexSuffix), suffix)
+        } else {
+            arrayOf(name, suffix)
+        }
         val splitFiles = mutableListOf<File>()
         var line: String?
         val reader = BufferedReader(FileReader(file))
@@ -348,11 +357,11 @@ class QifExporter(
                     val currencyCode = line.substring(1)
                     out?.close()
                     val newFileName = pathParts[0] + "_" + currencyCode + pathParts[1]
-                    val splitFile = File(newFileName)
+                    val splitFile = File(parent, newFileName)
                     splitFiles.add(splitFile)
                     out = BufferedWriter(FileWriter(splitFile))
                 } else {
-                    requireNotNull(out) { "Format invalid: $path" }
+                    requireNotNull(out) { "Format invalid: $file" }
                     out.append(line).append(NEW_LINE)
                 }
                 line = reader.readLine()
@@ -367,4 +376,8 @@ class QifExporter(
     private fun String?.toSingleLine() = this?.replace('\n', ' ')
         ?.replace('\r', ' ')
         ?.trim()
+
+    companion object {
+        private const val SUFFIX_ZIP = ".zip"
+    }
 }
