@@ -573,10 +573,12 @@ abstract class Exporter protected constructor(
             name.append('.')
                 .append(formatter.print(System.currentTimeMillis()))
                 .append(format.extension)
-            if (format == ExportFormat.QIF) {
-                name.append(".zip")
-            } else if (isCompressed && format != ExportFormat.XML) {
-                name.append(".gz")
+            if (isCompressed) {
+                if (format == ExportFormat.QIF) {
+                    name.append(".zip")
+                } else if (format != ExportFormat.XML) {
+                    name.append(".gz")
+                }
             }
             return name.toString()
         }

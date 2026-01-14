@@ -98,11 +98,14 @@ class QifExporter(
         if (splitByCurrency.isEmpty()) {
             return null
         }
-        val zipFile = if (cacheFile.path.endsWith(SUFFIX_ZIP))
-            cacheFile
-        else
-            File(cacheFile.path + SUFFIX_ZIP)
-        return zipFiles(splitByCurrency, zipFile)
+        if (isCompressed || (splitByCurrency.size > 1)) {
+            val zipFile = if (cacheFile.path.endsWith(SUFFIX_ZIP))
+                cacheFile
+            else
+                File(cacheFile.path + SUFFIX_ZIP)
+            return zipFiles(splitByCurrency, zipFile)
+        }
+        return splitByCurrency[0]
     }
 
     @Throws(ExportException::class, IOException::class)
@@ -157,7 +160,7 @@ class QifExporter(
                 whereArgs,
                 orderBy
             )
-            if ((cursor == null) || !cursor.moveToFirst()) return
+            if (!cursor.moveToFirst()) return
 
             var currentCommodityUID = ""
             var currentAccountUID = ""

@@ -40,6 +40,7 @@ import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.Transaction.Companion.computeBalance
+import org.gnucash.android.util.TimestampHelper
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import org.gnucash.android.util.TimestampHelper.timestampFromNow
 import org.gnucash.android.util.set
@@ -838,14 +839,31 @@ class TransactionsDbAdapter(
         }
     }
 
-    fun getAllCommoditiesInUse(): List<Commodity> {
+    fun getAllCommoditiesInUse(
+        isTemplate: Boolean = false,
+        modifiedSince: Timestamp = TimestampHelper.timestampFromEpochZero
+    ): List<Commodity> {
         val result = mutableListOf<Commodity>()
-        val projection = arrayOf(TransactionEntry.COLUMN_COMMODITY_UID)
-        val cursor = db.query(true, tableName, projection, null, null, null, null, null, null)
+        val table = TransactionEntry.TABLE_NAME + " t INNER JOIN " + SplitEntry.TABLE_NAME + " s" +
+                " ON t." + TransactionEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_TRANSACTION_UID +
+                " INNER JOIN " + AccountEntry.TABLE_NAME + " a" +
+                " ON a." + AccountEntry.COLUMN_UID + " = s." + SplitEntry.COLUMN_ACCOUNT_UID
+        val projection = arrayOf("a." + AccountEntry.COLUMN_COMMODITY_UID)
+        val where = "t." + TransactionEntry.COLUMN_TEMPLATE + " = ?" +
+                " AND t." + TransactionEntry.COLUMN_MODIFIED_AT + " >= ?" +
+                " AND a." + AccountEntry.COLUMN_TEMPLATE + " = ?"
+        val whereArgs = arrayOf<String?>(
+            if (isTemplate) "1" else "0",
+            getUtcStringFromTimestamp(modifiedSince),
+            if (isTemplate) "1" else "0"
+        )
+        val cursor = db.query(true, table, projection, where, whereArgs, null, null, null, null)
         cursor.forEach { cursor ->
             val commodityUID = cursor.getString(0)
             val commodity = commoditiesDbAdapter.getRecord(commodityUID)
-            result.add(commodity)
+            if (isTemplate == commodity.isTemplate) {
+                result.add(commodity)
+            }
         }
         return result
     }

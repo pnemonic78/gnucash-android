@@ -473,7 +473,10 @@ class ExportFormFragment : MenuFragment(),
         )
         if (isDoubleEntry) {
             formatItems.add(
-                ExportFormatItem(ExportFormat.SQLITE, context.getString(ExportFormat.SQLITE.labelId))
+                ExportFormatItem(
+                    ExportFormat.SQLITE,
+                    context.getString(ExportFormat.SQLITE.labelId)
+                )
             )
             formatItems.add(
                 ExportFormatItem(ExportFormat.XML, context.getString(ExportFormat.XML.labelId))
@@ -563,8 +566,9 @@ class ExportFormFragment : MenuFragment(),
      */
     private fun selectExportFile() {
         val bookName = BooksDbAdapter.instance.activeBookDisplayName
-        val filename =
-            buildExportFilename(exportParams.exportFormat, exportParams.isCompressed, bookName)
+        val exportFormat = exportParams.exportFormat
+        val isCompressed = isCompressedForFormat(exportFormat, exportParams.isCompressed)
+        val filename = buildExportFilename(exportFormat, isCompressed, bookName)
 
         val createIntent = Intent(Intent.ACTION_CREATE_DOCUMENT)
             .setType("*/*")
@@ -639,6 +643,17 @@ class ExportFormFragment : MenuFragment(),
         exportStartCalendar.set(Calendar.MINUTE, minute)
         binding.exportStartTime.text = TransactionFormFragment.TIME_FORMATTER
             .print(exportStartCalendar.timeInMillis)
+    }
+
+    private fun isCompressedForFormat(exportFormat: ExportFormat, compressed: Boolean): Boolean {
+        // Does QIF have multiple currencies that need to be zipped?
+        if (!compressed && exportFormat == ExportFormat.QIF) {
+            val transactionsDbAdapter = TransactionsDbAdapter.instance
+            val commodities =
+                transactionsDbAdapter.getAllCommoditiesInUse(false, exportParams.exportStartTime)
+            return commodities.size > 1
+        }
+        return compressed
     }
 
     private data class ExportFormatItem(val value: ExportFormat, val label: String) {
