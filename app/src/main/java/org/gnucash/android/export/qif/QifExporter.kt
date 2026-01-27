@@ -149,7 +149,7 @@ class QifExporter(
         val whereArgs = arrayOf<String?>(
             getUtcStringFromTimestamp(exportParams.exportStartTime)
         )
-        val orderBy =
+        val orderBy = "account1." + AccountEntry.COLUMN_COMMODITY_UID + " ASC," +
             "acct1_uid ASC, trans_date_posted ASC, trans_num ASC, trans_id ASC, split_id ASC"
 
         var cursor: Cursor? = null
@@ -200,6 +200,7 @@ class QifExporter(
                     }
                     if (accountUID != currentAccountUID) {
                         if (commodityUID != currentCommodityUID) {
+                            println("~!@ a=$accountUID c=$commodity")
                             currentCommodityUID = commodityUID
                             writer.append(INTERNAL_CURRENCY_PREFIX)
                                 .append(commodity.currencyCode)
@@ -350,10 +351,10 @@ class QifExporter(
         } else {
             arrayOf(name, suffix)
         }
-        val splitFiles = mutableListOf<File>()
+        val splitFiles = mutableSetOf<File>()
         var line: String?
         val reader = BufferedReader(FileReader(file))
-        var out: BufferedWriter? = null
+        var out: Writer? = null
         try {
             line = reader.readLine()
             while (line != null) {
@@ -363,7 +364,7 @@ class QifExporter(
                     val newFileName = pathParts[0] + "_" + currencyCode + pathParts[1]
                     val splitFile = File(parent, newFileName)
                     splitFiles.add(splitFile)
-                    out = BufferedWriter(FileWriter(splitFile))
+                    out = BufferedWriter(FileWriter(splitFile, true))
                 } else {
                     requireNotNull(out) { "Format invalid: $file" }
                     out.append(line).append(NEW_LINE)
@@ -374,7 +375,7 @@ class QifExporter(
             reader.close()
             out?.close()
         }
-        return splitFiles
+        return splitFiles.toList()
     }
 
     private fun String?.toSingleLine() = this?.replace('\n', ' ')
