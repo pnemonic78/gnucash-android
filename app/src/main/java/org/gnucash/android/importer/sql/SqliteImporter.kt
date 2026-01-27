@@ -130,7 +130,9 @@ class SqliteImporter(context: Context, inputStream: InputStream, listener: GncPr
             }
 
             listener?.onBook(book)
+            val displayName = book.displayName
             booksDbAdapter.replace(book)
+            book.displayName = displayName
             books.add(book)
 
             initDb(book).use {
@@ -155,7 +157,6 @@ class SqliteImporter(context: Context, inputStream: InputStream, listener: GncPr
         book.setUID(guid)
         book.rootAccountUID = rootAccountUID
         book.rootTemplateUID = rootTemplateUID
-        book.displayName = booksDbAdapter.generateDefaultBookName()
 
         return book
     }
