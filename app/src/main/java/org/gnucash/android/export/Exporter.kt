@@ -398,7 +398,7 @@ abstract class Exporter protected constructor(
             if (!(result.isSuccess || (code == RemoteOperationResult.ResultCode.FOLDER_ALREADY_EXISTS))) {
                 val message = result.getLogMessage(context)
                 Timber.w("Error creating folder: %s %s", code, message)
-                throw ExporterException(exportParams, message)
+                throw ExportException(exportParams, message)
             }
         }
 
