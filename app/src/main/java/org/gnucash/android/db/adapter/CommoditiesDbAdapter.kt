@@ -200,7 +200,7 @@ class CommoditiesDbAdapter(
             return commodity
         }
 
-    fun setDefaultCurrencyCode(currencyCode: String?) {
+    fun setDefaultCurrencyCode(currencyCode: String?): Commodity? {
         val context = holder.context
         val preferences = bookPreferences
         val prefKey = context.getString(R.string.key_default_currency)
@@ -211,6 +211,7 @@ class CommoditiesDbAdapter(
             _defaultCommodity = commodity
             Commodity.DEFAULT_COMMODITY = commodity
         }
+        return commodity
     }
 
     fun getCommodity(mnemonic: String, namespace: String): Commodity? {
