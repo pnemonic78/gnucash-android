@@ -31,6 +31,7 @@ import androidx.preference.PreferenceManager
 import com.dropbox.core.DbxException
 import com.owncloud.android.lib.common.OwnCloudClientFactory
 import com.owncloud.android.lib.common.OwnCloudCredentialsFactory
+import com.owncloud.android.lib.common.operations.RemoteOperationResult
 import com.owncloud.android.lib.resources.files.CreateFolderRemoteOperation
 import com.owncloud.android.lib.resources.files.FileUtils
 import com.owncloud.android.lib.resources.files.UploadFileRemoteOperation
@@ -56,6 +57,7 @@ import org.gnucash.android.export.DropboxHelper.getClient
 import org.gnucash.android.export.ExportParams.ExportTarget
 import org.gnucash.android.gnc.GncProgressListener
 import org.gnucash.android.model.Transaction
+import org.gnucash.android.net.configureHttpClientToTrustAllCertificates
 import org.gnucash.android.ui.settings.OwnCloudPreferences
 import org.gnucash.android.ui.snackLong
 import org.gnucash.android.util.BackupManager
@@ -137,7 +139,8 @@ abstract class Exporter protected constructor(
         accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter, pricesDbAdapter)
         val recurrenceDbAdapter = RecurrenceDbAdapter(holder)
         budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
-        scheduledActionDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
+        scheduledActionDbAdapter =
+            ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
 
         exportCacheFile = null
         cacheDir = File(context.cacheDir, exportParams.exportFormat.name)
@@ -348,7 +351,6 @@ abstract class Exporter protected constructor(
                 .uploadAndFinish(inputStream)
             Timber.i("Successfully uploaded file %s to DropBox", metadata.getName())
             inputStream.close()
-            exportedFile.delete() //delete file to prevent cache accumulation
 
             return Uri.Builder()
                 .scheme("dropbox")
@@ -372,28 +374,31 @@ abstract class Exporter protected constructor(
         val context = this.context
         val preferences = OwnCloudPreferences(context)
 
+        val ocEnabled = preferences.isEnabled
         val ocSync = preferences.isSync
-
-        if (!ocSync) {
+        if (!ocEnabled || !ocSync) {
             throw ExportException(exportParams, "ownCloud not enabled.")
         }
 
-        val ocServer = preferences.server!!
-        val ocUsername = preferences.username
+        val ocServer = preferences.server ?: return null
+        val ocUsername = preferences.username ?: return null
         val ocPassword = preferences.password
-        val ocDir = preferences.dir
-
         val serverUri = ocServer.toUri()
         val client = OwnCloudClientFactory.createOwnCloudClient(serverUri, context, true)
         client.credentials = OwnCloudCredentialsFactory.newBasicCredentials(ocUsername, ocPassword)
+        client.userId = ocUsername
+        if (BuildConfig.DEBUG) {
+            configureHttpClientToTrustAllCertificates()
+        }
 
+        val ocDir = preferences.dir
         if (!ocDir.isNullOrEmpty()) {
-            val dirResult = CreateFolderRemoteOperation(ocDir, true).execute(client)
-            if (!dirResult.isSuccess) {
-                Timber.w(
-                    "Error creating folder (it may happen if it already exists): %s",
-                    dirResult.logMessage
-                )
+            val result = CreateFolderRemoteOperation(ocDir, true).execute(client)
+            val code = result.code
+            if (!(result.isSuccess || (code == RemoteOperationResult.ResultCode.FOLDER_ALREADY_EXISTS))) {
+                val message = result.getLogMessage(context)
+                Timber.w("Error creating folder: %s %s", code, message)
+                throw ExporterException(exportParams, message)
             }
         }
 
@@ -407,10 +412,8 @@ abstract class Exporter protected constructor(
             getFileLastModifiedTimestamp(exportedFile)
         ).execute(client)
         if (!result.isSuccess) {
-            throw ExportException(exportParams, result.logMessage)
+            throw ExportException(exportParams, result.getLogMessage(context))
         }
-
-        exportedFile.delete()
 
         return serverUri.buildUpon()
             .appendPath(ocDir)
