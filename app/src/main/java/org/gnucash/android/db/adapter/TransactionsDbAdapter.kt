@@ -351,7 +351,7 @@ class TransactionsDbAdapter(
      */
     override fun buildModelInstance(cursor: Cursor): Transaction {
         val transaction = buildSimpleModelInstance(cursor)
-        transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction.uid)
+        transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction)
         return transaction
     }
 
@@ -374,7 +374,6 @@ class TransactionsDbAdapter(
         transaction.commodity = commoditiesDbAdapter.getRecord(commodityUID)
         transaction.scheduledActionUID = scheduledActionUID
         transaction.number = number
-        transaction.splits = splitsDbAdapter.getSplitsForTransaction(transaction)
 
         return transaction
     }
