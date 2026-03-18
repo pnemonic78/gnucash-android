@@ -262,8 +262,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         if (transactionUID.isNullOrEmpty()) return
 
         val transaction = transactionsDbAdapter.getRecord(transactionUID)
-        val duplicate = transaction.copy()
-        duplicate.time = System.currentTimeMillis()
+        val duplicate = transaction.copy(time = System.currentTimeMillis())
         try {
             transactionsDbAdapter.insert(duplicate)
             if (duplicate.id <= 0) return
