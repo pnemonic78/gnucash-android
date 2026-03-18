@@ -15,6 +15,7 @@
  */
 package org.gnucash.android.ui.transaction
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -49,10 +50,8 @@ import org.gnucash.android.app.actionBar
 import org.gnucash.android.databinding.CardviewTransactionBinding
 import org.gnucash.android.databinding.FragmentTransactionsListBinding
 import org.gnucash.android.db.DatabaseCursorLoader
-import org.gnucash.android.db.DatabaseSchema.TransactionEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
-import org.gnucash.android.db.getString
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.ui.adapter.CursorRecyclerAdapter
 import org.gnucash.android.ui.common.FormActivity
@@ -419,15 +418,20 @@ class TransactionsListFragment : MenuFragment(),
         val activity = activity ?: return
         if (shouldBackupTransactions(activity)) {
             backupActiveBookAsync(activity) { result ->
-                transactionsDbAdapter.deleteRecord(transactionUID)
-                updateAllWidgets(activity)
-                refresh()
+                deleteTransactionImpl(transactionUID, activity)
             }
         } else {
-            transactionsDbAdapter.deleteRecord(transactionUID)
-            updateAllWidgets(activity)
-            refresh()
+            deleteTransactionImpl(transactionUID, activity)
         }
+    }
+
+    private fun deleteTransactionImpl(transactionUID: String, activity: Activity) {
+        val position = findItemPosition(transactionUID)
+        transactionsDbAdapter.deleteRecord(transactionUID)
+        if (position >= 0) {
+            transactionsAdapter?.notifyItemRemoved(position)
+        }
+        updateAllWidgets(activity)
     }
 
     private fun duplicateTransaction(transactionUID: String) {
@@ -435,6 +439,7 @@ class TransactionsListFragment : MenuFragment(),
             val transaction = transactionsDbAdapter.getRecord(transactionUID)
             val duplicate = transaction.copy(date = System.currentTimeMillis())
             transactionsDbAdapter.insert(duplicate)
+            scrollTransactionUID = duplicate.uid
             refresh()
         } catch (e: SQLException) {
             Timber.e(e)
@@ -451,6 +456,7 @@ class TransactionsListFragment : MenuFragment(),
 
     private fun editTransaction(transactionUID: String, accountUID: String) {
         val context: Context = context ?: return
+        scrollTransactionUID = transactionUID
         val intent = Intent(context, FormActivity::class.java)
             .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
             .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
@@ -458,24 +464,20 @@ class TransactionsListFragment : MenuFragment(),
         startActivity(intent)
     }
 
-    private fun scrollToTransaction(cursor: Cursor?, scrollTransactionUID: String?) {
-        val cursor = cursor ?: return
-        val scrollTransactionUID = scrollTransactionUID ?: return
-        if (scrollTransactionUID.isEmpty()) return
+    private fun scrollToTransaction(cursor: Cursor?, transactionUID: String?) {
+        if (cursor == null) return
+        if (transactionUID.isNullOrEmpty()) return
         val binding = binding ?: return
 
-        var position = 0
-        if (cursor.moveToFirst()) {
-            do {
-                val transactionUID = cursor.getString(TransactionEntry.COLUMN_UID)
-                if (transactionUID == scrollTransactionUID) {
-                    break
-                }
-                position++
-            } while (cursor.moveToNext())
+        val position = findItemPosition(transactionUID)
+        if (position >= 0) {
+            binding.list.scrollToPosition(position)
         }
-        cursor.moveToFirst()
-        binding.list.scrollToPosition(position)
+    }
+
+    private fun findItemPosition(transactionUID: String): Int {
+        val adapter = transactionsAdapter ?: return -1
+        return adapter.getItemPosition(transactionUID)
     }
 
     private fun createNewTransaction(context: Context, accountUID: String) {
