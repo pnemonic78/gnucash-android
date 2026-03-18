@@ -296,8 +296,7 @@ class ScheduledActionService {
             //so compute the actual transaction time from pre-known values
             var transactionTime = scheduledAction.computeNextCountBasedScheduledExecutionTime()
             while (transactionTime <= endTime) {
-                val transaction = template.copy()
-                transaction.datePosted = transactionTime
+                val transaction = template.copy(date = transactionTime)
                 transaction.scheduledActionUID = scheduledAction.uid
                 for (split in transaction.splits) {
                     if (split.scheduledActionAccountUID.isNullOrEmpty()) continue

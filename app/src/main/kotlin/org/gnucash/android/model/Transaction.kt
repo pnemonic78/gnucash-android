@@ -89,8 +89,9 @@ class Transaction : BaseModel {
      * The export flag and the template flag are not copied from the old transaction to the new.
      *
      * @param generateNewUID Flag to determine if new UID should be assigned or not
+     * @param date The date posted.
      */
-    fun copy(generateNewUID: Boolean = true): Transaction {
+    fun copy(generateNewUID: Boolean = true, date: Long = datePosted): Transaction {
         val clone = Transaction(description)
         if (!generateNewUID) {
             clone.setUID(uid)
@@ -99,7 +100,7 @@ class Transaction : BaseModel {
         clone.notes = notes
         clone.number = number
         clone.splits = splits.map { it.copy(generateNewUID) }
-        clone.datePosted = datePosted
+        clone.datePosted = date
         return clone
     }
 
