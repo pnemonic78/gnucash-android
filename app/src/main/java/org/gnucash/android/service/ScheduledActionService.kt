@@ -49,7 +49,7 @@ import kotlin.math.min
  *
  *
  * It's run every time the `enqueueWork` is called. It goes
- * through all scheduled event entries in the the database and executes them.
+ * through all scheduled event entries in the database and executes them.
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
