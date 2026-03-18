@@ -54,7 +54,7 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Test the the scheduled actions service runs as expected
+ * Test the scheduled actions service runs as expected
  */
 class ScheduledActionServiceTest : BookHelperTest() {
     private var actionUID: String? = null

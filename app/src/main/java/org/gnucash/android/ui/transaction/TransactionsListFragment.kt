@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
+import org.gnucash.android.app.GnuCashApplication.Companion.isAbsoluteDate
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.app.MenuFragment
@@ -62,6 +63,7 @@ import org.gnucash.android.ui.homescreen.WidgetConfigurationActivity.Companion.u
 import org.gnucash.android.ui.transaction.dialog.BulkMoveDialogFragment
 import org.gnucash.android.ui.util.displayBalance
 import org.gnucash.android.util.BackupManager.backupActiveBookAsync
+import org.gnucash.android.util.formatMediumDate
 import timber.log.Timber
 
 /**
@@ -80,6 +82,7 @@ class TransactionsListFragment : MenuFragment(),
 
     private var useCompactView = false
     private var useDoubleEntry = true
+    private var useAbsoluteDate = false
 
     private var transactionsAdapter: TransactionCursorAdapter? = null
 
@@ -97,11 +100,16 @@ class TransactionsListFragment : MenuFragment(),
             getString(R.string.key_use_compact_list),
             useCompactView
         )
+        useAbsoluteDate = isAbsoluteDate(context)
         //if there was a local override of the global setting, respect it
         if (savedInstanceState != null) {
             useCompactView = savedInstanceState.getBoolean(
                 getString(R.string.key_use_compact_list),
                 useCompactView
+            )
+            useAbsoluteDate = savedInstanceState.getBoolean(
+                getString(R.string.key_absolute_date),
+                useAbsoluteDate
             )
         }
 
@@ -112,6 +120,7 @@ class TransactionsListFragment : MenuFragment(),
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(getString(R.string.key_use_compact_list), useCompactView)
+        outState.putBoolean(getString(R.string.key_absolute_date), useAbsoluteDate)
     }
 
     override fun onCreateView(
@@ -207,9 +216,12 @@ class TransactionsListFragment : MenuFragment(),
     @Deprecated("Deprecated in Java")
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        val item = menu.findItem(R.id.menu_toggle_compact)
-        item.isChecked = useCompactView
-        item.isEnabled = useDoubleEntry //always compact for single-entry
+        val itemCompact = menu.findItem(R.id.menu_toggle_compact)
+        itemCompact.isChecked = useCompactView
+        itemCompact.isEnabled = useDoubleEntry //always compact for single-entry
+
+        val itemDate = menu.findItem(R.id.menu_toggle_date)
+        itemDate.isChecked = useAbsoluteDate
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -217,6 +229,13 @@ class TransactionsListFragment : MenuFragment(),
             R.id.menu_toggle_compact -> {
                 item.isChecked = !item.isChecked
                 useCompactView = item.isChecked
+                refresh()
+                return true
+            }
+
+            R.id.menu_toggle_date -> {
+                item.isChecked = !item.isChecked
+                useAbsoluteDate = item.isChecked
                 refresh()
                 return true
             }
@@ -354,7 +373,11 @@ class TransactionsListFragment : MenuFragment(),
             val amount = transaction.getBalance(accountUID)
             transactionAmount.displayBalance(amount, colorBalanceZero)
 
-            val dateText = getPrettyDateFormat(context, transaction.datePosted)
+            val dateText = if (useAbsoluteDate) {
+                formatMediumDate(transaction.datePosted)
+            } else {
+                getPrettyDateFormat(context, transaction.datePosted)
+            }
             transactionDate.text = dateText
 
             if (useCompactView || !useDoubleEntry) {
@@ -396,7 +419,7 @@ class TransactionsListFragment : MenuFragment(),
         }
 
         /**
-         * Formats the date to show the the day of the week if the `dateMillis` is within 7 days
+         * Formats the date to show the day of the week if the `dateMillis` is within 7 days
          * of today. Else it shows the actual date formatted as short string. <br></br>
          * It also shows "today", "yesterday" or "tomorrow" if the date is on any of those days
          *
