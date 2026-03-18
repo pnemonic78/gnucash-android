@@ -313,8 +313,7 @@ class ScheduledActionService {
             //so compute the actual transaction time from pre-known values
             var transactionTime = scheduledAction.computeNextCountBasedScheduledExecutionTime()
             while (transactionTime <= endTime) {
-                val transaction = template.copy()
-                transaction.time = transactionTime
+                val transaction = template.copy(time = transactionTime)
                 transaction.scheduledActionUID = scheduledAction.uid
                 transactionsDbAdapter.insert(transaction)
                 //required for computingNextScheduledExecutionTime

@@ -375,7 +375,7 @@ class TransactionsListFragment : MenuFragment(),
             transactionAmount.displayBalance(amount, colorBalanceZero)
 
             val dateText = if (useAbsoluteDate) {
-                formatMediumDate(transaction.datePosted)
+                formatMediumDate(transaction.time)
             } else {
                 getPrettyDateFormat(context, transaction.time)
             }
@@ -457,8 +457,7 @@ class TransactionsListFragment : MenuFragment(),
     private fun duplicateTransaction(transactionUID: String) {
         try {
             val transaction = transactionsDbAdapter.getRecord(transactionUID)
-            val duplicate = transaction.copy()
-            duplicate.time = System.currentTimeMillis()
+            val duplicate = transaction.copy(time = System.currentTimeMillis())
             transactionsDbAdapter.insert(duplicate)
             refresh()
         } catch (e: SQLException) {
