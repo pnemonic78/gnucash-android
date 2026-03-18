@@ -162,13 +162,15 @@ class TransactionsActivity : BaseDrawerActivity(),
         refresh(requireAccount())
     }
 
-    private fun refresh(account: Account) {
+    private fun refresh(account: Account, force: Boolean = true) {
         val binding = this.binding
         setTitleIndicatorColor(binding)
 
         binding.toolbarLayout.toolbarSpinner.setEnabled(!accountNameAdapter!!.isEmpty)
         val adapterBefore = binding.pager.adapter
-        binding.pager.adapter = AccountViewPagerAdapter(this, account)
+        if (force) {
+            binding.pager.adapter = AccountViewPagerAdapter(this, account)
+        }
         if (adapterBefore == null) {
             TabLayoutMediator(binding.tabLayout, binding.pager) { tab, position ->
                 when (position) {
@@ -210,11 +212,15 @@ class TransactionsActivity : BaseDrawerActivity(),
         tabLayout.addTab(tabLayout.newTab())
 
         setupActionBarNavigation(binding, accountUID)
+
+        if (savedInstanceState == null) {
+            refresh()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        refresh()
+        setTitleIndicatorColor(binding)
     }
 
     /**
@@ -430,7 +436,7 @@ class TransactionsActivity : BaseDrawerActivity(),
     }
 
     private fun swapAccount(account: Account?) {
-        val binding = this.binding
+        val isSameAccount = this.account == account
         this.account = account
         if (account != null) {
             val accountUID = account.uid
@@ -438,6 +444,7 @@ class TransactionsActivity : BaseDrawerActivity(),
             intent.putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
 
             //if there are no transactions, and there are sub-accounts, show the sub-accounts
+            val binding = this.binding
             val tabLayout = binding.tabLayout
             val txCount = transactionsDbAdapter.getTransactionsCount(accountUID)
             if (txCount == 0) {
@@ -471,7 +478,7 @@ class TransactionsActivity : BaseDrawerActivity(),
             }
 
             //refresh any fragments in the tab with the new account UID
-            refresh(account)
+            refresh(account, force = !isSameAccount)
         } else {
             //refresh any fragments in the tab with the new account UID
             refresh()
