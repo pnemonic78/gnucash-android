@@ -186,6 +186,11 @@ class TransactionsListFragment : MenuFragment(),
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        transactionsDbAdapter = TransactionsDbAdapter.instance
+    }
+
     override fun onResume() {
         super.onResume()
         refresh()
@@ -249,7 +254,7 @@ class TransactionsListFragment : MenuFragment(),
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
-        Timber.d("Transactions loader finished. Swapping in cursor")
+        Timber.d("Transactions loader finished.")
         transactionsAdapter?.changeCursor(cursor)
         scrollToTransaction(cursor, scrollTransactionUID)
     }
