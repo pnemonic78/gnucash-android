@@ -224,22 +224,22 @@ class TransactionsListFragment : MenuFragment(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             R.id.menu_toggle_compact -> {
                 item.isChecked = !item.isChecked
                 useCompactView = item.isChecked
                 refresh()
-                return true
+                true
             }
 
             R.id.menu_toggle_date -> {
                 item.isChecked = !item.isChecked
                 useAbsoluteDate = item.isChecked
                 refresh()
-                return true
+                true
             }
 
-            else -> return super.onOptionsItemSelected(item)
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
