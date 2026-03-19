@@ -262,13 +262,13 @@ class AccountsActivity : BaseDrawerActivity(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             R.id.menu_hidden -> {
                 toggleHidden(item)
-                return true
+                true
             }
 
-            else -> return super.onOptionsItemSelected(item)
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -281,9 +281,10 @@ class AccountsActivity : BaseDrawerActivity(),
             .setAction(Intent.ACTION_VIEW)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
             .putExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
-
-        startActivity(intent)
+        startActivityForResult(intent, REQUEST_REFRESH)
     }
+
+    override fun accountChanged(accountUID: String) = Unit
 
     override fun onClose(): Boolean {
         val searchView = this.searchView
@@ -342,6 +343,8 @@ class AccountsActivity : BaseDrawerActivity(),
     }
 
     companion object {
+        // "ForResult" to force refresh afterward.
+        private const val REQUEST_REFRESH = 0x0000
         /**
          * Request code for GnuCash account structure file to import
          */

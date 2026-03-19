@@ -145,6 +145,7 @@ class TransactionsActivity : BaseDrawerActivity(),
         if (DeleteAccountDialogFragment.TAG == requestKey) {
             val refresh = result.getBoolean(Refreshable.EXTRA_REFRESH)
             if (refresh) {
+                setResult(RESULT_OK)
                 finish()
             }
         }
@@ -166,10 +167,19 @@ class TransactionsActivity : BaseDrawerActivity(),
         val binding = this.binding
         setTitleIndicatorColor(binding)
 
-        binding.toolbarLayout.toolbarSpinner.setEnabled(!accountNameAdapter!!.isEmpty)
+        val accountNameSpinner = binding.toolbarLayout.toolbarSpinner
         val adapterBefore = binding.pager.adapter
         if (force) {
+            accountNameSpinner.setEnabled(false)
+            accountNameAdapter!!.load { adapter ->
+                val position = adapter.getPosition(account.uid)
+                accountNameSpinner.setSelection(position)
+                accountNameSpinner.setEnabled(!adapter.isEmpty)
+            }
+
             binding.pager.adapter = AccountViewPagerAdapter(this, account)
+        } else {
+            accountNameSpinner.setEnabled(!accountNameAdapter!!.isEmpty)
         }
         if (adapterBefore == null) {
             TabLayoutMediator(binding.tabLayout, binding.pager) { tab, position ->
@@ -298,9 +308,8 @@ class TransactionsActivity : BaseDrawerActivity(),
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val account = account ?: return false
-        val favoriteAccountMenuItem = menu.findItem(R.id.menu_favorite)
-        if (favoriteAccountMenuItem == null)  //when the activity is used to edit a transaction
-            return false
+        //when the activity is used to edit a transaction
+        val favoriteAccountMenuItem = menu.findItem(R.id.menu_favorite) ?: return false
 
         val isFavoriteAccount = account.isFavorite
         @DrawableRes val favoriteIcon =
@@ -317,31 +326,31 @@ class TransactionsActivity : BaseDrawerActivity(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             R.id.menu_favorite -> {
                 val account = account ?: return false
                 toggleFavorite(account)
-                return true
+                true
             }
 
             R.id.menu_edit -> {
                 val account = account ?: return false
                 editAccount(account.uid)
-                return true
+                true
             }
 
             R.id.menu_delete -> {
                 val account = account ?: return false
                 deleteAccount(account.uid)
-                return true
+                true
             }
 
             R.id.menu_hidden -> {
                 toggleHidden(item)
-                return true
+                true
             }
 
-            else -> return super.onOptionsItemSelected(item)
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -362,7 +371,11 @@ class TransactionsActivity : BaseDrawerActivity(),
             .setAction(Intent.ACTION_VIEW)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
             .putExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
-        startActivity(intent)
+        startActivityForResult(intent, REQUEST_REFRESH)
+    }
+
+    override fun accountChanged(accountUID: String) {
+        accountNameAdapter?.notifyAccountChanged(accountUID)
     }
 
     private fun toggleFavorite(account: Account) {
@@ -398,6 +411,7 @@ class TransactionsActivity : BaseDrawerActivity(),
             backupActiveBookAsync(this) { result ->
                 // Avoid calling AccountsDbAdapter.deleteRecord(long). See #654
                 if (accountsDbAdapter.deleteRecord(accountUID)) {
+                    setResult(RESULT_OK)
                     finish()
                 }
             }
@@ -524,6 +538,7 @@ class TransactionsActivity : BaseDrawerActivity(),
          */
         private const val NUM_PAGES = 2
 
+        // "ForResult" to force refresh afterward.
         private const val REQUEST_REFRESH = 0x0000
 
         /**

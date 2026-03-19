@@ -199,28 +199,28 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             android.R.id.home -> {
                 finish()
-                return true
+                true
             }
 
             R.id.menu_move -> {
                 moveTransaction(transactionUID)
-                return true
+                true
             }
 
             R.id.menu_duplicate -> {
                 duplicateTransaction(transactionUID)
-                return true
+                true
             }
 
             R.id.menu_delete -> {
                 deleteTransaction(transactionUID)
-                return true
+                true
             }
 
-            else -> return super.onOptionsItemSelected(item)
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -294,11 +294,11 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
             .setAction(Intent.ACTION_VIEW)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
             .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
-        startActivity(intent)
+        startActivityForResult(intent, REQUEST_REFRESH)
     }
 
     companion object {
-        // "ForResult" to force refresh afterwards.
+        // "ForResult" to force refresh afterward.
         private const val REQUEST_REFRESH = 0x0000
     }
 }
