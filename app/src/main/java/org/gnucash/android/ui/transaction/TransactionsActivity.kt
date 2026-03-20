@@ -163,7 +163,11 @@ class TransactionsActivity : BaseDrawerActivity(),
         refresh(requireAccount())
     }
 
-    private fun refresh(account: Account, force: Boolean = true) {
+    private fun refresh(
+        account: Account,
+        force: Boolean = true,
+        tabIndex: Int = INDEX_TRANSACTIONS_FRAGMENT
+    ) {
         val binding = this.binding
         setTitleIndicatorColor(binding)
 
@@ -189,7 +193,7 @@ class TransactionsActivity : BaseDrawerActivity(),
                 }
             }.attach()
         }
-        binding.pager.currentItem = INDEX_TRANSACTIONS_FRAGMENT
+        binding.pager.currentItem = tabIndex
     }
 
     override fun inflateView() {
@@ -461,11 +465,13 @@ class TransactionsActivity : BaseDrawerActivity(),
             val binding = this.binding
             val tabLayout = binding.tabLayout
             val txCount = transactionsDbAdapter.getTransactionsCount(accountUID)
+            var tabIndex = INDEX_TRANSACTIONS_FRAGMENT
             if (txCount == 0) {
                 if (account.isPlaceholder) {
                     if (tabLayout.tabCount > 1) {
                         tabLayout.removeTabAt(INDEX_TRANSACTIONS_FRAGMENT)
                     }
+                    tabIndex = INDEX_SUB_ACCOUNTS_FRAGMENT
                 } else {
                     if (tabLayout.tabCount < 2) {
                         tabLayout.addTab(
@@ -476,10 +482,8 @@ class TransactionsActivity : BaseDrawerActivity(),
                 }
 
                 val subCount = accountsDbAdapter.getSubAccountCount(accountUID)
-                if ((subCount > 0) || (binding.tabLayout.tabCount < 2)) {
-                    binding.pager.currentItem = INDEX_SUB_ACCOUNTS_FRAGMENT
-                } else {
-                    binding.pager.currentItem = INDEX_TRANSACTIONS_FRAGMENT
+                if (subCount > 0) {
+                    tabIndex = INDEX_SUB_ACCOUNTS_FRAGMENT
                 }
             } else {
                 if (tabLayout.tabCount < 2) {
@@ -488,11 +492,10 @@ class TransactionsActivity : BaseDrawerActivity(),
                             .setText(R.string.section_header_transactions)
                     )
                 }
-                binding.pager.currentItem = INDEX_TRANSACTIONS_FRAGMENT
             }
 
             //refresh any fragments in the tab with the new account UID
-            refresh(account, force = !isSameAccount)
+            refresh(account, force = !isSameAccount, tabIndex = tabIndex)
         } else {
             //refresh any fragments in the tab with the new account UID
             refresh()
