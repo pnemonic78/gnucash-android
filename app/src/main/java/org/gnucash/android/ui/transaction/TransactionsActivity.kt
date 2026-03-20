@@ -171,11 +171,12 @@ class TransactionsActivity : BaseDrawerActivity(),
         val binding = this.binding
         setTitleIndicatorColor(binding)
 
+        val accountNameAdapter = accountNameAdapter!!
         val accountNameSpinner = binding.toolbarLayout.toolbarSpinner
         val adapterBefore = binding.pager.adapter
-        if (force) {
+        if (force || (adapterBefore == null)) {
             accountNameSpinner.setEnabled(false)
-            accountNameAdapter!!.load { adapter ->
+            accountNameAdapter.load { adapter ->
                 val position = adapter.getPosition(account.uid)
                 accountNameSpinner.setSelection(position)
                 accountNameSpinner.setEnabled(!adapter.isEmpty)
@@ -183,7 +184,7 @@ class TransactionsActivity : BaseDrawerActivity(),
 
             binding.pager.adapter = AccountViewPagerAdapter(this, account)
         } else {
-            accountNameSpinner.setEnabled(!accountNameAdapter!!.isEmpty)
+            accountNameSpinner.setEnabled(!accountNameAdapter.isEmpty)
         }
         if (adapterBefore == null) {
             TabLayoutMediator(binding.tabLayout, binding.pager) { tab, position ->
