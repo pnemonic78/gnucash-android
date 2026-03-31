@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
 import org.gnucash.android.BuildConfig
+import org.gnucash.android.app.finish
 import org.gnucash.android.ui.passcode.PasscodeHelper.getPasscode
 import timber.log.Timber
 
@@ -39,8 +40,7 @@ class PasscodeFragment : KeyboardFragment() {
                 .putExtras(args)
             startActivity(intent)
 
-            activity.setResult(Activity.RESULT_OK)
-            activity.finish()
+            activity.finish(Activity.RESULT_OK)
         } else {
             showWrongPassword()
         }

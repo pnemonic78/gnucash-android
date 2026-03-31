@@ -3,7 +3,6 @@ package org.gnucash.android.ui.transaction
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.database.SQLException
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -14,6 +13,8 @@ import androidx.fragment.app.FragmentResultListener
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
+import org.gnucash.android.app.finish
+import org.gnucash.android.app.requireArguments
 import org.gnucash.android.databinding.ActivityTransactionDetailBinding
 import org.gnucash.android.databinding.ItemSplitAmountInfoBinding
 import org.gnucash.android.databinding.RowBalanceBinding
@@ -22,6 +23,7 @@ import org.gnucash.android.db.adapter.AccountsDbAdapter.Companion.ALWAYS
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Split
+import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
@@ -40,13 +42,12 @@ import timber.log.Timber
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener, Refreshable {
-    private var transactionUID: String? = null
+    private var transaction: Transaction? = null
     private var accountUID: String? = null
 
     private lateinit var binding: ActivityTransactionDetailBinding
     private var transactionsDbAdapter = TransactionsDbAdapter.instance
-
-    private val accountsDbAdapter = AccountsDbAdapter.instance
+    private var accountsDbAdapter = AccountsDbAdapter.instance
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,11 +56,11 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         setContentView(binding.root)
 
         transactionsDbAdapter = TransactionsDbAdapter.instance
-        transactionUID = intent.getStringExtra(UxArgument.SELECTED_TRANSACTION_UID)
-        accountUID = intent.getStringExtra(UxArgument.SELECTED_ACCOUNT_UID)
+        val transaction = requireTransaction()
 
-        if (transactionUID.isNullOrEmpty() || accountUID.isNullOrEmpty()) {
-            throw IllegalArgumentException("Both the transaction and account UID are required")
+        accountUID = intent.getStringExtra(UxArgument.SELECTED_ACCOUNT_UID)
+        if (accountUID.isNullOrEmpty()) {
+            throw IllegalArgumentException("Account UID is required")
         }
 
         setSupportActionBar(binding.toolbar)
@@ -72,7 +73,13 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         setTitlesColor(accountColor)
         binding.toolbar.setBackgroundColor(accountColor)
 
-        bindViews(binding)
+        bindViews(binding, transaction)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        accountsDbAdapter = AccountsDbAdapter.instance
+        transactionsDbAdapter = TransactionsDbAdapter.instance
     }
 
     override fun onFragmentResult(requestKey: String, result: Bundle) {
@@ -111,11 +118,9 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     /**
      * Reads the transaction information from the database and binds it to the views
      */
-    private fun bindViews(binding: ActivityTransactionDetailBinding) {
+    private fun bindViews(binding: ActivityTransactionDetailBinding, transaction: Transaction) {
         // Remove all rows that are not special.
         binding.transactionItems.removeAllViews()
-
-        val transaction = transactionsDbAdapter.getRecord(transactionUID!!)
 
         binding.trnDescription.text = transaction.description
         binding.transactionAccount.text = getString(
@@ -171,23 +176,24 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
             binding.rowTrnRecurrence.isVisible = true
         }
 
-        binding.fabEdit.setOnClickListener { editTransaction() }
+        binding.fabEdit.setOnClickListener { editTransaction(transaction) }
     }
 
     override fun refresh() {
-        refresh(transactionUID)
+        refresh(null)
     }
 
     override fun refresh(uid: String?) {
-        transactionUID = uid
-        bindViews(binding)
+        this.transaction = null
+        val transaction = requireTransaction()
+        bindViews(binding, transaction)
     }
 
-    private fun editTransaction() {
+    private fun editTransaction(transaction: Transaction) {
         val intent = Intent(this, FormActivity::class.java)
             .setAction(Intent.ACTION_INSERT_OR_EDIT)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
+            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transaction.uid)
             .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
         startActivityForResult(intent, REQUEST_REFRESH)
     }
@@ -199,6 +205,8 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val transaction = requireTransaction()
+
         return when (item.itemId) {
             android.R.id.home -> {
                 finish()
@@ -206,17 +214,17 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
             }
 
             R.id.menu_move -> {
-                moveTransaction(transactionUID)
+                moveTransaction(transaction)
                 true
             }
 
             R.id.menu_duplicate -> {
-                duplicateTransaction(transactionUID)
+                duplicateTransaction(transaction)
                 true
             }
 
             R.id.menu_delete -> {
-                deleteTransaction(transactionUID)
+                deleteTransaction(transaction)
                 true
             }
 
@@ -232,41 +240,37 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    private fun moveTransaction(transactionUID: String?) {
-        if (transactionUID.isNullOrEmpty()) return
-        val uids = arrayOf(transactionUID)
+    private fun moveTransaction(transaction: Transaction) {
+        val uids = arrayOf(transaction.uid)
         val fragment = BulkMoveDialogFragment.newInstance(uids, accountUID!!)
         val fm = supportFragmentManager
         fm.setFragmentResultListener(BulkMoveDialogFragment.TAG, this, this)
         fragment.show(fm, BulkMoveDialogFragment.TAG)
     }
 
-    private fun deleteTransaction(transactionUID: String?) {
-        if (transactionUID.isNullOrEmpty()) return
-
+    private fun deleteTransaction(transaction: Transaction) {
         val activity: Activity = this
         if (shouldBackupTransactions(activity)) {
-            backupActiveBookAsync(activity) { result ->
-                transactionsDbAdapter.deleteRecord(transactionUID)
-                updateAllWidgets(activity)
-                finish()
+            backupActiveBookAsync(activity) { _ ->
+                postDelete(activity, transaction)
             }
         } else {
-            transactionsDbAdapter.deleteRecord(transactionUID)
-            updateAllWidgets(activity)
-            finish()
+            postDelete(activity, transaction)
         }
     }
 
-    private fun duplicateTransaction(transactionUID: String?) {
-        if (transactionUID.isNullOrEmpty()) return
+    private fun postDelete(activity: Activity, transaction: Transaction) {
+        transactionsDbAdapter.deleteRecord(transaction)
+        updateAllWidgets(activity)
+        finish()
+    }
 
-        val transaction = transactionsDbAdapter.getRecord(transactionUID)
+    private fun duplicateTransaction(transaction: Transaction) {
         val duplicate = transaction.copy(date = System.currentTimeMillis())
         try {
             transactionsDbAdapter.insert(duplicate)
             if (duplicate.id <= 0) return
-        } catch (e: SQLException) {
+        } catch (e: Exception) {
             Timber.e(e)
             return
         }
@@ -295,6 +299,26 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
             .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
         startActivityForResult(intent, REQUEST_REFRESH)
+    }
+
+    private fun requireTransaction(): Transaction {
+        var transaction = this.transaction
+        if (transaction != null) {
+            return transaction
+        }
+        val args: Bundle = requireArguments()
+        val transactionUID = args.getString(UxArgument.SELECTED_TRANSACTION_UID)!!
+        try {
+            transaction = transactionsDbAdapter.getRecord(transactionUID)
+            this.transaction = transaction
+        } catch (e: IllegalArgumentException) {
+            Timber.e(e)
+        }
+        if (transaction == null) {
+            finish(RESULT_CANCELED)
+            throw IllegalArgumentException("Transaction required")
+        }
+        return transaction
     }
 
     companion object {

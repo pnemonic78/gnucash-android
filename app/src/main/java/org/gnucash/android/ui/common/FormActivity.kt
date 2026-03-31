@@ -22,6 +22,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.fragment.app.Fragment
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
+import org.gnucash.android.app.finish
 import org.gnucash.android.app.isNullOrEmpty
 import org.gnucash.android.databinding.ActivityFormBinding
 import org.gnucash.android.db.adapter.AccountsDbAdapter
@@ -208,8 +209,7 @@ class FormActivity : PasscodeLockActivity() {
         if (fm.backStackEntryCount > 0) {
             fm.popBackStack()
         } else {
-            setResult(RESULT_CANCELED)
-            finish()
+            finish(RESULT_CANCELED)
         }
     }
 }

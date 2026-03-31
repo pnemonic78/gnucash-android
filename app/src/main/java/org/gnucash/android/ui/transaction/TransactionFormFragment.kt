@@ -48,6 +48,7 @@ import org.gnucash.android.app.GnuCashApplication.Companion.getDefaultTransactio
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.finish
 import org.gnucash.android.app.getParcelableArrayListCompat
 import org.gnucash.android.databinding.FragmentTransactionFormBinding
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
@@ -1006,9 +1007,8 @@ class TransactionFormFragment : MenuFragment(),
 
         val fm = activity.supportFragmentManager
         if (fm.backStackEntryCount == 0) {
-            activity.setResult(resultCode)
             //means we got here directly from the accounts list activity, need to finish
-            activity.finish()
+            activity.finish(resultCode)
         } else {
             //go back to transactions list
             fm.popBackStack()
@@ -1100,7 +1100,6 @@ class TransactionFormFragment : MenuFragment(),
             Timber.e(e)
         }
         if (account == null) {
-            Timber.e("Account not found")
             finish(Activity.RESULT_CANCELED)
             throw IllegalArgumentException("Account required")
         }

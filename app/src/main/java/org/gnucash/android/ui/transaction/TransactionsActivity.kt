@@ -32,6 +32,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentResultListener
 import com.google.android.material.tabs.TabLayoutMediator
 import org.gnucash.android.R
+import org.gnucash.android.app.finish
 import org.gnucash.android.databinding.ActivityTransactionsBinding
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
@@ -145,8 +146,7 @@ class TransactionsActivity : BaseDrawerActivity(),
         if (DeleteAccountDialogFragment.TAG == requestKey) {
             val refresh = result.getBoolean(Refreshable.EXTRA_REFRESH)
             if (refresh) {
-                setResult(RESULT_OK)
-                finish()
+                finish(RESULT_OK)
             }
         }
     }
@@ -416,8 +416,7 @@ class TransactionsActivity : BaseDrawerActivity(),
             backupActiveBookAsync(this) { result ->
                 // Avoid calling AccountsDbAdapter.deleteRecord(long). See #654
                 if (accountsDbAdapter.deleteRecord(accountUID)) {
-                    setResult(RESULT_OK)
-                    finish()
+                    finish(RESULT_OK)
                 }
             }
         }

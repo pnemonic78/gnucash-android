@@ -201,8 +201,7 @@ class SplitEditorFragment : MenuFragment() {
                     Timber.w("Activity required")
                     return false
                 }
-                activity.setResult(Activity.RESULT_CANCELED)
-                activity.finish()
+                activity.finish(Activity.RESULT_CANCELED)
                 true
             }
 

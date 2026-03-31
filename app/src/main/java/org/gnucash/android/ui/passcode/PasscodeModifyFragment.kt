@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.annotation.StringRes
 import org.gnucash.android.R
+import org.gnucash.android.app.finish
 import org.gnucash.android.ui.passcode.PasscodeHelper.getPasscode
 import org.gnucash.android.ui.passcode.PasscodeHelper.isPasscodeEnabled
 import org.gnucash.android.ui.passcode.PasscodeHelper.setPasscode
@@ -62,8 +63,7 @@ class PasscodeModifyFragment : KeyboardFragment() {
                     passcodeOriginal = null
                     setPasscode(activity, null)
 
-                    activity.setResult(Activity.RESULT_OK)
-                    activity.finish()
+                    activity.finish(Activity.RESULT_OK)
                 } else if (isPasscodeEnabled) {
                     setState(STATE_MODIFY)
                 } else {
@@ -87,8 +87,7 @@ class PasscodeModifyFragment : KeyboardFragment() {
                 passcodeOriginal = code
                 setPasscode(activity, code)
 
-                activity.setResult(Activity.RESULT_OK)
-                activity.finish()
+                activity.finish(Activity.RESULT_OK)
             } else {
                 showWrongPasswordConfirmation()
             }

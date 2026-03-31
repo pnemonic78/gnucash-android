@@ -79,3 +79,8 @@ fun Fragment.finish() = activity?.finish()
 fun Activity.requireArguments(): Bundle {
     return intent.extras!!
 }
+
+fun Activity.finish(resultCode: Int) {
+    setResult(resultCode)
+    finish()
+}

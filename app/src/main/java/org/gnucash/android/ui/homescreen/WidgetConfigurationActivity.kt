@@ -30,6 +30,7 @@ import androidx.core.content.edit
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashActivity
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
+import org.gnucash.android.app.finish
 import org.gnucash.android.databinding.WidgetConfigurationBinding
 import org.gnucash.android.db.BookDbHelper
 import org.gnucash.android.db.DatabaseHelper
@@ -131,15 +132,14 @@ class WidgetConfigurationActivity : GnuCashActivity() {
             configureWidget(context, appWidgetId, bookUID, accountUID, hideAccountBalance)
             updateWidget(context, appWidgetId)
 
-            val resultValue = Intent()
+            val data = Intent()
                 .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            setResult(RESULT_OK, resultValue)
+            setResult(RESULT_OK, data)
             finish()
         }
 
         binding.defaultButtons.btnCancel.setOnClickListener {
-            setResult(RESULT_CANCELED)
-            finish()
+            finish(RESULT_CANCELED)
         }
     }
 

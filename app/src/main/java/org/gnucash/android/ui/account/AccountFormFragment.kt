@@ -39,6 +39,7 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.finish
 import org.gnucash.android.databinding.FragmentAccountFormBinding
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
@@ -606,8 +607,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
 
         val action = activity.intent.action
         if (action == Intent.ACTION_INSERT_OR_EDIT) {
-            activity.setResult(Activity.RESULT_OK)
-            activity.finish()
+            activity.finish(Activity.RESULT_OK)
         } else {
             activity.supportFragmentManager.popBackStack()
         }
