@@ -548,9 +548,6 @@
     <string name="add_budget_amounts">Add Budget Amounts</string>
     <string name="label_spent">Spent</string>
     <string name="label_remaining">Remaining</string>
-<string name="server_address">Server Address</string>
-    <string name="directory">Directory</string>
-
     <string name="server_address">Server Address</string>
     <string name="directory">Directory</string>
     <string name="title_absolute_date">Absolute date</string>
