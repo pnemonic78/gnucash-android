@@ -645,7 +645,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         ).hasSize(1)
 
         clickViewId(R.id.options_menu)
-        clickViewText(R.string.menu_duplicate_transaction)
+        clickViewText(R.string.menu_duplicate)
 
         val dummyAccountTrns =
             transactionsDbAdapter.getTransactionsForAccount(TRANSACTIONS_ACCOUNT_UID)
