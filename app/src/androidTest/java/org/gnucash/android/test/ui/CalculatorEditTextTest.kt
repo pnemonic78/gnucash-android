@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import android.content.Intent
 import android.text.InputType
 import androidx.test.espresso.Espresso.onView
@@ -26,16 +25,13 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withInputType
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.gnucash.android.R
 import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.test.ui.util.SoftwareKeyboard.isKeyboardOpen
 import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.transaction.TransactionsActivity
-import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.After
@@ -49,11 +45,6 @@ import org.junit.Test
 class CalculatorEditTextTest : GnuAndroidTest() {
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var transactionsActivity: TransactionsActivity
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Rule
     @JvmField
@@ -94,8 +85,10 @@ class CalculatorEditTextTest : GnuAndroidTest() {
      */
     @Test
     fun testShowingHidingOfCalculatorKeyboard() {
+        waitForView(R.id.fab_add)
         clickViewId(R.id.fab_add)
 
+        waitForView(R.id.input_transaction_amount)
         // Verify the input type is correct
         onView(withId(R.id.input_transaction_amount))
             .check(matches(withInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)))

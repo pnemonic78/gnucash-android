@@ -12,22 +12,29 @@ import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.kobakei.ratethisapp.RateThisApp
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.test.ui.util.WaitAction
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.util.applyLocale
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.FixMethodOrder
+import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import java.util.Locale
 
+@RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 abstract class GnuAndroidTest {
 
@@ -82,7 +89,7 @@ abstract class GnuAndroidTest {
      * @param viewId View resource ID
      */
     fun clickViewId(@IdRes viewId: Int): ViewInteraction {
-        return onView(withId(viewId))
+        return onView(allOf(withId(viewId), isDisplayed()))
             .perform(click())
     }
 
@@ -98,12 +105,34 @@ abstract class GnuAndroidTest {
     }
 
     /**
+     * Simple wrapper for clicking on views in a pop-up window with espresso
+     *
+     * @param viewId View resource ID
+     */
+    fun clickViewPopup(@IdRes viewId: Int): ViewInteraction {
+        return onView(withId(viewId))
+            .inRoot(isPlatformPopup())
+            .perform(click())
+    }
+
+    /**
      * Simple wrapper for clicking on views with espresso
      *
      * @param textId String resource ID
      */
     fun clickViewText(@StringRes textId: Int): ViewInteraction {
         return onView(withText(textId))
+            .perform(click())
+    }
+
+    /**
+     * Simple wrapper for clicking on views in a pop-up window with espresso
+     *
+     * @param textId String resource ID
+     */
+    fun clickViewTextPopup(@StringRes textId: Int): ViewInteraction {
+        return onView(withText(textId))
+            .inRoot(isPlatformPopup())
             .perform(click())
     }
 
@@ -115,6 +144,16 @@ abstract class GnuAndroidTest {
     fun clickViewText(text: String?): ViewInteraction {
         return onView(withText(text))
             .perform(click())
+    }
+
+    fun waitForView(activity: Activity, @IdRes viewId: Int): ViewInteraction {
+        return onView(`is`(activity.window.decorView))
+            .perform(WaitAction.waitForView(viewId))
+    }
+
+    fun waitForView(@IdRes viewId: Int): ViewInteraction {
+        return onView(withId(android.R.id.content))
+            .perform(WaitAction.waitForView(viewId))
     }
 
     companion object {
@@ -129,7 +168,8 @@ abstract class GnuAndroidTest {
         @JvmStatic
         fun preventFirstRunDialogs(context: Context) {
             AccountsActivity.rateAppConfig = RateThisApp.Config(10000, 10000)
-            PreferenceManager.getDefaultSharedPreferences(context).edit { //do not show first run dialog
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .edit { //do not show first run dialog
                     putBoolean(context.getString(R.string.key_first_run), false)
                     putInt(
                         AccountsActivity.LAST_OPEN_TAB_INDEX,

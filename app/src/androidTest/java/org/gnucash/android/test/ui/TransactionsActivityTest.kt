@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
 import androidx.core.content.edit
@@ -33,7 +32,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
@@ -76,11 +74,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
     private var transactionTimeMillis: Long = 0
 
     private lateinit var transactionsActivity: TransactionsActivity
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Rule
     @JvmField
@@ -139,6 +132,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     }
 
     private fun validateTransactionListDisplayed() {
+        waitForView(android.R.id.list)
         onView(
             allOf(
                 withId(android.R.id.list),
@@ -152,6 +146,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
     private fun validateTimeInput(timeMillis: Long) {
         var expectedValue = DATE_FORMATTER.print(timeMillis)
+
         onView(withId(R.id.input_date))
             .check(matches(withText(expectedValue)))
 
@@ -184,6 +179,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     }
 
     private fun validateEditTransactionFields(transaction: Transaction) {
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .check(matches(withText(transaction.description)))
 
@@ -209,8 +205,10 @@ class TransactionsActivityTest : GnuAndroidTest() {
         setDefaultTransactionType(TransactionType.DEBIT)
         validateTransactionListDisplayed()
 
+        waitForView(R.id.fab_add)
         clickViewId(R.id.fab_add)
 
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .perform(typeText("Lunch"))
         closeSoftKeyboard()
@@ -307,6 +305,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     fun testEditTransaction() {
         validateTransactionListDisplayed()
 
+        waitForView(R.id.edit_transaction)
         clickViewId(R.id.edit_transaction)
 
         validateEditTransactionFields(transaction)
@@ -386,6 +385,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
 
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .perform(typeText("Autobalance"))
         onView(withId(R.id.input_transaction_amount))
@@ -461,7 +461,10 @@ class TransactionsActivityTest : GnuAndroidTest() {
     fun testDefaultTransactionType() {
         setDefaultTransactionType(TransactionType.CREDIT)
 
+        waitForView(R.id.fab_add)
         clickViewId(R.id.fab_add)
+
+        waitForView(R.id.input_transaction_type)
         onView(withId(R.id.input_transaction_type))
             .check(
                 matches(
@@ -515,6 +518,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     @Test
     fun testToggleTransactionType() {
         validateTransactionListDisplayed()
+
         clickViewId(R.id.edit_transaction)
 
         validateEditTransactionFields(transaction)
@@ -582,9 +586,12 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
     @Test
     fun testDeleteTransaction() {
+        waitForView(R.id.options_menu)
         clickViewId(R.id.options_menu)
         clickViewText(R.string.menu_delete)
-        sleep(1000) // wait for backup to finish
+
+        // wait for backup to finish
+        sleep(1000)
 
         assertThat(transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)).isZero()
     }
@@ -619,6 +626,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         //create new transaction "Transaction Acct" --> "Transfer Account"
         clickViewId(R.id.fab_add)
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .perform(typeText("Test Split"))
         onView(withId(R.id.input_transaction_amount))
@@ -641,9 +649,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         clickViewId(R.id.menu_save)
 
         assertThat(
-            transactionsDbAdapter.getTransactionsCount(
-                TRANSACTIONS_ACCOUNT_UID
-            )
+            transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
         ).isZero()
 
         assertThat(
@@ -661,17 +667,14 @@ class TransactionsActivityTest : GnuAndroidTest() {
         clickViewId(R.id.options_menu)
         clickViewText(R.string.menu_duplicate_transaction)
 
-        val dummyAccountTrns = transactionsDbAdapter.getAllTransactionsForAccount(
-            TRANSACTIONS_ACCOUNT_UID
-        )
+        val dummyAccountTrns =
+            transactionsDbAdapter.getAllTransactionsForAccount(TRANSACTIONS_ACCOUNT_UID)
         assertThat(dummyAccountTrns).hasSize(2)
 
-        assertThat(dummyAccountTrns[0].description).isEqualTo(
-            dummyAccountTrns[1].description
-        )
-        assertThat(dummyAccountTrns[0].time).isNotEqualTo(
-            dummyAccountTrns[1].time
-        )
+        assertThat(dummyAccountTrns[0].description)
+            .isEqualTo(dummyAccountTrns[1].description)
+        assertThat(dummyAccountTrns[0].time)
+            .isNotEqualTo(dummyAccountTrns[1].time)
     }
 
     //TODO: add normal transaction recording
@@ -701,9 +704,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
             if (transaction.description == "Power intents") {
                 assertThat(transaction.notes).isEqualTo("Intents for sale")
                 assertThat(
-                    transaction.getBalance(
-                        TRANSACTIONS_ACCOUNT_UID
-                    ).toDouble()
+                    transaction.getBalance(TRANSACTIONS_ACCOUNT_UID).toDouble()
                 ).isEqualTo(4.99)
             }
         }
@@ -722,6 +723,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         accountsDbAdapter.addRecord(account)
 
         clickViewId(R.id.fab_add)
+        waitForView(R.id.input_transaction_name)
         val trnDescription = "Multi-currency trn"
         onView(withId(R.id.input_transaction_name))
             .perform(typeText(trnDescription))
@@ -963,6 +965,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
+        waitForView(R.id.fragment_transaction_form)
         onView(withId(R.id.fragment_transaction_form))
             .check(matches(isDisplayed()))
         onView(withId(R.id.input_transaction_type))

@@ -15,14 +15,12 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.contrib.DrawerActions.open
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.adapter.AccountsDbAdapter
@@ -40,11 +38,6 @@ import org.junit.Test
 
 class ExportTransactionsTest : GnuAndroidTest() {
     private lateinit var accountsDbAdapter: AccountsDbAdapter
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Rule
     @JvmField

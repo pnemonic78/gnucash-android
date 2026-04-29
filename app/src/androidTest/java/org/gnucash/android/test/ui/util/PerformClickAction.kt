@@ -25,9 +25,7 @@ class PerformClickAction : ViewAction {
 
     companion object {
         fun click(): ViewAction {
-            return actionWithAssertions(
-                PerformClickAction()
-            )
+            return actionWithAssertions(PerformClickAction())
         }
     }
 }

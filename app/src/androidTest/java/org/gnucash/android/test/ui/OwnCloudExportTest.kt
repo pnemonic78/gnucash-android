@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import android.content.Context
 import android.net.ConnectivityManager
 import androidx.core.content.edit
@@ -33,7 +32,6 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
@@ -74,11 +72,6 @@ class OwnCloudExportTest : GnuAndroidTest() {
     @Rule
     @JvmField
     val activityRule = ActivityTestRule(AccountsActivity::class.java)
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Before
     fun setUp() {
