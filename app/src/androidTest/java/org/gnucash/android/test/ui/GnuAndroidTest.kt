@@ -16,7 +16,6 @@ import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.kobakei.ratethisapp.RateThisApp
@@ -26,11 +25,9 @@ import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.util.applyLocale
 import org.hamcrest.Matchers.not
 import org.junit.FixMethodOrder
-import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import java.util.Locale
 
-@RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 abstract class GnuAndroidTest {
 
