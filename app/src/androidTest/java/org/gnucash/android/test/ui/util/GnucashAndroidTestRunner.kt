@@ -18,6 +18,7 @@ package org.gnucash.android.test.ui.util
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
+import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnitRunner
 import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
@@ -26,6 +27,7 @@ import java.lang.reflect.InvocationTargetException
  * Custom test runner
  */
 @Suppress("unused")
+@SdkSuppress(minSdkVersion = 26)
 class GnucashAndroidTestRunner : AndroidJUnitRunner() {
     override fun onCreate(args: Bundle) {
         super.onCreate(args)

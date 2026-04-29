@@ -41,6 +41,10 @@ android {
         manifestPlaceholders["dropbox_app_key"] = "db-${dropboxAppKey}"
 
         testInstrumentationRunner = "org.gnucash.android.test.ui.util.GnucashAndroidTestRunner"
+
+        // Required for support of NIO APIs
+        // For older Java 1.8 devices (SDK 25-)
+        multiDexEnabled = true
     }
 
     packaging {
@@ -141,7 +145,7 @@ android {
     }
 
     compileOptions {
-        // For older Java 1.8 devices.
+        // For older Java 1.8 devices (SDK 25-).
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -209,7 +213,7 @@ dependencies {
     androidTestImplementation(libs.bundles.espresso)
     androidTestImplementation(libs.assertj.core)
 
-    // For older Java 1.8 devices.
+    // For older Java 1.8 devices (SDK 25-).
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
 
