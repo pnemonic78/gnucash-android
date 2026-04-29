@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
 import androidx.core.content.edit
@@ -33,7 +32,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
@@ -50,6 +48,7 @@ import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.receivers.TransactionRecorder
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
+import org.gnucash.android.test.ui.util.WaitAction.Companion.waitForView
 import org.gnucash.android.test.ui.util.performClick
 import org.gnucash.android.test.ui.util.withTagValue
 import org.gnucash.android.ui.common.UxArgument
@@ -76,11 +75,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
     private var transactionTimeMillis: Long = 0
 
     private lateinit var transactionsActivity: TransactionsActivity
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Rule
     @JvmField
@@ -139,6 +133,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     }
 
     private fun validateTransactionListDisplayed() {
+        waitForView(android.R.id.list)
         onView(
             allOf(
                 withId(android.R.id.list),
@@ -184,6 +179,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     }
 
     private fun validateEditTransactionFields(transaction: Transaction) {
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .check(matches(withText(transaction.description)))
 
@@ -211,6 +207,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         clickViewId(R.id.fab_add)
 
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .perform(typeText("Lunch"))
         closeSoftKeyboard()
@@ -382,6 +379,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
 
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .perform(typeText("Autobalance"))
         onView(withId(R.id.input_transaction_amount))
@@ -452,6 +450,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         setDefaultTransactionType(TransactionType.CREDIT)
 
         clickViewId(R.id.fab_add)
+        waitForView(R.id.input_transaction_type)
         onView(withId(R.id.input_transaction_type))
             .check(
                 matches(
@@ -605,6 +604,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         //create new transaction "Transaction Acct" --> "Transfer Account"
         clickViewId(R.id.fab_add)
+        waitForView(R.id.input_transaction_name)
         onView(withId(R.id.input_transaction_name))
             .perform(typeText("Test Split"))
         onView(withId(R.id.input_transaction_amount))
@@ -703,6 +703,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         accountsDbAdapter.addRecord(account)
 
         clickViewId(R.id.fab_add)
+        waitForView(R.id.input_transaction_name)
         val trnDescription = "Multi-currency trn"
         onView(withId(R.id.input_transaction_name))
             .perform(typeText(trnDescription))
@@ -942,6 +943,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
+        waitForView(R.id.fragment_transaction_form)
         onView(withId(R.id.fragment_transaction_form))
             .check(matches(isDisplayed()))
         onView(withId(R.id.input_transaction_type))

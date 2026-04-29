@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import android.content.Intent
 import android.view.View
 import androidx.preference.PreferenceManager
@@ -39,7 +38,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.db.adapter.AccountsDbAdapter
@@ -74,11 +72,6 @@ import java.math.BigDecimal
 
 class AccountsActivityTest : GnuAndroidTest() {
     private lateinit var accountsActivity: AccountsActivity
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Rule
     @JvmField

@@ -15,13 +15,11 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
@@ -50,11 +48,6 @@ class FirstRunWizardActivityTest : GnuAndroidTest() {
     @Rule
     @JvmField
     val rule = ActivityTestRule(FirstRunWizardActivity::class.java)
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     @Before
     fun setUp() {

@@ -15,7 +15,6 @@
  */
 package org.gnucash.android.test.ui
 
-import android.Manifest
 import android.text.format.DateUtils
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
@@ -27,7 +26,6 @@ import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
-import androidx.test.rule.GrantPermissionRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
@@ -62,11 +60,6 @@ class PieChartReportTest : GnuAndroidTest() {
     @Rule
     @JvmField
     val activityRule = ActivityTestRule(ReportsActivity::class.java)
-
-    @Rule
-    @JvmField
-    val animationPermissionsRule =
-        GrantPermissionRule.grant(Manifest.permission.SET_ANIMATION_SCALE)
 
     private lateinit var reportsActivity: ReportsActivity
 
