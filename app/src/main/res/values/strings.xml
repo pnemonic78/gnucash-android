@@ -554,4 +554,12 @@
     <string name="summary_absolute_date">Show transactions formatted with their actual date - relative date otherwise.</string>
     <string name="menu_show_absolute_date">Format absolute date</string>
     <string name="export_only_modified">Export only modified transactions</string>
+
+    <!-- msgid "Price Database"-->
+    <string name="price_database">"Price Database"</string>
+    <!-- msgid "_Add" -->
+    <string name="price_add">"Add"</string>
+    <!-- msgid "Remove Old Prices" -->
+    <string name="price_remove_old_prices">"Remove Old Prices"</string>
+    <string name="label_no_prices">No prices to display</string>
 </resources>
