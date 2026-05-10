@@ -12,9 +12,9 @@ plugins {
     alias(libs.plugins.crashlytics)
 }
 
-val versionMajor = 2
-val versionMinor = 16
-val versionPatch = 1
+val versionMajor = 3
+val versionMinor = 0
+val versionPatch = 0
 val versionBuild = 0
 
 val dropboxAppKey =
