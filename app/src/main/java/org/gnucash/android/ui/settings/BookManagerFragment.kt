@@ -210,7 +210,7 @@ class BookManagerFragment : MenuFragment(), Refreshable, FragmentResultListener 
         }
     }
 
-    inner class BookViewHolder(private val binding: CardviewBookBinding) :
+    inner class BookViewHolder(binding: CardviewBookBinding) :
         RecyclerView.ViewHolder(binding.root) {
         private val activeBookUID = GnuCashApplication.activeBookUID
 
@@ -383,7 +383,6 @@ class BookManagerFragment : MenuFragment(), Refreshable, FragmentResultListener 
         ) {
             val intent = intent ?: return
             val uri = intent.data
-            activity.takePersistableUriPermission(intent)
             openBook(activity, uri, onFinishTask)
         }
 
