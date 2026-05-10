@@ -2,7 +2,6 @@ package org.gnucash.android.ui.search
 
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,6 +18,7 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.FragmentTransactionsListBinding
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
@@ -72,7 +72,7 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
         val context = binding.list.context
 
         binding.list.setHasFixedSize(true)
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (context.isLandscape) {
             binding.list.setLayoutManager(GridLayoutManager(context, 2))
         } else {
             binding.list.setLayoutManager(LinearLayoutManager(context))

@@ -25,6 +25,7 @@ import androidx.core.view.setPadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
+import org.gnucash.android.app.isLandscape
 import org.gnucash.android.ui.colorpicker.ColorPickerSwatch.OnColorSelectedListener
 import kotlin.math.max
 import kotlin.math.min
@@ -52,7 +53,7 @@ class ColorPickerPalette @JvmOverloads constructor(context: Context, attrs: Attr
         this.spanCount = if (spanCount >= 1) spanCount else UNDEFINED
 
         val res = resources
-        applyOrientation(res.configuration.orientation)
+        applyOrientation(res.configuration.isLandscape)
 
         if (size == SIZE_LARGE) {
             swatchSizePx = res.getDimensionPixelSize(R.dimen.color_swatch_large)
@@ -107,10 +108,10 @@ class ColorPickerPalette @JvmOverloads constructor(context: Context, attrs: Attr
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        applyOrientation(newConfig.orientation)
+        applyOrientation(newConfig.isLandscape)
     }
 
-    private fun applyOrientation(orientation: Int) {
+    private fun applyOrientation(isLandscape: Boolean) {
         val layoutManager = object : GridLayoutManager(context, max(1, spanCount)) {
             override fun checkLayoutParams(lp: RecyclerView.LayoutParams): Boolean {
                 if (!super.checkLayoutParams(lp)) return false
@@ -129,7 +130,7 @@ class ColorPickerPalette @JvmOverloads constructor(context: Context, attrs: Attr
                 return true
             }
         }
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (isLandscape) {
             layoutManager.orientation = GridLayoutManager.HORIZONTAL
         } else {
             layoutManager.orientation = GridLayoutManager.VERTICAL
