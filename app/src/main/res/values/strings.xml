@@ -553,4 +553,47 @@
     <string name="title_absolute_date">Absolute date</string>
     <string name="summary_absolute_date">Show transactions formatted with their actual date - relative date otherwise.</string>
     <string name="menu_show_absolute_date">Format absolute date</string>
+
+    <!-- msgid "_Add" -->
+    <string name="add">"Add"</string>
+    <!-- msgid "_Date" -->
+    <string name="date">"Date"</string>
+    <!-- msgid "_Edit" -->
+    <string name="edit">"Edit"</string>
+    <!-- msgid "Price" -->
+    <string name="price">"Price"</string>
+    <!-- msgid "Security" -->
+    <string name="security">"Security"</string>
+    <!-- msgid "Unknown" -->
+    <string name="unknown">"Unknown"</string>
+
+    <string name="price_list_empty">No prices to display</string>
+    <!-- msgid "Price Database"-->
+    <string name="price_database">"Price Database"</string>
+    <!-- msgid "Remove Old Prices" -->
+    <string name="price_remove_old_prices">"Remove Old Prices"</string>
+    <!-- msgid "Price Editor" -->
+    <string name="price_editor">"Price Editor"</string>
+    <!-- msgid "Nam_espace" -->
+    <string name="price_namespace">"Namespace"</string>
+    <!-- msgid "Bid" -->
+    <string name="price_bid">"Bid"</string>
+    <!-- msgid "Ask" -->
+    <string name="price_ask">"Ask"</string>
+    <!-- msgid "Last" -->
+    <string name="price_last">"Last"</string>
+    <!-- msgid "Net Asset Value" -->
+    <string name="price_net_asset_value">"Net Asset Value"</string>
+    <!-- msgid "Currencies" -->
+    <string name="commodity_currencies">"Currencies"</string>
+    <!-- msgid "All non-currency" -->
+    <string name="commodity_non_currency">"All non-currency"</string>
+    <!-- msgid "You must select a Security." -->
+    <string name="price_error_security">"You must select a Security."</string>
+    <!-- msgid "You must select a Currency." -->
+    <string name="price_error_currency">"You must select a Currency."</string>
+    <!-- msgid "You must enter a valid amount." -->
+    <string name="price_error_amount">"You must enter a valid amount."</string>
+    <!-- msgid "You must enter a valid price." -->
+    <string name="price_error_price">"You must enter a valid price."</string>
 </resources>
