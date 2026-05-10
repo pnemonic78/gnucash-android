@@ -17,7 +17,6 @@ package org.gnucash.android.ui.transaction
 
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.database.Cursor
 import android.database.SQLException
 import android.os.Bundle
@@ -47,6 +46,7 @@ import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.CardviewTransactionBinding
 import org.gnucash.android.databinding.FragmentTransactionsListBinding
 import org.gnucash.android.db.DatabaseCursorLoader
@@ -143,7 +143,7 @@ class TransactionsListFragment : MenuFragment(),
         transactionsAdapter = TransactionCursorAdapter(null)
 
         binding.list.setHasFixedSize(true)
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (context.isLandscape) {
             binding.list.setLayoutManager(GridLayoutManager(context, 2))
         } else {
             binding.list.setLayoutManager(LinearLayoutManager(context))
