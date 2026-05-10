@@ -18,7 +18,6 @@ package org.gnucash.android.ui.budget
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.database.Cursor
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -38,6 +37,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.CardviewBudgetBinding
 import org.gnucash.android.databinding.FragmentBudgetListBinding
 import org.gnucash.android.db.DatabaseCursorLoader
@@ -84,7 +84,7 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
         budgetRecyclerAdapter = BudgetRecyclerAdapter(null)
 
         val context = binding.list.context
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (context.isLandscape) {
             binding.list.layoutManager = GridLayoutManager(context, 2)
         } else {
             binding.list.layoutManager = LinearLayoutManager(context)
