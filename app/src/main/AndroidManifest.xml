@@ -149,6 +149,10 @@
             android:label="@string/title_settings"
             android:theme="@style/Theme.GnuCash" />
         <activity
+            android:name="org.gnucash.android.ui.price.PriceDatabaseActivity"
+            android:exported="false"
+            android:label="@string/price_database" />
+        <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:configChanges="orientation|keyboard"
             android:exported="true"
