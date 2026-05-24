@@ -22,6 +22,7 @@ import org.gnucash.android.db.adapter.AccountsDbAdapter.Companion.ALWAYS
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Split
+import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
@@ -55,12 +56,14 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         setContentView(binding.root)
 
         transactionsDbAdapter = TransactionsDbAdapter.instance
-        transactionUID = intent.getStringExtra(UxArgument.SELECTED_TRANSACTION_UID)
-        accountUID = intent.getStringExtra(UxArgument.SELECTED_ACCOUNT_UID)
+        val transactionUID = intent.getStringExtra(UxArgument.SELECTED_TRANSACTION_UID)
+        val accountUID = intent.getStringExtra(UxArgument.SELECTED_ACCOUNT_UID)
 
         if (transactionUID.isNullOrEmpty() || accountUID.isNullOrEmpty()) {
             throw IllegalArgumentException("Both the transaction and account UID are required")
         }
+        this.transactionUID = transactionUID
+        this.accountUID = accountUID
 
         setSupportActionBar(binding.toolbar)
         val actionBar: ActionBar? = supportActionBar
@@ -72,7 +75,8 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         setTitlesColor(accountColor)
         binding.toolbar.setBackgroundColor(accountColor)
 
-        bindViews(binding)
+        val transaction = transactionsDbAdapter.getRecord(transactionUID)
+        bindViews(binding, transaction)
     }
 
     override fun onFragmentResult(requestKey: String, result: Bundle) {
@@ -111,11 +115,9 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     /**
      * Reads the transaction information from the database and binds it to the views
      */
-    private fun bindViews(binding: ActivityTransactionDetailBinding) {
+    private fun bindViews(binding: ActivityTransactionDetailBinding, transaction: Transaction) {
         // Remove all rows that are not special.
         binding.transactionItems.removeAllViews()
-
-        val transaction = transactionsDbAdapter.getRecord(transactionUID!!)
 
         binding.trnDescription.text = transaction.description
         binding.transactionAccount.text = getString(
@@ -181,8 +183,9 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     }
 
     override fun refresh(uid: String?) {
-        transactionUID = uid
-        bindViews(binding)
+        transactionUID = uid!!
+        val transaction = transactionsDbAdapter.getRecord(uid)
+        bindViews(binding, transaction)
     }
 
     private fun editTransaction(accountUID: String?, transactionUID: String?) {
