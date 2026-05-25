@@ -150,6 +150,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    kotlin {
+        compilerOptions {
+            // 'Didn't find class "java.nio.file.DirectoryStream" on path'
+            jvmTarget = JvmTarget.JVM_1_8
+        }
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
