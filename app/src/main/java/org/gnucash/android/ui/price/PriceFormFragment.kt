@@ -170,7 +170,7 @@ class PriceFormFragment : MenuFragment() {
                 viewModel.onTypeSelected(type)
             }
 
-        val dateListener: DatePickerDialog.OnDateSetListener = { _, year, month, dayOfMonth ->
+        val dateListener = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
             viewModel.onDateSelected(year, month, dayOfMonth)
         }
         binding.inputDate.setOnClickListener {
@@ -180,7 +180,7 @@ class PriceFormFragment : MenuFragment() {
                 .show(parentFragmentManager, "date_picker_dialog")
         }
 
-        val timeListener: TimePickerDialog.OnTimeSetListener = { _, hourOfDay, minute ->
+        val timeListener = TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
             viewModel.onTimeSelected(hourOfDay, minute)
         }
         binding.inputTime.setOnClickListener {
