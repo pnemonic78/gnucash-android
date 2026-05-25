@@ -31,10 +31,6 @@ class CommoditiesAdapter(
         scope = lifecycleOwner.lifecycleScope
     )
 
-    init {
-        setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-    }
-
     fun getCommodity(position: Int): Commodity? {
         return getItem(position)?.value
     }
@@ -55,7 +51,7 @@ class CommoditiesAdapter(
                 return i
             }
         }
-        return -1
+        return NO_SELECTION
     }
 
     fun load(callback: ((CommoditiesAdapter) -> Unit)? = null): CommoditiesAdapter {
