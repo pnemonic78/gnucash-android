@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
 import org.gnucash.android.db.adapter.PricesDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.BaseModel.Companion.markNew
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
@@ -20,7 +21,9 @@ import org.gnucash.android.quote.YahooJson
 import java.math.BigDecimal
 import java.util.Calendar
 
-class PriceFormViewModel : ViewModel() {
+class PriceFormViewModel(
+    private val pricesDbAdapter: PricesDbAdapter
+) : ViewModel() {
     private val _price = MutableStateFlow(Price())
     val price: StateFlow<Price> = _price
 
@@ -34,13 +37,12 @@ class PriceFormViewModel : ViewModel() {
     }
 
     fun load(priceUID: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launchCatching(Dispatchers.IO) {
             loadPrice(priceUID)
         }
     }
 
     fun loadPrice(priceUID: String?) {
-        val pricesDbAdapter = PricesDbAdapter.instance
         if (priceUID.isNullOrEmpty()) {
             _price.update { Price() }
         } else {
@@ -55,7 +57,6 @@ class PriceFormViewModel : ViewModel() {
             if (price.source == null) {
                 price = price.copy(source = PriceSource.PRICE_SOURCE_EDIT_DLG)
             }
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.replace(price)
             _command.emit(Command.Done)
         }
@@ -64,7 +65,6 @@ class PriceFormViewModel : ViewModel() {
     fun onDeletePriceClick() {
         viewModelScope.launch {
             val price = _price.value
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.deleteRecord(price)
             _command.emit(Command.Done)
         }
@@ -78,7 +78,6 @@ class PriceFormViewModel : ViewModel() {
             ).apply {
                 markNew()
             }
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.insert(price)
             _command.emit(Command.Done)
         }

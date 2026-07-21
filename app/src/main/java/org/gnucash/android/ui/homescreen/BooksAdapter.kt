@@ -6,11 +6,10 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.db.adapter.BooksDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Book
-import org.gnucash.android.model.Commodity
 import org.gnucash.android.ui.adapter.SpinnerArrayAdapter
 import org.gnucash.android.ui.adapter.SpinnerItem
 import org.gnucash.android.util.getDocumentName
@@ -38,7 +37,7 @@ class BooksAdapter(
 
     fun load(callback: ((BooksAdapter) -> Unit)? = null): BooksAdapter {
         loadJob?.cancel()
-        loadJob = scope.launch(Dispatchers.IO) {
+        loadJob = scope.launchCatching(Dispatchers.IO) {
             val records = loadData(adapter)
             val labels = records.map { book ->
                 val name = book.displayName ?: book.sourceUri?.getDocumentName(context) ?: book.uid

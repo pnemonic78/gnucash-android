@@ -12,11 +12,11 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.R
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
 
@@ -24,7 +24,7 @@ class QualifiedAccountNameAdapter(
     context: Context,
     private val where: String? = null,
     private val whereArgs: Array<String?>? = null,
-    var adapter: AccountsDbAdapter = AccountsDbAdapter.instance,
+    var adapter: AccountsDbAdapter,
     private val scope: CoroutineScope
 ) : SpinnerArrayAdapter<Account>(context) {
 
@@ -66,17 +66,6 @@ class QualifiedAccountNameAdapter(
         whereArgs = whereArgs,
         adapter = adapter,
         scope = lifecycleOwner.lifecycleScope
-    )
-
-    constructor(
-        context: Context,
-        lifecycleOwner: LifecycleOwner
-    ) : this(
-        context = context,
-        where = null,
-        whereArgs = null,
-        adapter = AccountsDbAdapter.instance,
-        lifecycleOwner = lifecycleOwner
     )
 
     override fun hasStableIds(): Boolean {
@@ -144,7 +133,7 @@ class QualifiedAccountNameAdapter(
 
     fun load(callback: ((QualifiedAccountNameAdapter) -> Unit)? = null): QualifiedAccountNameAdapter {
         loadJob?.cancel()
-        loadJob = scope.launch(Dispatchers.IO) {
+        loadJob = scope.launchCatching(Dispatchers.IO) {
             val records = loadData(adapter)
             val items = records.map { account -> toItem(account) }
             withContext(Dispatchers.Main) {
@@ -179,7 +168,7 @@ class QualifiedAccountNameAdapter(
     fun notifyAccountChanged(uid: String) {
         val position = getPosition(uid)
         if (position < 0) return
-        scope.launch(Dispatchers.IO) {
+        scope.launchCatching(Dispatchers.IO) {
             val record = adapter.getRecord(uid)
             val itemOld = getItem(position)
             val itemNew = toItem(record)

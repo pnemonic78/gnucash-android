@@ -4,6 +4,7 @@ import android.database.Cursor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,18 +12,23 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gnucash.android.db.DatabaseSchema.PriceEntry
 import org.gnucash.android.db.adapter.PricesDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.BaseModel.Companion.markNew
 import org.gnucash.android.model.Price
 import org.gnucash.android.model.PriceSource
 
 typealias PriceCallback = (Price) -> Unit
 
-class PriceListViewModel : ViewModel() {
+class PriceListViewModel(
+    private val pricesDbAdapter: PricesDbAdapter
+) : ViewModel() {
     private val _prices = MutableStateFlow<Cursor?>(null)
     val prices: StateFlow<Cursor?> = _prices
 
     private val _command = MutableStateFlow<Command>(Command.None)
     val command: Flow<Command> = _command
+
+    private var loadJob: Job? = null
 
     sealed class Command {
         object None : Command()
@@ -37,13 +43,19 @@ class PriceListViewModel : ViewModel() {
         load()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+    }
+
     fun load() {
-        viewModelScope.launch(Dispatchers.IO) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launchCatching(Dispatchers.IO) {
             loadImpl()
         }
     }
 
-    private fun loadImpl(pricesDbAdapter: PricesDbAdapter = PricesDbAdapter.instance) {
+    private fun loadImpl() {
         val cursor = pricesDbAdapter.fetchAllRecords(
             null,
             null,
@@ -72,23 +84,21 @@ class PriceListViewModel : ViewModel() {
     }
 
     fun onDeletePriceClick(price: Price) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val pricesDbAdapter = PricesDbAdapter.instance
+        viewModelScope.launchCatching(Dispatchers.IO) {
             pricesDbAdapter.deleteRecord(price)
-            loadImpl(pricesDbAdapter)
+            loadImpl()
         }
     }
 
     fun onDuplicatePriceClick(price: Price) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launchCatching(Dispatchers.IO) {
             val priceNew = price.copy().apply {
                 markNew()
                 date = System.currentTimeMillis()
                 source = PriceSource.PRICE_SOURCE_EDIT_DLG
             }
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.insert(priceNew)
-            loadImpl(pricesDbAdapter)
+            loadImpl()
         }
     }
 

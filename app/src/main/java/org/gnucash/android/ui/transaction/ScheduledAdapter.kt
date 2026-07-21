@@ -9,9 +9,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.databinding.ListItemScheduledTrxnBinding
+import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.ui.adapter.ModelDiff
 import org.gnucash.android.ui.common.Refreshable
@@ -19,8 +20,11 @@ import org.gnucash.android.ui.common.Refreshable
 /**
  * Extends a simple cursor adapter to bind transaction attributes to views
  */
-abstract class ScheduledAdapter<VH : ScheduledViewHolder>(protected val refreshable: Refreshable) :
-    ListAdapter<ScheduledAction, VH>(ModelDiff<ScheduledAction>()) {
+abstract class ScheduledAdapter<VH : ScheduledViewHolder>(
+    protected val bookUID: String,
+    protected val scheduledActionDbAdapter: ScheduledActionDbAdapter,
+    protected val refreshable: Refreshable
+) : ListAdapter<ScheduledAction, VH>(ModelDiff<ScheduledAction>()) {
 
     private var loadJob: Job? = null
 
@@ -36,10 +40,12 @@ abstract class ScheduledAdapter<VH : ScheduledViewHolder>(protected val refresha
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ListItemScheduledTrxnBinding.inflate(inflater, parent, false)
-        return createViewHolder(binding, refreshable)
+        return createViewHolder(bookUID, scheduledActionDbAdapter, binding, refreshable)
     }
 
     protected abstract fun createViewHolder(
+        bookUID: String,
+        scheduledActionDbAdapter: ScheduledActionDbAdapter,
         binding: ListItemScheduledTrxnBinding,
         refreshable: Refreshable
     ): VH
@@ -51,7 +57,7 @@ abstract class ScheduledAdapter<VH : ScheduledViewHolder>(protected val refresha
     @SuppressLint("NotifyDataSetChanged")
     fun load(lifecycleScope: LifecycleCoroutineScope) {
         loadJob?.cancel()
-        loadJob = lifecycleScope.launch(Dispatchers.IO) {
+        loadJob = lifecycleScope.launchCatching(Dispatchers.IO) {
             val records = loadData()
             withContext(Dispatchers.Main) {
                 submitList(records)

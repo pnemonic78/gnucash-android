@@ -7,28 +7,28 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Transaction
 import timber.log.Timber
 
-class SearchResultsViewModel : ViewModel() {
+class SearchResultsViewModel(
+    private val transactionsDbAdapter: TransactionsDbAdapter
+) : ViewModel() {
     var where: String? = null
 
     private val _results = MutableStateFlow<Cursor?>(null)
     val results: StateFlow<Cursor?> = _results
 
-    private val transactionsDbAdapter: TransactionsDbAdapter = TransactionsDbAdapter.instance
-
     fun search() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launchCatching(Dispatchers.IO) {
             val cursorOld = _results.value
             withContext(Dispatchers.Main) {
                 cursorOld?.close()
             }
 
-            val where = this@SearchResultsViewModel.where ?: return@launch
+            val where = this@SearchResultsViewModel.where ?: return@launchCatching
             Timber.d("Search transactions: $where")
 
             val cursor = transactionsDbAdapter.fetchSearch(where)

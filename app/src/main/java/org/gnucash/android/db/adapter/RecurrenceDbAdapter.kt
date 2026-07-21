@@ -17,7 +17,6 @@ package org.gnucash.android.db.adapter
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteStatement
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.RecurrenceEntry
 import org.gnucash.android.db.bindInt
@@ -80,8 +79,6 @@ class RecurrenceDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Recurrence>(
         private const val INDEX_COLUMN_BYDAY = INDEX_COLUMN_PERIOD_TYPE + 1
         private const val INDEX_COLUMN_PERIOD_START = INDEX_COLUMN_BYDAY + 1
         private const val INDEX_COLUMN_PERIOD_END = INDEX_COLUMN_PERIOD_START + 1
-
-        val instance: RecurrenceDbAdapter get() = GnuCashApplication.recurrenceDbAdapter!!
 
         /**
          * Converts a list of days of week as Calendar constants to an String for

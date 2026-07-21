@@ -5,7 +5,13 @@ import android.text.TextUtils
 import android.util.SparseArray
 import android.widget.EditText
 import androidx.collection.LongSparseArray
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.gnucash.android.util.SparseArrayIterator
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 typealias BooleanCallback = ((Boolean) -> Unit)
 typealias VoidCallback = (() -> Unit)
@@ -31,3 +37,15 @@ fun <E> SparseArray<E>.iterator(): Iterator<E> {
 }
 
 fun EditText.trim(): String = text.toString().trim()
+
+fun CoroutineScope.launchCatching(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit
+): Job {
+    try {
+        return launch(context, start, block)
+    } catch (_: Throwable) {
+    }
+    return Job()
+}

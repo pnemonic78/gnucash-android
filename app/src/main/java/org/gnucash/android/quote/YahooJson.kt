@@ -3,12 +3,12 @@ package org.gnucash.android.quote
 import android.text.format.DateUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
 import org.gnucash.android.model.PriceSource
@@ -27,7 +27,7 @@ class YahooJson : QuoteProvider {
         scope: CoroutineScope,
         callback: QuoteCallback
     ) {
-        scope.launch(Dispatchers.IO) {
+        scope.launchCatching(Dispatchers.IO) {
             val url = String.format(
                 Locale.ROOT,
                 YIND_URL,
