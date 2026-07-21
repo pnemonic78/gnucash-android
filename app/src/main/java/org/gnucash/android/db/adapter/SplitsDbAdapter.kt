@@ -19,7 +19,6 @@ package org.gnucash.android.db.adapter
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteStatement
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.DatabaseSchema.SplitEntry
@@ -519,12 +518,5 @@ class SplitsDbAdapter(
         internal const val INDEX_COLUMN_SCHEDX_ACTION_ACCOUNT_UID = INDEX_COLUMN_TRANSACTION_UID + 1
 
         private val credit = TransactionType.CREDIT.value
-
-        /**
-         * Returns application-wide instance of the database adapter
-         *
-         * @return SplitsDbAdapter instance
-         */
-        val instance: SplitsDbAdapter get() = GnuCashApplication.splitsDbAdapter!!
     }
 }

@@ -362,4 +362,5 @@
     <string name="title_search">@string/menu_search_accounts</string>
     <string name="type" translatable="false">@string/gnucash_po_type</string>
     <string name="unknown" translatable="false">@string/gnucash_po_unknown</string>
+    <string name="wizard_title_default_accounts" translatable="false">@string/wizard_option_create_default_accounts</string>
 </resources>

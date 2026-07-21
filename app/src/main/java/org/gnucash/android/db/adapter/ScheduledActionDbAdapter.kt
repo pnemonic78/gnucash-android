@@ -19,7 +19,6 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteStatement
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.BookEntry
 import org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
@@ -272,7 +271,5 @@ class ScheduledActionDbAdapter(
         private const val INDEX_COLUMN_TEMPLATE_ACCT_UID = INDEX_COLUMN_ADVANCE_NOTIFY + 1
         private const val INDEX_COLUMN_INSTANCE_COUNT = INDEX_COLUMN_TEMPLATE_ACCT_UID + 1
         private const val INDEX_COLUMN_NAME = INDEX_COLUMN_INSTANCE_COUNT + 1
-
-        val instance: ScheduledActionDbAdapter get() = GnuCashApplication.scheduledEventDbAdapter!!
     }
 }

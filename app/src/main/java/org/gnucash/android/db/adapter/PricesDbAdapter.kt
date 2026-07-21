@@ -3,7 +3,6 @@ package org.gnucash.android.db.adapter
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteStatement
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.PriceEntry
 import org.gnucash.android.db.bindStringOrNull
 import org.gnucash.android.db.bindTimestamp
@@ -231,7 +230,5 @@ class PricesDbAdapter(val commoditiesDbAdapter: CommoditiesDbAdapter) : Database
         private const val INDEX_COLUMN_TYPE = INDEX_COLUMN_SOURCE + 1
         private const val INDEX_COLUMN_VALUE_NUM = INDEX_COLUMN_TYPE + 1
         private const val INDEX_COLUMN_VALUE_DENOM = INDEX_COLUMN_VALUE_NUM + 1
-
-        val instance: PricesDbAdapter get() = GnuCashApplication.pricesDbAdapter!!
     }
 }

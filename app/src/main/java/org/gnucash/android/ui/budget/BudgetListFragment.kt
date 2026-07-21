@@ -36,12 +36,14 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.CardviewBudgetBinding
 import org.gnucash.android.databinding.FragmentBudgetListBinding
 import org.gnucash.android.db.DatabaseCursorLoader
-import org.gnucash.android.db.DatabaseSchema
+import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.DatabaseSchema.BudgetEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
 import org.gnucash.android.model.Budget
@@ -58,13 +60,26 @@ import java.math.RoundingMode
  * Budget list fragment
  */
 class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallbacks<Cursor> {
-    private var budgetsDbAdapter: BudgetsDbAdapter = BudgetsDbAdapter.instance
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var budgetsDbAdapter: BudgetsDbAdapter
     private var budgetRecyclerAdapter: BudgetRecyclerAdapter? = null
     private var binding: FragmentBudgetListBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        budgetsDbAdapter = BudgetsDbAdapter.instance
+        val context: Context = requireContext()
+
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        val holder = dbHelper.readableHolder
+        accountsDbAdapter = holder.accountsDbAdapter
+        budgetsDbAdapter = holder.budgetDbAdapter
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     override fun onCreateView(
@@ -169,7 +184,7 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
      * @param budgetUID Database record UID
      */
     private fun deleteBudget(budgetUID: String) {
-        BudgetsDbAdapter.instance.deleteRecord(budgetUID)
+        budgetsDbAdapter.deleteRecord(budgetUID)
         refresh()
     }
 
@@ -247,7 +262,6 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
 
             budgetName.text = budget.name
 
-            val accountsDbAdapter = AccountsDbAdapter.instance
             val numberOfAccounts = budget.numberOfAccounts
             val accountString = if (numberOfAccounts == 1) {
                 accountsDbAdapter.getAccountFullName(budget.budgetAmounts[0].accountUID!!)
@@ -296,14 +310,13 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
     /**
      * Loads Budgets asynchronously from the database
      */
-    private class BudgetsCursorLoader(context: Context) :
+    private inner class BudgetsCursorLoader(context: Context) :
         DatabaseCursorLoader<BudgetsDbAdapter>(context) {
         override fun loadInBackground(): Cursor? {
-            databaseAdapter = BudgetsDbAdapter.instance
-            return databaseAdapter!!.fetchAllRecords(
+            return budgetsDbAdapter.fetchAllRecords(
                 null,
                 null,
-                DatabaseSchema.BudgetEntry.COLUMN_NAME + " ASC"
+                BudgetEntry.COLUMN_NAME + " ASC"
             )
         }
     }

@@ -17,7 +17,6 @@ package org.gnucash.android.model
 
 import android.content.Intent
 import org.gnucash.android.BuildConfig
-import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.export.csv.CsvTransactionsExporter.Companion.toCsv
 import org.gnucash.android.model.Transaction.Companion.computeBalance
 import org.gnucash.android.util.formatShortDate
@@ -89,7 +88,7 @@ class Transaction : BaseModel {
      * The export flag and the template flag are not copied from the old transaction to the new.
      *
      * @param generateNewUID Flag to determine if new UID should be assigned or not
-     * @param time The date posted.
+     * @param datePosted The date posted.
      */
     fun copy(generateNewUID: Boolean = true, datePosted: Long? = null): Transaction {
         val clone = Transaction(description)
@@ -178,6 +177,16 @@ class Transaction : BaseModel {
     }
 
     /**
+     * Returns the list of splits belonging to a specific account
+     *
+     * @param account the account
+     * @return List of [org.gnucash.android.model.Split]s
+     */
+    fun getSplits(account: Account): List<Split> {
+        return getSplits(account.uid)
+    }
+
+    /**
      * Add a split to the transaction.
      *
      * Sets the split UID and currency to that of this transaction
@@ -200,12 +209,12 @@ class Transaction : BaseModel {
      *
      * Uses a call to [.getBalance] with the appropriate parameters
      *
-     * @param accountUID Unique Identifier of the account
+     * @param account the account
      * @return Money balance of the transaction for the specified account
      * @see computeBalance
      */
-    fun getBalance(accountUID: String): Money {
-        return computeBalance(accountUID, splits, true)
+    fun getBalance(account: Account): Money {
+        return getBalance(account, true)
     }
 
     /**
@@ -371,23 +380,6 @@ class Transaction : BaseModel {
          * If the `accountUID` is null, then the imbalance of the transaction is computed. This means that either
          * zero is returned (for balanced transactions) or the imbalance amount will be returned.
          *
-         * @param accountUID Unique Identifier of the account
-         * @param splits  List of splits
-         * @return Money list of splits
-         */
-        fun computeBalance(accountUID: String, splits: List<Split>, display: Boolean): Money {
-            val accountsDbAdapter = AccountsDbAdapter.instance
-            val account = accountsDbAdapter.getRecord(accountUID)
-            return computeBalance(account, splits, display)
-        }
-
-        /**
-         * Computes the balance of the splits belonging to a particular account.
-         *
-         * Only those splits which belong to the account will be considered.
-         * If the `accountUID` is null, then the imbalance of the transaction is computed. This means that either
-         * zero is returned (for balanced transactions) or the imbalance amount will be returned.
-         *
          * @param account The account
          * @param splits  List of splits
          * @return Money list of splits
@@ -421,7 +413,7 @@ class Transaction : BaseModel {
         }
 
         /**
-         * Returns the corresponding [TransactionType] given the accounttype and the effect which the transaction
+         * Returns the corresponding [TransactionType] given the account type and the effect which the transaction
          * type should have on the account balance
          *
          * @param accountType         Type of account

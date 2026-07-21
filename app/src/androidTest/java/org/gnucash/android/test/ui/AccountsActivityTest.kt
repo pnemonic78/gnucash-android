@@ -40,9 +40,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.SplitsDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Commodity
@@ -70,7 +67,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.math.BigDecimal
 
-class AccountsActivityTest : GnuAndroidTest() {
+class AccountsActivityTest : DatabaseTest() {
     private lateinit var accountsActivity: AccountsActivity
 
     @Rule
@@ -210,8 +207,6 @@ class AccountsActivityTest : GnuAndroidTest() {
 
         val editedAccount = accountsDbAdapter.getRecord(account.uid)
         val parentUID = editedAccount.parentUID
-
-        assertThat(parentUID).isNotNull()
         assertThat(parentUID).isEqualTo(SIMPLE_ACCOUNT_UID)
     }
 
@@ -570,10 +565,6 @@ class AccountsActivityTest : GnuAndroidTest() {
         private const val PARENT_ACCOUNT_NAME = "Parent account"
         private const val PARENT_ACCOUNT_UID = "parent-account"
 
-        private lateinit var accountsDbAdapter: AccountsDbAdapter
-        private lateinit var transactionsDbAdapter: TransactionsDbAdapter
-        private lateinit var splitsDbAdapter: SplitsDbAdapter
-
         @ClassRule
         @JvmField
         val disableAnimationsRule = DisableAnimationsRule()
@@ -583,11 +574,6 @@ class AccountsActivityTest : GnuAndroidTest() {
         fun prepTest() {
             configureDevice()
             preventFirstRunDialogs()
-
-            accountsDbAdapter = AccountsDbAdapter.instance
-            transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
-            splitsDbAdapter = transactionsDbAdapter.splitsDbAdapter
-            assertThat(accountsDbAdapter.isOpen).isTrue()
         }
 
         /**

@@ -17,16 +17,15 @@ package org.gnucash.android.test.unit.model
 
 import junit.framework.TestCase.fail
 import org.assertj.core.api.Assertions.assertThat
-import org.gnucash.android.db.adapter.PricesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
-import org.gnucash.android.test.unit.GnuCashTest
+import org.gnucash.android.test.unit.db.DatabaseTest
 import org.junit.Test
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
 
-class PriceTest : GnuCashTest() {
+class PriceTest : DatabaseTest() {
     @Test
     fun creatingFromExchangeRate_ShouldGetPrecisionRight() {
         Locale.setDefault(Locale.US)
@@ -109,7 +108,6 @@ class PriceTest : GnuCashTest() {
         val commodity2 = Commodity.EUR
 
         val rate = BigDecimal(1.17)
-        val pricesDbAdapter = PricesDbAdapter.instance
         val price = Price(commodity2, commodity1, rate) // 1 EUR = 1.17 USD
         assertThat(price.toBigDecimal(2)).isEqualTo(rate.setScale(2, RoundingMode.HALF_UP))
         pricesDbAdapter.addRecord(price)

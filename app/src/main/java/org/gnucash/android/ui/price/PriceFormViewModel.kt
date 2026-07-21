@@ -20,7 +20,9 @@ import org.gnucash.android.quote.YahooJson
 import java.math.BigDecimal
 import java.util.Calendar
 
-class PriceFormViewModel : ViewModel() {
+class PriceFormViewModel(
+    private val pricesDbAdapter: PricesDbAdapter
+) : ViewModel() {
     private val _price = MutableStateFlow(Price())
     val price: StateFlow<Price> = _price
 
@@ -40,7 +42,6 @@ class PriceFormViewModel : ViewModel() {
     }
 
     fun loadPrice(priceUID: String?) {
-        val pricesDbAdapter = PricesDbAdapter.instance
         if (priceUID.isNullOrEmpty()) {
             _price.update { Price() }
         } else {
@@ -55,7 +56,6 @@ class PriceFormViewModel : ViewModel() {
             if (price.source == null) {
                 price = price.copy(source = PriceSource.PRICE_SOURCE_EDIT_DLG)
             }
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.replace(price)
             _command.emit(Command.Done)
         }
@@ -64,7 +64,6 @@ class PriceFormViewModel : ViewModel() {
     fun onDeletePriceClick() {
         viewModelScope.launch {
             val price = _price.value
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.deleteRecord(price)
             _command.emit(Command.Done)
         }
@@ -79,7 +78,6 @@ class PriceFormViewModel : ViewModel() {
             ).apply {
                 setUID(null)
             }
-            val pricesDbAdapter = PricesDbAdapter.instance
             pricesDbAdapter.insert(price)
             _command.emit(Command.Done)
         }

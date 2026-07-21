@@ -36,6 +36,7 @@ import com.google.android.material.navigation.NavigationView
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.db.adapter.BooksDbAdapter
+import org.gnucash.android.db.NoActiveBookException
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.passcode.PasscodeLockActivity
@@ -46,8 +47,9 @@ import org.gnucash.android.ui.settings.PreferenceActivity
 import org.gnucash.android.ui.transaction.ScheduledActionsActivity
 import org.gnucash.android.ui.transaction.TransactionsActivity
 import org.gnucash.android.util.BookUtils.activateBook
-import org.gnucash.android.util.BookUtils.loadBook
+import org.gnucash.android.util.BookUtils.showBook
 import org.gnucash.android.util.documentMimeTypes
+import timber.log.Timber
 
 /**
  * Base activity implementing the navigation drawer, to be extended by all activities requiring one.
@@ -78,11 +80,12 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
     protected var toolbarProgress: ProgressBar? = null
     private var bookNameSpinner: Spinner? = null
     private var drawerToggle: ActionBarDrawerToggle? = null
-    private val pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let {
-            openBook(this@BaseDrawerActivity, uri)
+    private val pickDocumentLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let {
+                openBook(this@BaseDrawerActivity, uri)
+            }
         }
-    }
 
     private inner class DrawerItemClickListener : NavigationView.OnNavigationItemSelectedListener {
         override fun onNavigationItemSelected(menuItem: MenuItem): Boolean {
@@ -200,13 +203,14 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
         val bookNameSpinner = bookNameSpinner!!
         val books = BooksDbAdapter.instance.allRecords
         val count = books.size
+        val activeBookUID = activeBookUID
         var activeBookIndex = -1
         val names = mutableListOf<String>()
 
         for (i in 0 until count) {
             val book = books[i]
             names.add(book.displayName.orEmpty())
-            if (book.isActive && (activeBookIndex < 0)) {
+            if ((book.uid == activeBookUID) && (activeBookIndex < 0)) {
                 activeBookIndex = i
             }
         }
@@ -231,15 +235,15 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
                 val context = view!!.context
                 if (position == parent.count - 1) {
                     val intent = Intent(context, PreferenceActivity::class.java)
-                    intent.setAction(PreferenceActivity.ACTION_MANAGE_BOOKS)
+                        .setAction(PreferenceActivity.ACTION_MANAGE_BOOKS)
                     startActivity(intent)
                     drawerLayout!!.closeDrawer(navigationView!!)
                     return@DefaultItemSelectedListener
                 }
                 val book = books[position]
-                loadBook(context, book.uid)
+                showBook(context, book.uid)
                 finish()
-                AccountsActivity.start(context)
+                AccountsActivity.start(context, book.uid)
             }
     }
 
@@ -254,10 +258,7 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
         when (itemId) {
             R.id.nav_item_open -> pickDocumentLauncher.launch(documentMimeTypes)
 
-            R.id.nav_item_favorites -> AccountsActivity.start(
-                context,
-                AccountsActivity.INDEX_FAVORITE_ACCOUNTS_FRAGMENT
-            )
+            R.id.nav_item_favorites -> showFavorites(this)
 
             R.id.nav_item_reports -> ReportsActivity.show(context)
 
@@ -274,10 +275,24 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
         drawerLayout.closeDrawer(navigationView)
     }
 
-    private fun onClickAppTitle(context: Context) {
+    fun onClickAppTitle(context: Context) {
+        showFavorites(context)
+    }
+
+    private fun showFavorites(context: Context) {
         val drawerLayout = drawerLayout ?: return
         val navigationView = navigationView ?: return
+
         drawerLayout.closeDrawer(navigationView)
-        AccountsActivity.start(context)
+        try {
+            val bookUID = activeBookUID
+            AccountsActivity.start(
+                context,
+                bookUID,
+                AccountsActivity.INDEX_FAVORITE_ACCOUNTS_FRAGMENT
+            )
+        } catch (e: NoActiveBookException) {
+            Timber.e(e)
+        }
     }
 }

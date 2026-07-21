@@ -15,6 +15,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.databinding.FragmentSearchFormBinding
 import org.gnucash.android.databinding.ItemSearchAccountBinding
@@ -24,6 +25,8 @@ import org.gnucash.android.databinding.ItemSearchMemoBinding
 import org.gnucash.android.databinding.ItemSearchNotesBinding
 import org.gnucash.android.databinding.ItemSearchNumberBinding
 import org.gnucash.android.databinding.ItemSearchNumericBinding
+import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter
 import org.gnucash.android.ui.adapter.SpinnerArrayAdapter
@@ -41,8 +44,18 @@ class SearchFormFragment : Fragment() {
     private val viewModel by viewModels<SearchFormViewModel>()
     private var binding: FragmentSearchFormBinding? = null
 
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val context: Context = requireContext()
+
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
+        val holder = dbHelper.holder
+        accountsDbAdapter = holder.accountsDbAdapter
 
         lifecycleScope.launch {
             viewModel.query.collect { sql ->
@@ -52,6 +65,11 @@ class SearchFormFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     override fun onCreateView(
@@ -325,14 +343,19 @@ class SearchFormFragment : Fragment() {
         binding.comparison.post {
             binding.comparison.setSelection(adapter.getValuePosition(criterion.compare))
         }
-        val accountsAdapter = QualifiedAccountNameAdapter(context, viewLifecycleOwner)
-            .load { adapter ->
-                criterion.value?.let { account ->
-                    binding.accountsListSpinner.post {
-                        binding.accountsListSpinner.setSelection(adapter.getValuePosition(account))
+        val accountsAdapter =
+            QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
+                .load { adapter ->
+                    criterion.value?.let { account ->
+                        binding.accountsListSpinner.post {
+                            binding.accountsListSpinner.setSelection(
+                                adapter.getValuePosition(
+                                    account
+                                )
+                            )
+                        }
                     }
                 }
-            }
         binding.accountsListSpinner.adapter = accountsAdapter
         binding.accountsListSpinner.onItemSelectedListener =
             DefaultItemSelectedListener { parent: AdapterView<*>,

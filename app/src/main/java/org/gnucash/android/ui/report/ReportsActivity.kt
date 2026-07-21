@@ -31,11 +31,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.getSerializableCompat
 import org.gnucash.android.databinding.ActivityReportsBinding
+import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.AccountType
-import org.gnucash.android.model.Commodity
 import org.gnucash.android.ui.adapter.AccountTypesAdapter.Companion.expenseAndIncome
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.common.BaseDrawerActivity
@@ -63,7 +65,9 @@ class ReportsActivity : BaseDrawerActivity(),
     DatePickerDialog.OnDateSetListener,
     OnDateRangeSetListener,
     Refreshable {
-    private var transactionsDbAdapter: TransactionsDbAdapter = TransactionsDbAdapter.instance
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
     var accountType: AccountType = AccountType.EXPENSE
         private set
     private var reportType: ReportType = ReportType.NONE
@@ -119,11 +123,18 @@ class ReportsActivity : BaseDrawerActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val context: Context = this
-        transactionsDbAdapter = TransactionsDbAdapter.instance
+
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
+        val holder = dbHelper.readableHolder
+        commoditiesDbAdapter = holder.commoditiesDbAdapter
+        transactionsDbAdapter = holder.transactionsDbAdapter
+
         val binding = this.binding!!
 
         val actionBar: ActionBar = supportActionBar!!
-        val typesAdapter = ArrayAdapter<String?>(
+        val typesAdapter = ArrayAdapter(
             actionBar.themedContext,
             android.R.layout.simple_list_item_1,
             getReportNames(context)
@@ -155,10 +166,10 @@ class ReportsActivity : BaseDrawerActivity(),
                     }
 
                     5 -> {
-                        val commodityUID = Commodity.DEFAULT_COMMODITY.uid
-                        val earliest = transactionsDbAdapter!!.getTimestampOfEarliestTransaction(
+                        val commodity = commoditiesDbAdapter.defaultCommodity
+                        val earliest = transactionsDbAdapter.getTimestampOfEarliestTransaction(
                             accountType,
-                            commodityUID
+                            commodity.uid
                         )
                         DateRangePickerDialogFragment.newInstance(
                             LocalDate(earliest),
@@ -193,6 +204,11 @@ class ReportsActivity : BaseDrawerActivity(),
             reportPeriodStart = savedInstanceState.getLong(STATE_REPORT_START).toLocalDateTime()
             reportPeriodEnd = savedInstanceState.getLong(STATE_REPORT_END).toLocalDateTime()
         }
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     fun onFragmentResumed(fragment: Fragment) {

@@ -8,16 +8,18 @@ import org.gnucash.android.ui.common.Refreshable
 /**
  * Extends a simple cursor adapter to bind transaction attributes to views
  */
-internal class ScheduledExportAdapter(refreshable: Refreshable) :
-    ScheduledAdapter<ScheduledExportViewHolder>(refreshable) {
+internal class ScheduledExportAdapter(
+    scheduledActionDbAdapter: ScheduledActionDbAdapter,
+    refreshable: Refreshable
+) : ScheduledAdapter<ScheduledExportViewHolder>(scheduledActionDbAdapter, refreshable) {
 
     override suspend fun loadData(): List<ScheduledAction> {
-        val databaseAdapter = ScheduledActionDbAdapter.instance
-        return databaseAdapter.getRecords(ScheduledAction.ActionType.EXPORT)
+        return scheduledActionDbAdapter.getRecords(ScheduledAction.ActionType.EXPORT)
     }
 
     override fun createViewHolder(
+        scheduledActionDbAdapter: ScheduledActionDbAdapter,
         binding: ListItemScheduledTrxnBinding,
         refreshable: Refreshable
-    ) = ScheduledExportViewHolder(binding, refreshable)
+    ) = ScheduledExportViewHolder(scheduledActionDbAdapter, binding, refreshable)
 }

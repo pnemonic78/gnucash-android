@@ -23,7 +23,6 @@ import android.database.SQLException
 import android.database.sqlite.SQLiteQueryBuilder
 import android.database.sqlite.SQLiteStatement
 import androidx.core.database.sqlite.transaction
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHelper.Companion.sqlEscapeLike
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
@@ -385,12 +384,12 @@ class TransactionsDbAdapter(
      * We consider only those splits which belong to this account
      *
      * @param transactionUID GUID of the transaction
-     * @param accountUID     GUID of the account
+     * @param account     the account
      * @return [Money] balance of the transaction for that account
      */
-    fun getBalance(transactionUID: String, accountUID: String, display: Boolean): Money {
-        val splits = splitsDbAdapter.getSplitsForTransactionInAccount(transactionUID, accountUID)
-        return computeBalance(accountUID, splits, display)
+    fun getBalance(transactionUID: String, account: Account, display: Boolean): Money {
+        val splits = splitsDbAdapter.getSplitsForTransactionInAccount(transactionUID, account.uid)
+        return computeBalance(account, splits, display)
     }
 
     /**
@@ -431,6 +430,16 @@ class TransactionsDbAdapter(
         return cursor.use { cursor ->
             cursor.count
         }
+    }
+
+    /**
+     * Returns the number of transactions belonging to an account
+     *
+     * @param account the account
+     * @return Number of transactions with splits in the account
+     */
+    fun getTransactionsCount(account: Account): Int {
+        return getTransactionsCount(account.uid)
     }
 
     /**
@@ -578,12 +587,10 @@ class TransactionsDbAdapter(
         )
 
         var timestamp = timestampFromNow
-        try {
+        cursor.use { cursor ->
             if (cursor.moveToFirst()) {
                 timestamp = cursor.getTimestamp(0) ?: timestamp
             }
-        } finally {
-            cursor.close()
         }
         return timestamp
     }
@@ -836,12 +843,5 @@ class TransactionsDbAdapter(
         internal const val INDEX_COLUMN_NUMBER = INDEX_COLUMN_TEMPLATE + 1
 
         const val INVALID_DATE: Long = Long.MIN_VALUE
-
-        /**
-         * Returns an application-wide instance of the database adapter
-         *
-         * @return Transaction database adapter
-         */
-        val instance: TransactionsDbAdapter get() = GnuCashApplication.transactionDbAdapter!!
     }
 }

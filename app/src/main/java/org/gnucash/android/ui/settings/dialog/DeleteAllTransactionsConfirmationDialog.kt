@@ -21,7 +21,9 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldSaveOpeningBalances
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.model.Transaction
@@ -37,6 +39,24 @@ import timber.log.Timber
  * @author Yongxin Wang <fefe.wyx@gmail.com>
  */
 class DeleteAllTransactionsConfirmationDialog : DoubleConfirmationDialog() {
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val context: Context = requireContext()
+        val bookUID = activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
+        val holder = dbHelper.holder
+        accountsDbAdapter = holder.accountsDbAdapter
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val activity: Activity = requireActivity()
 
@@ -59,7 +79,6 @@ class DeleteAllTransactionsConfirmationDialog : DoubleConfirmationDialog() {
     fun deleteAll(context: Context) {
         // TODO show a "Deleting Transactions" progress dialog.
 
-        val accountsDbAdapter = AccountsDbAdapter.instance
         deleteAllTransactions(accountsDbAdapter)
         snackLong(R.string.toast_all_transactions_deleted)
         WidgetConfigurationActivity.updateAllWidgets(context)

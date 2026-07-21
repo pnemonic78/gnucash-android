@@ -15,6 +15,7 @@
  */
 package org.gnucash.android.test.ui
 
+import android.net.Uri
 import android.text.format.DateUtils
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
@@ -29,9 +30,6 @@ import androidx.test.rule.ActivityTestRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.BooksDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.importer.xml.GncXmlImporter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
@@ -43,19 +41,20 @@ import org.gnucash.android.ui.adapter.AccountTypesAdapter
 import org.gnucash.android.ui.get
 import org.gnucash.android.ui.report.BaseReportFragment
 import org.gnucash.android.ui.report.ReportsActivity
-import org.gnucash.android.util.BookUtils
+import org.gnucash.android.util.BookUtils.activateBook
 import org.hamcrest.Matchers.not
 import org.joda.time.LocalDateTime
 import org.junit.After
-import org.junit.AfterClass
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.util.Locale
 
-class PieChartReportTest : GnuAndroidTest() {
+class PieChartReportTest : DatabaseTest() {
+    private lateinit var commodity: Commodity
+    private lateinit var testBookUID: String
+    private lateinit var oldActiveBookUID: String
 
     @Rule
     @JvmField
@@ -65,6 +64,23 @@ class PieChartReportTest : GnuAndroidTest() {
 
     @Before
     fun setUp() {
+        configureDevice()
+        val context = GnuCashApplication.appContext
+        preventFirstRunDialogs(context)
+        oldActiveBookUID = GnuCashApplication.activeBookUID
+        testBookUID = GncXmlImporter.parse(
+            context,
+            Uri.EMPTY,
+            context.resources.openRawResource(R.raw.default_accounts)
+        )
+
+        activityRule.finishActivity()
+        activateBook(context, testBookUID)
+        initAdapters(testBookUID)
+        activityRule.launchActivity(null)
+
+        commodity = commoditiesDbAdapter.setDefaultCurrencyCode("USD")!!
+
         transactionsDbAdapter.deleteAllRecords()
         reportsActivity = activityRule.activity
         assertThat(accountsDbAdapter.recordsCount)
@@ -92,12 +108,10 @@ class PieChartReportTest : GnuAndroidTest() {
 
     /**
      * Add a transactions for the previous month for testing pie chart
-     *
-     * @param minusMonths Number of months prior
      */
-    private fun addTransactionForPreviousMonth(minusMonths: Int) {
+    private fun addTransactionForPreviousMonth() {
         val transaction = Transaction(TRANSACTION2_NAME)
-        transaction.datePosted = LocalDateTime.now().minusMonths(minusMonths).toDateTime().millis
+        transaction.datePosted = LocalDateTime.now().minusMonths(1).toDateTime().millis
 
         val split = Split(
             Money(TRANSACTION2_AMOUNT, commodity), BOOKS_EXPENSE_ACCOUNT_UID
@@ -121,7 +135,7 @@ class PieChartReportTest : GnuAndroidTest() {
     @Test
     fun testSelectingValue() {
         addTransactionForCurrentMonth()
-        addTransactionForPreviousMonth(1)
+        addTransactionForPreviousMonth()
         assertThat(transactionsDbAdapter.recordsCount).isGreaterThan(1)
         refreshReport()
 
@@ -130,7 +144,7 @@ class PieChartReportTest : GnuAndroidTest() {
         val percent =
             ((TRANSACTION_AMOUNT * 100) / (TRANSACTION_AMOUNT + TRANSACTION2_AMOUNT)).toFloat()
         val selectedText = BaseReportFragment.formatSelectedValue(
-            Locale.getDefault(),
+            Locale.US,
             DINING_EXPENSE_ACCOUNT_NAME,
             TRANSACTION_AMOUNT.toFloat(),
             commodity,
@@ -162,7 +176,7 @@ class PieChartReportTest : GnuAndroidTest() {
         onView(withId(R.id.chart))
             .perform(clickXY(Position.BEGIN, Position.MIDDLE))
         val selectedText = BaseReportFragment.formatSelectedValue(
-            Locale.getDefault(),
+            Locale.US,
             GIFTS_RECEIVED_INCOME_ACCOUNT_NAME,
             TRANSACTION3_AMOUNT.toFloat(),
             commodity,
@@ -208,7 +222,8 @@ class PieChartReportTest : GnuAndroidTest() {
         activityRule.runOnUiThread {
             reportsActivity.refresh()
         }
-        sleep(5000)
+        waitForView(R.id.chart)
+        sleep(2000)
     }
 
     @After
@@ -239,37 +254,9 @@ class PieChartReportTest : GnuAndroidTest() {
         private const val GIFTS_RECEIVED_INCOME_ACCOUNT_UID = "b01950c0df0890b6543209d51c8e0b0f"
         private const val GIFTS_RECEIVED_INCOME_ACCOUNT_NAME = "Gifts Received"
 
-        private lateinit var commodity: Commodity
-        private lateinit var accountsDbAdapter: AccountsDbAdapter
-        private lateinit var transactionsDbAdapter: TransactionsDbAdapter
-        private lateinit var testBookUID: String
-        private lateinit var oldActiveBookUID: String
-
         @ClassRule
         @JvmField
         val disableAnimationsRule = DisableAnimationsRule()
-
-        @BeforeClass
-        @JvmStatic
-        fun prepareTestCase() {
-            configureDevice()
-            val context = GnuCashApplication.appContext
-            preventFirstRunDialogs(context)
-            oldActiveBookUID = GnuCashApplication.activeBookUID!!
-            testBookUID = GncXmlImporter.parse(
-                context,
-                context.resources.openRawResource(R.raw.default_accounts)
-            )
-
-            BookUtils.loadBook(context, testBookUID)
-            accountsDbAdapter = AccountsDbAdapter.instance
-            transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
-
-            commodity = accountsDbAdapter.commoditiesDbAdapter.getCurrency("USD")!!
-
-            accountsDbAdapter.commoditiesDbAdapter.setDefaultCurrencyCode(commodity.currencyCode)
-        }
-
 
         fun clickXY(horizontal: Position, vertical: Position): ViewAction {
             return GeneralClickAction(
@@ -284,14 +271,6 @@ class PieChartReportTest : GnuAndroidTest() {
                 },
                 Press.FINGER
             )
-        }
-
-        @AfterClass
-        @JvmStatic
-        fun cleanup() {
-            val booksDbAdapter = BooksDbAdapter.instance
-            booksDbAdapter.setActive(oldActiveBookUID)
-            booksDbAdapter.deleteRecord(testBookUID)
         }
     }
 }

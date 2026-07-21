@@ -23,10 +23,6 @@ import androidx.test.rule.ActivityTestRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.db.DatabaseHelper
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.SplitsDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.BaseModel.Companion.generateUID
 import org.gnucash.android.ui.wizard.FirstRunWizardActivity
 import org.junit.Before
@@ -38,11 +34,7 @@ import org.junit.Test
  *
  * @author Ngewi Fet
  */
-class FirstRunWizardActivityTest : GnuAndroidTest() {
-    private lateinit var dbHelper: DatabaseHelper
-    private lateinit var accountsDbAdapter: AccountsDbAdapter
-    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
-    private lateinit var splitsDbAdapter: SplitsDbAdapter
+class FirstRunWizardActivityTest : DatabaseTest() {
     private lateinit var activity: FirstRunWizardActivity
 
     @Rule
@@ -52,10 +44,7 @@ class FirstRunWizardActivityTest : GnuAndroidTest() {
     @Before
     fun setUp() {
         activity = activityRule.activity
-        dbHelper = DatabaseHelper(activity, generateUID())
-        splitsDbAdapter = SplitsDbAdapter(dbHelper.holder)
-        transactionsDbAdapter = TransactionsDbAdapter(splitsDbAdapter)
-        accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter)
+        initAdapters(generateUID())
         accountsDbAdapter.deleteAllRecords()
     }
 
@@ -87,9 +76,11 @@ class FirstRunWizardActivityTest : GnuAndroidTest() {
             .check(matches(isDisplayed()))
 
         clickViewId(R.id.btn_save)
+        sleep(5000) //give import time to finish
+        initAdapters(null)
 
         //default accounts should be created
-        val actualCount = GnuCashApplication.accountsDbAdapter!!.recordsCount
+        val actualCount = accountsDbAdapter.recordsCount
         assertThat(actualCount).isGreaterThan(60L)
 
         val enableCrashlytics = GnuCashApplication.isCrashlyticsEnabled
@@ -121,10 +112,14 @@ class FirstRunWizardActivityTest : GnuAndroidTest() {
 
         onView(withText(com.tech.freak.wizardpager.R.string.review))
             .check(matches(isDisplayed()))
+
         clickViewId(R.id.btn_save)
+        sleep(5000) //give import time to finish
+        initAdapters(null)
 
         //default accounts should not be created
-        assertThat(accountsDbAdapter.recordsCount).isZero()
+        //ROOT is only account.
+        assertThat(accountsDbAdapter.recordsCount).isOne()
 
         val enableCrashlytics = GnuCashApplication.isCrashlyticsEnabled
         assertThat(enableCrashlytics).isFalse()

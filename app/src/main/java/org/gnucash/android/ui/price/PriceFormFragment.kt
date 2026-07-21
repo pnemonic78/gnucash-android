@@ -14,12 +14,15 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import androidx.appcompat.app.ActionBar
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.databinding.FragmentPriceFormBinding
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
 import org.gnucash.android.ui.adapter.CommoditiesAdapter
@@ -33,13 +36,26 @@ import org.gnucash.android.ui.util.widget.CalculatorEditText
 import org.gnucash.android.ui.util.widget.CalculatorKeyboard.Companion.rebind
 import java.math.BigDecimal
 
-class PriceFormFragment : MenuFragment() {
+class PriceFormFragment : DatabaseFragment() {
 
-    private val viewModel by viewModels<PriceFormViewModel>()
+    private val viewModel: PriceFormViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val pricesDbAdapter = dbHelper.holder.pricesDbAdapter
+                return PriceFormViewModel(pricesDbAdapter) as T
+            }
+        }
+    }
     private var binding: FragmentPriceFormBinding? = null
+
+    private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val dbHolder = dbHelper.holder
+        commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
 
         if (savedInstanceState == null) {
             val priceUID = arguments?.getString(UxArgument.SELECTED_PRICE_UID)
@@ -109,11 +125,12 @@ class PriceFormFragment : MenuFragment() {
         val typesAdapter = PriceTypeAdapter(context)
         val namespaceAdapter = NamespaceAdapter(context)
 
-        val securitiesAdapter = CommoditiesAdapter(context, viewLifecycleOwner).load { adapter ->
-            val price = viewModel.price.value
-            val position = adapter.getValuePosition(price.security)
-            binding.security.setSelection(position)
-        }
+        val securitiesAdapter = CommoditiesAdapter(context, commoditiesDbAdapter, viewLifecycleOwner)
+                .load { adapter ->
+                    val price = viewModel.price.value
+                    val position = adapter.getValuePosition(price.security)
+                    binding.security.setSelection(position)
+                }
         binding.security.adapter = securitiesAdapter
         binding.security.onItemSelectedListener =
             DefaultItemSelectedListener { parent: AdapterView<*>,
@@ -125,7 +142,7 @@ class PriceFormFragment : MenuFragment() {
                 viewModel.onSecuritySelected(commodity)
             }
 
-        val commoditiesAdapter = CommoditiesAdapter(context, viewLifecycleOwner).load { adapter ->
+        val commoditiesAdapter = CommoditiesAdapter(context, commoditiesDbAdapter, viewLifecycleOwner).load { adapter ->
             val price = viewModel.price.value
             binding.currency.setSelection(adapter.getValuePosition(price.currency))
         }

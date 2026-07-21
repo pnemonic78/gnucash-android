@@ -15,6 +15,7 @@
  */
 package org.gnucash.android.ui.common
 
+import android.content.Context
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.annotation.ColorInt
@@ -24,6 +25,7 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.isNullOrEmpty
 import org.gnucash.android.databinding.ActivityFormBinding
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.ui.account.AccountFormFragment
 import org.gnucash.android.ui.budget.BudgetAmountEditorFragment
@@ -57,8 +59,12 @@ class FormActivity : PasscodeLockActivity() {
 
     private lateinit var binding: ActivityFormBinding
 
+    private var dbHelper: DatabaseHelper? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val context: Context = this
+
         binding = ActivityFormBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -70,10 +76,19 @@ class FormActivity : PasscodeLockActivity() {
         }
 
         //if a parameter was passed to open an account within a specific book, then switch
-        val bookUID = args.getString(UxArgument.BOOK_UID)
-        if (bookUID != null && bookUID != activeBookUID) {
-            activateBook(this, bookUID)
+        val activeBookUID = activeBookUID
+        if (activeBookUID.isNullOrEmpty()) {
+            Timber.e("Book required")
+            finish()
+            return
         }
+        val bookUID: String = args.getString(UxArgument.BOOK_UID, activeBookUID) ?: activeBookUID
+        if (bookUID.isNotEmpty() && bookUID != activeBookUID) {
+            activateBook(context, bookUID)
+        }
+
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
 
         setSupportActionBar(binding.toolbarLayout.toolbar)
 
@@ -86,8 +101,9 @@ class FormActivity : PasscodeLockActivity() {
             accountUID = args.getString(UxArgument.PARENT_ACCOUNT_UID)
         }
         if (!accountUID.isNullOrEmpty()) {
+            val accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
             @ColorInt val accountColor =
-                AccountsDbAdapter.instance.getActiveAccountColor(this, accountUID)
+                accountsDbAdapter.getActiveAccountColor(context, accountUID)
             setTitlesColor(accountColor)
         }
 
@@ -107,6 +123,11 @@ class FormActivity : PasscodeLockActivity() {
             FormType.BUDGET_AMOUNT_EDITOR -> showBudgetAmountEditorFragment(args)
             FormType.SEARCH -> showSearchForm(args)
         }
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
