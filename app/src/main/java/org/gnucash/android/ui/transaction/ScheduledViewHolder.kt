@@ -15,11 +15,10 @@ import org.gnucash.android.util.BackupManager.backupActiveBookAsync
 import org.gnucash.android.util.formatMediumDateTime
 
 abstract class ScheduledViewHolder(
+    protected val scheduledActionDbAdapter: ScheduledActionDbAdapter,
     protected val binding: ListItemScheduledTrxnBinding,
     protected val refreshable: Refreshable
 ) : RecyclerView.ViewHolder(binding.root), PopupMenu.OnMenuItemClickListener {
-    protected val scheduledActionDbAdapter: ScheduledActionDbAdapter =
-        ScheduledActionDbAdapter.instance
 
     protected val primaryTextView: TextView = binding.primaryText
     protected val descriptionTextView: TextView = binding.secondaryText

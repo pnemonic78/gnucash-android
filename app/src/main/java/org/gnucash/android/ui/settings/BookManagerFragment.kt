@@ -41,12 +41,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.defaultCurrencyCode
-import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
-import org.gnucash.android.app.takePersistableUriPermission
 import org.gnucash.android.databinding.CardviewBookBinding
 import org.gnucash.android.databinding.FragmentBookListBinding
 import org.gnucash.android.db.BookDbHelper
@@ -68,7 +67,7 @@ import org.gnucash.android.ui.common.GnucashProgressDialog
 import org.gnucash.android.ui.common.Refreshable
 import org.gnucash.android.ui.get
 import org.gnucash.android.ui.settings.dialog.DeleteBookConfirmationDialog
-import org.gnucash.android.util.BookUtils.loadBook
+import org.gnucash.android.util.BookUtils.showBook
 import org.gnucash.android.util.PreferencesHelper.getLastExportTime
 import org.gnucash.android.util.documentMimeTypes
 import org.gnucash.android.util.formatMediumDateTime
@@ -77,7 +76,7 @@ import timber.log.Timber
 /**
  * Fragment for managing the books in the database
  */
-class BookManagerFragment : MenuFragment(), Refreshable, FragmentResultListener {
+class BookManagerFragment : DatabaseFragment(), Refreshable, FragmentResultListener {
     private var booksAdapter: BooksAdapter? = null
     private var accountsTemplatesAdapter: AccountsTemplatesAdapter? = null
     private var binding: FragmentBookListBinding? = null
@@ -239,7 +238,7 @@ class BookManagerFragment : MenuFragment(), Refreshable, FragmentResultListener 
             itemView.setOnClickListener { v ->
                 //do nothing if the active book is tapped
                 if (activeBookUID != bookUID) {
-                    loadBook(v.context, bookUID)
+                    showBook(v.context, bookUID)
                     finish()
                 }
             }

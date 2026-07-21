@@ -2,9 +2,7 @@ package org.gnucash.android.model
 
 import android.os.Parcel
 import android.os.Parcelable
-import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.Split.Companion.CREATOR
-import org.gnucash.android.model.Split.Companion.getFormattedAmount
 
 /**
  * A split amount in a transaction.
@@ -202,27 +200,9 @@ class Split : BaseModel, Parcelable {
         return value == other.value && type.invert() == other.type
     }
 
-    /**
-     * Returns the formatted amount (with or without negation sign) for the split value
-     *
-     * @return Money amount of value
-     * @see getFormattedAmount
-     */
-    val formattedValue: Money
-        get() = getFormattedAmount(value, accountUID, type)
-
     fun getFormattedValue(account: Account): Money {
         return getFormattedAmount(value, account, type)
     }
-
-    /**
-     * Returns the formatted amount (with or without negation sign) for the quantity
-     *
-     * @return Money amount of quantity
-     * @see getFormattedAmount
-     */
-    val formattedQuantity: Money
-        get() = getFormattedAmount(quantity, accountUID, type)
 
     fun getFormattedQuantity(account: Account): Money {
         return getFormattedAmount(quantity, account, type)
@@ -266,7 +246,7 @@ class Split : BaseModel, Parcelable {
         if (transactionUID != split.transactionUID) return false
         if (accountUID != split.accountUID) return false
         if (type !== split.type) return false
-        return if (memo != null) memo == split.memo else split.memo == null
+        return memo == split.memo
     }
 
     /**
@@ -355,28 +335,6 @@ class Split : BaseModel, Parcelable {
          * Flag indicating that the split has been cleared, but not reconciled
          */
         const val FLAG_CLEARED = 'c'
-
-        /**
-         * Splits are saved as absolute values to the database, with no negative numbers.
-         * The type of movement the split causes to the balance of an account determines
-         * its sign, and that depends on the split type and the account type
-         *
-         * @param amount     Money amount to format
-         * @param accountUID GUID of the account
-         * @param splitType  Transaction type of the split
-         * @return -`amount` if the amount would reduce the balance of
-         * `account`, otherwise +`amount`
-         */
-        private fun getFormattedAmount(
-            amount: Money,
-            accountGUID: String?,
-            splitType: TransactionType
-        ): Money {
-            val accountUID = accountGUID ?: return Money.createZeroInstance(amount.commodity)
-            val account = AccountsDbAdapter.instance.getRecordOrNull(accountUID)
-                ?: return Money.createZeroInstance(amount.commodity)
-            return getFormattedAmount(amount, account, splitType)
-        }
 
         /**
          * Splits are saved as absolute values to the database, with no negative numbers.

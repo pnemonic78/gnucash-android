@@ -40,8 +40,10 @@ import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.interfaces.datasets.IDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.PricesDbAdapter
@@ -77,7 +79,7 @@ import kotlin.math.max
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
+abstract class BaseReportFragment<D : ChartData<*>> : DatabaseFragment(),
     OnChartValueSelectedListener,
     ReportOptionsListener,
     Refreshable {
@@ -95,15 +97,15 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
      * Account type for which to display reports
      */
     protected var accountType: AccountType = AccountType.EXPENSE
-    protected var commoditiesDbAdapter: CommoditiesDbAdapter = CommoditiesDbAdapter.instance
-    protected var accountsDbAdapter: AccountsDbAdapter = AccountsDbAdapter.instance
-    protected var pricesDbAdapter: PricesDbAdapter = PricesDbAdapter.instance
+    protected lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
+    protected lateinit var accountsDbAdapter: AccountsDbAdapter
+    protected lateinit var pricesDbAdapter: PricesDbAdapter
     protected var useAccountColor: Boolean = true
 
     /**
      * Commodity for which to display reports
      */
-    protected var commodity: Commodity = commoditiesDbAdapter.defaultCommodity
+    protected var commodity: Commodity = Commodity.DEFAULT_COMMODITY
 
     /**
      * Intervals in which to group reports
@@ -177,9 +179,9 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val view = inflateView(inflater, container)
-        selectedValueTextView = view.findViewById<TextView>(R.id.selected_chart_slice)
+        selectedValueTextView = view.findViewById(R.id.selected_chart_slice)
         return view
     }
 
@@ -191,16 +193,16 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        accountsDbAdapter = AccountsDbAdapter.instance
-        useAccountColor = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val context: Context = requireContext()
+        useAccountColor = PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean(getString(R.string.key_use_account_color), false)
-    }
 
-    override fun onStart() {
-        super.onStart()
-        accountsDbAdapter = AccountsDbAdapter.instance
-        commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
-        pricesDbAdapter = PricesDbAdapter.instance
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        val holder = dbHelper.readableHolder
+        accountsDbAdapter = holder.accountsDbAdapter
+        commoditiesDbAdapter = holder.commoditiesDbAdapter
+        pricesDbAdapter = holder.pricesDbAdapter
         commodity = commoditiesDbAdapter.defaultCommodity
     }
 
@@ -233,11 +235,12 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         if (generatorTask != null) {
             generatorTask!!.cancel(true)
             generatorTask = null
         }
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     private fun toggleBaseReportingOptionsVisibility(activity: ReportsActivity) {

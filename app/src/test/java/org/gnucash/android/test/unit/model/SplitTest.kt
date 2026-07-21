@@ -21,12 +21,12 @@ import java.math.BigDecimal
 class SplitTest : GnuCashTest() {
     @Test
     fun amounts_shouldBeStoredUnsigned() {
-        val split = Split(Money("-1", "USD"), Money("-2", "EUR"), "account-UID")
+        val split = Split(Money("-1", Commodity.USD), Money("-2", Commodity.EUR), "account-UID")
         assertThat(split.value.isNegative).isFalse()
         assertThat(split.quantity.isNegative).isFalse()
 
-        split.value = Money("-3", "USD")
-        split.quantity = Money("-4", "EUR")
+        split.value = Money("-3", Commodity.USD)
+        split.quantity = Money("-4", Commodity.EUR)
         assertThat(split.value.isNegative).isFalse()
         assertThat(split.quantity.isNegative).isFalse()
     }
@@ -44,7 +44,7 @@ class SplitTest : GnuCashTest() {
 
     @Test
     fun testCloning() {
-        val split = Split(Money(BigDecimal.TEN, Commodity.getInstance("EUR")), "random-account")
+        val split = Split(Money(BigDecimal.TEN, Commodity.EUR), "random-account")
         split.transactionUID = "terminator-trx"
         split.type = TransactionType.CREDIT
 
@@ -62,7 +62,7 @@ class SplitTest : GnuCashTest() {
      */
     @Test
     fun shouldCreateInversePair() {
-        val split = Split(Money("2", "USD"), "dummy")
+        val split = Split(Money("2", Commodity.USD), "dummy")
         split.type = TransactionType.CREDIT
         split.transactionUID = "random-trx"
         val pair = split.createPair("test")
@@ -75,7 +75,7 @@ class SplitTest : GnuCashTest() {
 
     @Test
     fun shouldGenerateValidCsv() {
-        val split = Split(Money(BigDecimal.TEN, Commodity.getInstance("EUR")), "random-account")
+        val split = Split(Money(BigDecimal.TEN, Commodity.EUR), "random-account")
         split.transactionUID = "terminator-trx"
         split.type = TransactionType.CREDIT
 
@@ -88,7 +88,7 @@ class SplitTest : GnuCashTest() {
         val csv =
             "test-split-uid;490;100;USD;490;100;USD;trx-action;test-account;DEBIT;Didn't you get the memo?"
         val split = parseSplit(csv)
-        assertThat(split.value.numerator).isEqualTo(Money("4.90", "USD").numerator)
+        assertThat(split.value.numerator).isEqualTo(Money("4.90", Commodity.USD).numerator)
         assertThat(split.transactionUID).isEqualTo("trx-action")
         assertThat(split.accountUID).isEqualTo("test-account")
         assertThat(split.type).isEqualTo(TransactionType.DEBIT)

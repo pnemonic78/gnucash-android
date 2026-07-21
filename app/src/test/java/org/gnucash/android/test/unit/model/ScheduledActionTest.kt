@@ -146,7 +146,7 @@ class ScheduledActionTest : GnuCashTest() {
         recurrence.byDays = Arrays.asList(Calendar.MONDAY, Calendar.THURSDAY)
         scheduledAction.setRecurrence(recurrence)
         scheduledAction.startDate = DateTime(2016, 6, 6, 9, 0).millis
-        scheduledAction.lastRunTime = DateTime(2017, 4, 17, 9, 0).millis // Monday
+        scheduledAction.lastRunDate = DateTime(2017, 4, 17, 9, 0).millis // Monday
 
         val expectedNextDueDate = DateTime(2017, 4, 20, 9, 0).millis // Thursday
         assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())
@@ -165,7 +165,7 @@ class ScheduledActionTest : GnuCashTest() {
         recurrence.byDays = listOf(Calendar.WEDNESDAY)
         scheduledAction.setRecurrence(recurrence)
         scheduledAction.startDate = DateTime(2016, 6, 6, 9, 0).millis
-        scheduledAction.lastRunTime = DateTime(2017, 4, 12, 9, 0).millis // Wednesday
+        scheduledAction.lastRunDate = DateTime(2017, 4, 12, 9, 0).millis // Wednesday
 
         // Wednesday, 2 weeks after the last run
         val expectedNextDueDate = DateTime(2017, 4, 26, 9, 0).millis
@@ -187,7 +187,7 @@ class ScheduledActionTest : GnuCashTest() {
         recurrence.byDays = emptyList()
         scheduledAction.setRecurrence(recurrence)
         scheduledAction.startDate = DateTime(2016, 6, 6, 9, 0).millis
-        scheduledAction.lastRunTime = DateTime(2017, 4, 12, 9, 0).millis
+        scheduledAction.lastRunDate = DateTime(2017, 4, 12, 9, 0).millis
 
         val now = LocalDateTime.now().toDateTime().millis
         assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())

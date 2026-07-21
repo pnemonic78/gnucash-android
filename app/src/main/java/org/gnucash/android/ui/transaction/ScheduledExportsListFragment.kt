@@ -11,7 +11,7 @@ import org.gnucash.android.ui.common.UxArgument
 class ScheduledExportsListFragment : ScheduledActionsListFragment() {
 
     override fun createAdapter(): ScheduledAdapter<*> {
-        return ScheduledExportAdapter(this)
+        return ScheduledExportAdapter(scheduledActionDbAdapter, this)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

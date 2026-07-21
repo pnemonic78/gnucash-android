@@ -23,7 +23,9 @@ import android.view.LayoutInflater
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.databinding.DialogTransferFundsBinding
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.PricesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
@@ -58,12 +60,22 @@ class TransferFundsDialogFragment : VolatileDialogFragment() {
     // FIXME these fields must be persisted for when dialog is changed, e.g. rotated.
     private var onTransferFundsListener: OnTransferFundsListener? = null
 
-    private var pricesDbAdapter = PricesDbAdapter.instance
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var pricesDbAdapter: PricesDbAdapter
     private var priceQuoted: Price? = null
 
-    override fun onStart() {
-        super.onStart()
-        pricesDbAdapter = PricesDbAdapter.instance
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val context: Context = requireContext()
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        val holder = dbHelper.holder
+        pricesDbAdapter = holder.pricesDbAdapter
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     private fun onCreateBinding(inflater: LayoutInflater): DialogTransferFundsBinding {
@@ -237,11 +249,13 @@ class TransferFundsDialogFragment : VolatileDialogFragment() {
             try {
                 rate = parse(binding.inputExchangeRate.text.toString())
             } catch (_: ParseException) {
-                binding.exchangeRateTextInputLayout.error = getString(R.string.error_invalid_exchange_rate)
+                binding.exchangeRateTextInputLayout.error =
+                    getString(R.string.error_invalid_exchange_rate)
                 return
             }
             if (rate <= BigDecimal.ZERO) {
-                binding.exchangeRateTextInputLayout.error = getString(R.string.error_invalid_exchange_rate)
+                binding.exchangeRateTextInputLayout.error =
+                    getString(R.string.error_invalid_exchange_rate)
                 return
             }
             convertedAmount = (originAmount * rate).withCommodity(targetCommodity)
@@ -252,11 +266,13 @@ class TransferFundsDialogFragment : VolatileDialogFragment() {
             try {
                 amount = parse(binding.inputConvertedAmount.text.toString())
             } catch (_: ParseException) {
-                binding.convertedAmountTextInputLayout.error = getString(R.string.error_invalid_amount)
+                binding.convertedAmountTextInputLayout.error =
+                    getString(R.string.error_invalid_amount)
                 return
             }
             if (amount < BigDecimal.ZERO) {
-                binding.convertedAmountTextInputLayout.error = getString(R.string.error_invalid_amount)
+                binding.convertedAmountTextInputLayout.error =
+                    getString(R.string.error_invalid_amount)
                 return
             }
             convertedAmount = Money(amount, targetCommodity)
@@ -285,11 +301,13 @@ class TransferFundsDialogFragment : VolatileDialogFragment() {
         val context: Context = binding.root.context
         binding.exchangeRateTextInputLayout.error = null
         if (!fromCommodity.isCurrency) {
-            binding.exchangeRateTextInputLayout.error = context.getString(R.string.commodity_required)
+            binding.exchangeRateTextInputLayout.error =
+                context.getString(R.string.commodity_required)
             return
         }
         if (!targetCommodity.isCurrency) {
-            binding.exchangeRateTextInputLayout.error = context.getString(R.string.commodity_required)
+            binding.exchangeRateTextInputLayout.error =
+                context.getString(R.string.commodity_required)
             return
         }
         val formatterRate = NumberFormat.getNumberInstance()

@@ -32,7 +32,9 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentResultListener
 import com.google.android.material.tabs.TabLayoutMediator
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.databinding.ActivityTransactionsBinding
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
@@ -60,15 +62,13 @@ class TransactionsActivity : BaseDrawerActivity(),
     OnAccountClickedListener,
     FragmentResultListener {
     /**
-     * GUID of [Account] whose transactions are displayed
+     * The [Account] whose transactions are displayed
      */
     private var account: Account? = null
 
-    /**
-     * Account database adapter for manipulating the accounts list in navigation
-     */
-    private var accountsDbAdapter = AccountsDbAdapter.instance
-    private var transactionsDbAdapter = TransactionsDbAdapter.instance
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
     private var accountNameAdapter: QualifiedAccountNameAdapter? = null
 
     private var isShowHiddenAccounts = false
@@ -211,13 +211,18 @@ class TransactionsActivity : BaseDrawerActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val context: Context = this
 
         val actionBar: ActionBar? = supportActionBar
         actionBar?.setDisplayShowTitleEnabled(false)
         actionBar?.setDisplayHomeAsUpEnabled(true)
 
-        accountsDbAdapter = AccountsDbAdapter.instance
-        transactionsDbAdapter = TransactionsDbAdapter.instance
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
+        val holder = dbHelper.holder
+        accountsDbAdapter = holder.accountsDbAdapter
+        transactionsDbAdapter = holder.transactionsDbAdapter
 
         isShowHiddenAccounts =
             intent.getBooleanExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
@@ -233,6 +238,11 @@ class TransactionsActivity : BaseDrawerActivity(),
         if (savedInstanceState == null) {
             refresh()
         }
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     override fun onResume() {

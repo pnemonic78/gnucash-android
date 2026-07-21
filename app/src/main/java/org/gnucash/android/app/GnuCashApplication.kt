@@ -19,7 +19,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import android.database.sqlite.SQLiteDatabase
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.google.firebase.FirebaseApp
 import org.gnucash.android.BuildConfig
@@ -27,17 +27,9 @@ import org.gnucash.android.R
 import org.gnucash.android.db.BookDbHelper
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
-import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter
-import org.gnucash.android.db.adapter.BooksDbAdapter.NoActiveBookFoundException
-import org.gnucash.android.db.adapter.BudgetAmountsDbAdapter
-import org.gnucash.android.db.adapter.BudgetsDbAdapter
+import org.gnucash.android.db.NoActiveBookException
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
-import org.gnucash.android.db.adapter.PricesDbAdapter
-import org.gnucash.android.db.adapter.RecurrenceDbAdapter
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
-import org.gnucash.android.db.adapter.SplitsDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Commodity.Companion.getLocaleCurrencyCode
 import org.gnucash.android.model.TransactionType
@@ -86,35 +78,12 @@ class GnuCashApplication : Application() {
          * Authority (domain) for the file provider. Also used in the app manifest
          */
         const val FILE_PROVIDER_AUTHORITY: String = BuildConfig.APPLICATION_ID + ".fileprovider"
+        private const val KEY_ACTIVE_BOOK = "active_book"
 
         @SuppressLint("StaticFieldLeak")
         private var context: Context? = null
 
-        var accountsDbAdapter: AccountsDbAdapter? = null
-            private set
-
-        var transactionDbAdapter: TransactionsDbAdapter? = null
-            private set
-
-        var splitsDbAdapter: SplitsDbAdapter? = null
-            private set
-
-        var scheduledEventDbAdapter: ScheduledActionDbAdapter? = null
-            private set
-
         var commoditiesDbAdapter: CommoditiesDbAdapter? = null
-            private set
-
-        var pricesDbAdapter: PricesDbAdapter? = null
-            private set
-
-        var budgetDbAdapter: BudgetsDbAdapter? = null
-            private set
-
-        var budgetAmountsDbAdapter: BudgetAmountsDbAdapter? = null
-            private set
-
-        var recurrenceDbAdapter: RecurrenceDbAdapter? = null
             private set
 
         var booksDbAdapter: BooksDbAdapter? = null
@@ -129,7 +98,7 @@ class GnuCashApplication : Application() {
          *
          * @param context the context.
          */
-        fun initializeDatabaseAdapters(context: Context) {
+        fun initializeDatabaseAdapters(context: Context, bookUID: String? = null) {
             val bookDbHelper = BookDbHelper(context)
             val bookHolder = bookDbHelper.getHolder()
             val booksDbAdapter = BooksDbAdapter(bookHolder)
@@ -137,92 +106,29 @@ class GnuCashApplication : Application() {
 
             dbHelper?.close()
 
-            var bookUID = try {
-                booksDbAdapter.activeBookUID
-            } catch (_: NoActiveBookFoundException) {
-                booksDbAdapter.fixBooksDatabase()
+            var bookUID = bookUID ?: try {
+                activeBookUID
+            } catch (_: NoActiveBookException) {
+                null
             }
             if (bookUID.isNullOrEmpty()) {
-                bookUID = bookDbHelper.insertBlankBook().uid
+                bookUID = booksDbAdapter.fixBooksDatabase()
+                activeBookUID = bookUID
             }
             val dbHelper = DatabaseHelper(context, bookUID)
             Companion.dbHelper = dbHelper
             val dbHolder: DatabaseHolder = dbHelper.holder
 
-            val commoditiesDbAdapter = CommoditiesDbAdapter(dbHolder, true)
+            val commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
             this.commoditiesDbAdapter = commoditiesDbAdapter
-            pricesDbAdapter = PricesDbAdapter(commoditiesDbAdapter)
-            splitsDbAdapter = SplitsDbAdapter(commoditiesDbAdapter)
-            transactionDbAdapter = TransactionsDbAdapter(splitsDbAdapter!!)
-            accountsDbAdapter = AccountsDbAdapter(transactionDbAdapter!!, pricesDbAdapter!!)
-            recurrenceDbAdapter = RecurrenceDbAdapter(dbHolder)
-            scheduledEventDbAdapter = ScheduledActionDbAdapter(recurrenceDbAdapter!!, transactionDbAdapter!!)
-            budgetAmountsDbAdapter = BudgetAmountsDbAdapter(commoditiesDbAdapter)
-            budgetDbAdapter = BudgetsDbAdapter(budgetAmountsDbAdapter!!, recurrenceDbAdapter!!)
             Commodity.DEFAULT_COMMODITY = commoditiesDbAdapter.defaultCommodity
         }
 
         private fun destroyDatabaseAdapters() {
-            if (splitsDbAdapter != null) {
-                try {
-                    splitsDbAdapter!!.close()
-                    splitsDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (transactionDbAdapter != null) {
-                try {
-                    transactionDbAdapter!!.close()
-                    transactionDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (accountsDbAdapter != null) {
-                try {
-                    accountsDbAdapter!!.close()
-                    accountsDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (recurrenceDbAdapter != null) {
-                try {
-                    recurrenceDbAdapter!!.close()
-                    recurrenceDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (scheduledEventDbAdapter != null) {
-                try {
-                    scheduledEventDbAdapter!!.close()
-                    scheduledEventDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (pricesDbAdapter != null) {
-                try {
-                    pricesDbAdapter!!.close()
-                    pricesDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
             if (commoditiesDbAdapter != null) {
                 try {
                     commoditiesDbAdapter!!.close()
                     commoditiesDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (budgetAmountsDbAdapter != null) {
-                try {
-                    budgetAmountsDbAdapter!!.close()
-                    budgetAmountsDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
-            if (budgetDbAdapter != null) {
-                try {
-                    budgetDbAdapter!!.close()
-                    budgetDbAdapter = null
                 } catch (_: IOException) {
                 }
             }
@@ -237,20 +143,27 @@ class GnuCashApplication : Application() {
             dbHelper = null
         }
 
-        @get:Throws(NoActiveBookFoundException::class)
-        val activeBookUID: String?
+        @get:Throws(NoActiveBookException::class)
+        var activeBookUID: String = ""
             get() {
-                val adapter: BooksDbAdapter? = booksDbAdapter
-                return adapter?.activeBookUID
+                if (field.isEmpty()) {
+                    val preferences = PreferenceManager.getDefaultSharedPreferences(appContext)
+                    var bookUID = preferences.getString(KEY_ACTIVE_BOOK, null)
+                    if (bookUID.isNullOrEmpty()) {
+                        @Suppress("DEPRECATION")
+                        bookUID = booksDbAdapter?.activeBookUID!!
+                    }
+                    field = bookUID
+                }
+                return field
             }
-
-        /**
-         * Returns the currently active database in the application
-         *
-         * @return Currently active [SQLiteDatabase]
-         */
-        val activeDb: SQLiteDatabase?
-            get() = if (dbHelper != null) dbHelper!!.getWritableDatabase() else null
+            set(value) {
+                field = value
+                val preferences = PreferenceManager.getDefaultSharedPreferences(appContext)
+                preferences.edit {
+                    putString(KEY_ACTIVE_BOOK, value)
+                }
+            }
 
         /**
          * Returns the application context
@@ -266,7 +179,7 @@ class GnuCashApplication : Application() {
          * @return `true` if crashlytics is enabled, `false` otherwise
          */
         val isCrashlyticsEnabled: Boolean
-            get() = PreferenceManager.getDefaultSharedPreferences(context!!)
+            get() = PreferenceManager.getDefaultSharedPreferences(appContext)
                 .getBoolean(
                     context!!.getString(R.string.key_enable_crashlytics),
                     false
@@ -423,9 +336,9 @@ class GnuCashApplication : Application() {
          * @param context the context.
          * @return Shared preferences file
          */
-        @Throws(NoActiveBookFoundException::class)
+        @Throws(NoActiveBookException::class)
         fun getBookPreferences(context: Context): SharedPreferences {
-            return getBookPreferences(context, activeBookUID!!)
+            return getBookPreferences(context, activeBookUID)
         }
 
         /**

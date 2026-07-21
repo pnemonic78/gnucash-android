@@ -94,7 +94,7 @@ object BackupManager {
      */
     @WorkerThread
     fun backupActiveBook(context: Context): Boolean {
-        return backupBook(context, GnuCashApplication.activeBookUID!!)
+        return backupBook(context, GnuCashApplication.activeBookUID)
     }
 
     /**
@@ -243,6 +243,6 @@ object BackupManager {
     }
 
     fun backupActiveBookAsync(activity: Activity?, after: BooleanCallback) {
-        backupBookAsync(activity, GnuCashApplication.activeBookUID!!, after)
+        backupBookAsync(activity, GnuCashApplication.activeBookUID, after)
     }
 }

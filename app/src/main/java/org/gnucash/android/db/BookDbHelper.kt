@@ -56,10 +56,6 @@ class BookDbHelper(context: Context) : SQLiteOpenHelper(
         insertBlankBook(context, db)
     }
 
-    fun insertBlankBook(): Book {
-        return insertBlankBook(getHolder())
-    }
-
     fun insertBlankBook(context: Context, db: SQLiteDatabase): Book {
         return insertBlankBook(DatabaseHolder(context, db))
     }

@@ -17,9 +17,11 @@ package org.gnucash.android.db
 
 import android.content.Context
 import android.database.DatabaseUtils
+import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.DatabaseSchema.BudgetAmountEntry
 import org.gnucash.android.db.DatabaseSchema.BudgetEntry
@@ -34,6 +36,7 @@ import org.gnucash.android.db.MigrationHelper.importCommodities
 import org.gnucash.android.db.MigrationHelper.migrate
 import org.gnucash.android.model.Commodity
 import timber.log.Timber
+import java.io.IOException
 
 /**
  * Helper class for managing the SQLite database.
@@ -133,11 +136,34 @@ class DatabaseHelper(private val context: Context, databaseName: String) :
         }
     }
 
+    private var _holder: DatabaseHolder? = null
     val holder: DatabaseHolder
-        get() = DatabaseHolder(context, writableDatabase, databaseName)
+        get() {
+            var result = _holder
+            if (result == null) {
+                result = DatabaseHolder(context, writableDatabase, databaseName)
+                _holder = result
+            }
+            return result
+        }
 
     val readableHolder: DatabaseHolder
-        get() = DatabaseHolder(context, readableDatabase, databaseName)
+        get() {
+            var result = _holder
+            if (result == null) {
+                result = DatabaseHolder(context, readableDatabase, databaseName)
+                _holder = result
+            }
+            return result
+        }
+
+    val bookUID: String = databaseName
+
+    @Throws(IOException::class, SQLException::class)
+    override fun close() {
+        super.close()
+        _holder?.close()
+    }
 
     companion object {
         /**
@@ -424,6 +450,16 @@ class DatabaseHelper(private val context: Context, databaseName: String) :
                 }
             }
             return result
+        }
+
+        fun deleteFiles(context: Context) {
+            GnuCashApplication.activeBookUID = ""
+
+            // Delete all the databases.
+            context.databaseList().forEach { dbName ->
+                val dbPath = context.getDatabasePath(dbName)
+                dbPath.delete()
+            }
         }
     }
 }

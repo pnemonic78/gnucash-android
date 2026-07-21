@@ -19,20 +19,19 @@ package org.gnucash.android.importer.xml
 import android.content.ContentValues
 import android.content.Context
 import android.database.SQLException
+import android.net.Uri
 import android.os.CancellationSignal
 import androidx.annotation.ColorInt
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.appContext
 import org.gnucash.android.db.DatabaseHelper
-import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
+import org.gnucash.android.db.NoActiveBookException
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter
-import org.gnucash.android.db.adapter.BooksDbAdapter.NoActiveBookFoundException
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.PricesDbAdapter
-import org.gnucash.android.db.adapter.RecurrenceDbAdapter
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.export.xml.GncXmlHelper.ATTR_KEY_TYPE
@@ -148,7 +147,9 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.model.WeekendAdjust
+import org.gnucash.android.util.BookUtils.populateName
 import org.gnucash.android.util.NotSet
+import org.gnucash.android.util.getDocumentName
 import org.gnucash.android.util.parseColor
 import org.gnucash.android.util.set
 import org.xml.sax.Attributes
@@ -171,6 +172,7 @@ import java.util.TimeZone
  */
 class GncXmlHandler(
     private val context: Context = appContext,
+    private val uri: Uri,
     private val listener: GncProgressListener? = null,
     private val cancellationSignal: CancellationSignal = CancellationSignal()
 ) : DefaultHandler(), Closeable {
@@ -255,6 +257,7 @@ class GncXmlHandler(
     @Deprecated("Use the new scheduled action elements instead")
     private var recurrencePeriod: Long = 0
 
+    private var dbHelper: DatabaseHelper? = null
     private val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.instance
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var transactionsDbAdapter: TransactionsDbAdapter
@@ -266,7 +269,6 @@ class GncXmlHandler(
 
     val importedBooks = mutableListOf<Book>()
     private var book: Book = Book()
-    private var holder: DatabaseHolder? = null
     private var countDataType: String? = null
     private var isValidRoot = false
     private var hasBookElement = false
@@ -286,9 +288,9 @@ class GncXmlHandler(
     }
 
     private fun initDb(bookUID: String) {
-        val databaseHelper = DatabaseHelper(context, bookUID)
-        val holder = databaseHelper.holder
-        this.holder = holder
+        val dbHelper = DatabaseHelper(context, bookUID)
+        val holder = dbHelper.holder
+        this.dbHelper = dbHelper
         val db = holder.db
         try {
             // Nice to have for performance, but not critical.
@@ -302,14 +304,13 @@ class GncXmlHandler(
 
         book = booksDbAdapter.getRecordOrNull(bookUID) ?: book
 
-        commoditiesDbAdapter = CommoditiesDbAdapter(holder, true)
-        pricesDbAdapter = PricesDbAdapter(commoditiesDbAdapter)
-        transactionsDbAdapter = TransactionsDbAdapter(commoditiesDbAdapter)
-        accountsDbAdapter = AccountsDbAdapter(transactionsDbAdapter, pricesDbAdapter)
-        val recurrenceDbAdapter = RecurrenceDbAdapter(holder)
-        scheduledActionsDbAdapter =
-            ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
-        budgetsDbAdapter = BudgetsDbAdapter(recurrenceDbAdapter)
+        commoditiesDbAdapter = holder.commoditiesDbAdapter
+        pricesDbAdapter = holder.pricesDbAdapter
+        transactionsDbAdapter = holder.transactionsDbAdapter
+        accountsDbAdapter = holder.accountsDbAdapter
+        scheduledActionsDbAdapter = holder.scheduledActionDbAdapter
+        budgetsDbAdapter = holder.budgetDbAdapter
+        val recurrenceDbAdapter = holder.recurrenceDbAdapter
 
         Timber.d("before clean up db")
         budgetsDbAdapter.deleteAllRecords()
@@ -328,7 +329,7 @@ class GncXmlHandler(
 
     private fun maybeInitDb(bookUIDOld: String?, bookUIDNew: String) {
         if (bookUIDOld != null && bookUIDOld != bookUIDNew) {
-            holder?.close()
+            dbHelper?.close()
             initDb(bookUIDNew)
         }
     }
@@ -344,7 +345,7 @@ class GncXmlHandler(
         elementNames.push(ElementName(uri, localName, qualifiedName))
         if (!isValidRoot) {
             if (TAG_ROOT == localName || AccountsTemplate.TAG_ROOT == localName) {
-                isValidRoot = true
+                handleStartRoot(uri)
                 return
             }
             throw SAXException("Expected root element")
@@ -502,19 +503,19 @@ class GncXmlHandler(
      * We on purpose do not set the book active. Only import. Caller should handle activation
      */
     private fun saveToDatabase() {
-        holder!!.db.setForeignKeyConstraintsEnabled(true)
+        dbHelper!!.holder.db.setForeignKeyConstraintsEnabled(true)
         maybeClose() //close it after import
     }
 
     override fun close() {
-        holder!!.close()
+        dbHelper?.close()
     }
 
     private fun maybeClose() {
         var activeBookUID: String? = null
         try {
             activeBookUID = GnuCashApplication.activeBookUID
-        } catch (_: NoActiveBookFoundException) {
+        } catch (_: NoActiveBookException) {
         }
         val newBookUID = book.uid
         if (activeBookUID == null || activeBookUID != newBookUID) {
@@ -651,20 +652,19 @@ class GncXmlHandler(
     }
 
     private fun handleEndBook(localName: String) {
-        val book = book
-        val displayName = book.displayName
+        var book = book
+        populateName(context, booksDbAdapter, book)
         if (hasBookElement) {
             if (TAG_BOOK == localName) {
-                booksDbAdapter.replace(book)
+                book = booksDbAdapter.replace(book)
                 listener?.onBook(book)
                 importedBooks.add(book)
             }
         } else {
-            booksDbAdapter.replace(book)
+            book = booksDbAdapter.replace(book)
             listener?.onBook(book)
             importedBooks.add(book)
         }
-        book.displayName = displayName
     }
 
     private fun handleEndBudget() {
@@ -1332,10 +1332,16 @@ class GncXmlHandler(
         }
     }
 
+    private fun handleStartRoot(uri: String) {
+        book.sourceUri = this.uri
+        isValidRoot = true
+    }
+
     private fun handleStartBook(uri: String) {
         if (NS_GNUCASH == uri) {
             hasBookElement = true
             book = Book()
+            book.sourceUri = this.uri
         }
     }
 

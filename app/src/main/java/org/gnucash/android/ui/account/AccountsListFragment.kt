@@ -42,7 +42,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.getSerializableCompat
 import org.gnucash.android.app.isLandscape
@@ -67,7 +67,7 @@ import timber.log.Timber
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class AccountsListFragment : MenuFragment(),
+class AccountsListFragment : DatabaseFragment(),
     Refreshable,
     LoaderManager.LoaderCallbacks<Cursor?>,
     SearchView.OnQueryTextListener,
@@ -88,10 +88,7 @@ class AccountsListFragment : MenuFragment(),
      */
     private var displayMode: DisplayMode = DisplayMode.TOP_LEVEL
 
-    /**
-     * Database adapter for loading Account records from the database
-     */
-    private var accountsDbAdapter = AccountsDbAdapter.instance
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
 
     /**
      * Listener to be notified when an account is clicked
@@ -157,6 +154,8 @@ class AccountsListFragment : MenuFragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        accountsDbAdapter = dbHelper.holder.accountsDbAdapter
+
         val args = arguments
         if (args != null) {
             displayMode = args.getSerializableCompat(STATE_DISPLAY_MODE, DisplayMode::class.java)
@@ -173,11 +172,6 @@ class AccountsListFragment : MenuFragment(),
 
         // specify an adapter (see also next example)
         accountListAdapter = AccountRecyclerAdapter(null)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        accountsDbAdapter = AccountsDbAdapter.instance
     }
 
     override fun onResume() {
@@ -322,7 +316,8 @@ class AccountsListFragment : MenuFragment(),
             parentAccountUID,
             displayMode,
             currentFilter,
-            isShowHiddenAccounts
+            isShowHiddenAccounts,
+            accountsDbAdapter
         )
     }
 
@@ -373,11 +368,15 @@ class AccountsListFragment : MenuFragment(),
         private val parentAccountUID: String?,
         private val displayMode: DisplayMode,
         private val filter: String?,
-        private val isShowHiddenAccounts: Boolean
+        private val isShowHiddenAccounts: Boolean,
+        accountsDbAdapter: AccountsDbAdapter
     ) : DatabaseCursorLoader<AccountsDbAdapter>(context) {
+        init {
+            databaseAdapter = accountsDbAdapter
+        }
+
         override fun loadInBackground(): Cursor? {
-            val dbAdapter = AccountsDbAdapter.instance
-            databaseAdapter = dbAdapter
+            val dbAdapter = databaseAdapter ?: return null
 
             val cursor = if (!parentAccountUID.isNullOrEmpty()) {
                 dbAdapter.fetchSubAccounts(parentAccountUID, isShowHiddenAccounts)

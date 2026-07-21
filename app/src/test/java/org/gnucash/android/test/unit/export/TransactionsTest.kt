@@ -5,6 +5,7 @@ import androidx.core.content.edit
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
 import org.gnucash.android.test.unit.BookHelperTest
@@ -55,7 +56,7 @@ class TransactionsTest : BookHelperTest() {
         val tx3 = transactionsDbAdapter.getRecord("9b42fbb885db4918819a05fc42dd63e0")
         assertThat(tx3.isTemplate).isTrue()
         assertThat(tx3.description).isEqualTo("AT&T")
-        assertThat(tx3.splits[0].value).isEqualTo(Money(999, 10, Commodity.getInstance("ILS")))
+        assertThat(tx3.splits[0].value).isEqualTo(Money(999, 10, CommoditiesDbAdapter.getInstance("ILS")))
 
         deleteAllTransactions(accountsDbAdapter)
 

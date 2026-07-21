@@ -33,7 +33,7 @@ class CurrencySelectPage(callbacks: ModelCallbacks, title: String) :
         currenciesByLabel.clear()
         val adapter = GnuCashApplication.commoditiesDbAdapter
         val commodities = adapter!!.allRecords
-        val choices: SortedSet<String> = TreeSet<String>()
+        val choices: SortedSet<String> = TreeSet()
         for (commodity in commodities) {
             choices.add(addCurrency(commodity))
         }

@@ -28,17 +28,6 @@ class CommoditiesDbAdapter(
 ) {
     private var _defaultCommodity: Commodity? = null
 
-    /**
-     * Opens the database adapter with an existing database
-     *
-     * @param holder     Database holder
-     * @param initCommon initialize commonly used commodities?
-     */
-    /**
-     * Opens the database adapter with an existing database
-     *
-     * @param holder Database holder
-     */
     init {
         if (initCommon) {
             initCommon()
@@ -125,7 +114,7 @@ class CommoditiesDbAdapter(
                 + " IN ('" + Commodity.COMMODITY_CURRENCY + "','" + Commodity.COMMODITY_ISO4217 + "')")
         val whereArgs = arrayOf<String?>(currencyCode)
         val cursor = fetchAllRecords(where, whereArgs, null)
-        try {
+        cursor.use { cursor ->
             if (cursor.moveToFirst()) {
                 val commodity = buildModelInstance(cursor)
                 if (isCached) {
@@ -136,8 +125,6 @@ class CommoditiesDbAdapter(
                 val msg = "Commodity not found in the database: $currencyCode"
                 Timber.e(msg)
             }
-        } finally {
-            cursor.close()
         }
 
         return when (currencyCode) {
@@ -256,6 +243,28 @@ class CommoditiesDbAdapter(
         private const val INDEX_COLUMN_QUOTE_SOURCE = INDEX_COLUMN_QUOTE_FLAG + 1
         private const val INDEX_COLUMN_QUOTE_TZ = INDEX_COLUMN_QUOTE_SOURCE + 1
 
-        val instance: CommoditiesDbAdapter get() = GnuCashApplication.commoditiesDbAdapter!!
+        /**
+         * Returns an instance of commodity for the specified currencyCode
+         *
+         * @param currencyCode ISO 4217 currency code (3-letter)
+         * @return the commodity, or default commodity.
+         */
+        fun getInstance(currencyCode: String?): Commodity {
+            if (currencyCode.isNullOrEmpty()) {
+                return Commodity.DEFAULT_COMMODITY
+            }
+            when (currencyCode) {
+                "AUD" -> return Commodity.AUD
+                "CAD" -> return Commodity.CAD
+                "CHF" -> return Commodity.CHF
+                "EUR" -> return Commodity.EUR
+                "GBP" -> return Commodity.GBP
+                "JPY" -> return Commodity.JPY
+                "USD" -> return Commodity.USD
+            }
+
+            val adapter: CommoditiesDbAdapter = GnuCashApplication.commoditiesDbAdapter!!
+            return adapter.getCurrency(currencyCode) ?: Commodity.DEFAULT_COMMODITY
+        }
     }
 }

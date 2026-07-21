@@ -1,7 +1,9 @@
 package org.gnucash.android.test.unit
 
+import android.net.Uri
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.BuildConfig
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
@@ -17,9 +19,11 @@ import org.gnucash.android.gnc.GncProgressListener
 import org.gnucash.android.importer.ImporterFactory.getInputStream
 import org.gnucash.android.importer.sql.SqliteImporter
 import org.gnucash.android.importer.xml.GncXmlImporter
+import org.gnucash.android.net.toUri
 import org.gnucash.android.util.ConsoleTree
 import org.junit.After
 import org.junit.Before
+import org.junit.BeforeClass
 import timber.log.Timber
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
@@ -37,8 +41,9 @@ abstract class BookHelperTest : GnuCashTest() {
     protected lateinit var pricesDbAdapter: PricesDbAdapter
 
     protected fun importGnuCashXml(filename: String): String {
+        val uri = javaClass.classLoader!!.getResource(filename).toUri()
         val inputStream = getInputStream(openResourceStream(filename))
-        val bookUID = GncXmlImporter.parse(context, inputStream)
+        val bookUID = GncXmlImporter.parse(context, uri, inputStream)
         setUpDbAdapters(bookUID)
         return bookUID
     }
@@ -47,16 +52,18 @@ abstract class BookHelperTest : GnuCashTest() {
         filename: String,
         listener: GncProgressListener? = null
     ): String {
+        val uri = javaClass.classLoader!!.getResource(filename).toUri()
         val inputStream = getInputStream(openResourceStream(filename))
-        return importGnuCashSqlite(inputStream, listener)
+        return importGnuCashSqlite(uri, inputStream, listener)
     }
 
     protected fun importGnuCashSqlite(
+        uri: Uri,
         inputStream: InputStream,
         listener: GncProgressListener? = null
     ): String {
         val importer = SqliteImporter(context, inputStream, listener)
-        val books = importer.parse()
+        val books = importer.parse(uri)
         val book = books[books.lastIndex]
         val bookUID = book.uid
         setUpDbAdapters(bookUID)
@@ -79,16 +86,20 @@ abstract class BookHelperTest : GnuCashTest() {
     }
 
     @Before
-    open fun setUp() {
-        System.gc()
+    fun setUpHelper() {
+        val bookUID = GnuCashApplication.activeBookUID
+        assertThat(bookUID).isNotEmpty()
         booksDbAdapter = BooksDbAdapter.instance
         assertThat(booksDbAdapter.recordsCount).isOne()
-        setUpDbAdapters(booksDbAdapter.activeBookUID)
+        val book = booksDbAdapter.allRecords.first()
+        assertThat(book.uid).isEqualTo(bookUID)
+        setUpDbAdapters(bookUID)
     }
 
     @After
-    open fun tearDown() {
+    fun tearDownHelper() {
         close()
+        DatabaseHelper.deleteFiles(context)
     }
 
     protected fun close() {
@@ -109,8 +120,7 @@ abstract class BookHelperTest : GnuCashTest() {
 
     // Mark the transactions as ready to be exported.
     protected fun markForExport(where: String? = null) {
-        var sql = "UPDATE " + TransactionEntry.TABLE_NAME +
-                " SET " + TransactionEntry.COLUMN_EXPORTED + " = 0"
+        var sql = "UPDATE ${TransactionEntry.TABLE_NAME} SET ${TransactionEntry.COLUMN_EXPORTED} = 0"
         if (where != null) {
             sql += " WHERE $where"
         }
@@ -119,8 +129,10 @@ abstract class BookHelperTest : GnuCashTest() {
     }
 
     companion object {
-        init {
-            Timber.plant(ConsoleTree(BuildConfig.DEBUG) as Timber.Tree)
+        @BeforeClass
+        @JvmStatic
+        fun before() {
+            Timber.plant(ConsoleTree(BuildConfig.DEBUG))
         }
     }
 }

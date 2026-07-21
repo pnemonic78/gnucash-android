@@ -12,12 +12,14 @@ import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentResultListener
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.app.requireArguments
 import org.gnucash.android.databinding.ActivityTransactionDetailBinding
 import org.gnucash.android.databinding.ItemSplitAmountInfoBinding
 import org.gnucash.android.databinding.RowBalanceBinding
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.AccountsDbAdapter.Companion.ALWAYS
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
@@ -46,13 +48,16 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     private var transaction: Transaction? = null
     private var account: Account? = null
 
-    private var transactionsDbAdapter = TransactionsDbAdapter.instance
-    private var accountsDbAdapter = AccountsDbAdapter.instance
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var scheduledActionDbAdapter: ScheduledActionDbAdapter
 
     private lateinit var binding: ActivityTransactionDetailBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val context: Context = this
 
         binding = ActivityTransactionDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -63,8 +68,12 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         actionBar?.setDisplayHomeAsUpEnabled(true)
         actionBar?.setDisplayShowTitleEnabled(false)
 
-        transactionsDbAdapter = TransactionsDbAdapter.instance
-        accountsDbAdapter = AccountsDbAdapter.instance
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        val holder = dbHelper.readableHolder
+        transactionsDbAdapter = holder.transactionsDbAdapter
+        accountsDbAdapter = holder.accountsDbAdapter
+        scheduledActionDbAdapter = holder.scheduledActionDbAdapter
 
         handleIntent(intent)
     }
@@ -78,6 +87,11 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
     private fun handleIntent(intent: Intent) {
         this.transaction = requireTransaction(intent)
         this.account = requireAccount(intent)
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
     }
 
     override fun onResume() {
@@ -182,8 +196,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         if (actionUID.isNullOrEmpty()) {
             binding.rowTrnRecurrence.isVisible = false
         } else {
-            val scheduledAction =
-                ScheduledActionDbAdapter.instance.getRecord(actionUID)
+            val scheduledAction = scheduledActionDbAdapter.getRecord(actionUID)
             binding.trnRecurrence.text = scheduledAction.getRepeatString(context)
             binding.rowTrnRecurrence.isVisible = true
         }

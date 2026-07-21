@@ -39,8 +39,8 @@ import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupForImport
 import org.gnucash.android.databinding.ActivityAccountsBinding
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema
-import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.importer.ImportAsyncTask
 import org.gnucash.android.importer.ImportBookCallback
 import org.gnucash.android.service.ScheduledActionService.Companion.schedulePeriodic
@@ -138,7 +138,6 @@ class AccountsActivity : BaseDrawerActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        handleOpenFileIntent(intent)
         init()
 
         val tabLayout = binding.tabLayout
@@ -434,15 +433,19 @@ class AccountsActivity : BaseDrawerActivity(),
             callback: ImportBookCallback?
         ) {
             ImportAsyncTask(activity) { bookUID ->
-                if (!currencyCode.isNullOrEmpty()) {
-                    val accountsDbAdapter = AccountsDbAdapter.instance
-                    val commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
+                if (!bookUID.isNullOrEmpty() && !currencyCode.isNullOrEmpty()) {
+                    activeBookUID = bookUID
+                    val dbHelper = DatabaseHelper(activity, bookUID)
+                    val dbHolder = dbHelper.holder
+                    val accountsDbAdapter = dbHolder.accountsDbAdapter
+                    val commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
                     val currencyUID = commoditiesDbAdapter.getCommodityUID(currencyCode)
                     accountsDbAdapter.updateAllAccounts(
                         DatabaseSchema.AccountEntry.COLUMN_COMMODITY_UID,
                         currencyUID
                     )
                     commoditiesDbAdapter.setDefaultCurrencyCode(currencyCode)
+                    dbHelper.close()
                 }
                 callback?.invoke(bookUID)
             }.execute(uri)
@@ -494,17 +497,14 @@ class AccountsActivity : BaseDrawerActivity(),
          * Starts the AccountsActivity and clears the activity stack
          *
          * @param context  Application context
+         * @param bookUID the book UID.
          * @param tabIndex the initial tab index to select.
          */
-        /**
-         * Starts the AccountsActivity and clears the activity stack
-         *
-         * @param context Application context
-         */
-        fun start(context: Context, tabIndex: Int = INDEX_TOP_LEVEL_ACCOUNTS_FRAGMENT) {
+        fun start(context: Context, bookUID: String, tabIndex: Int = INDEX_TOP_LEVEL_ACCOUNTS_FRAGMENT) {
             val intent = Intent(context, AccountsActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(UxArgument.BOOK_UID, bookUID)
                 .putExtra(EXTRA_TAB_INDEX, tabIndex)
             context.startActivity(intent)
         }

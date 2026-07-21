@@ -61,18 +61,6 @@ class Money(
     private var roundingMode = RoundingMode.HALF_UP
 
     /**
-     * Constructs a new money amount given the numerator and denominator of the amount.
-     * The rounding mode used for the division is [BigDecimal.ROUND_HALF_EVEN]
-     *
-     * @param amount    Value of the amount
-     * @param currencyCode 3-character currency code string
-     */
-    constructor(amount: BigDecimal, currencyCode: String) : this(
-        amount,
-        Commodity.getInstance(currencyCode)
-    )
-
-    /**
      * Creates a new money amount
      *
      * @param amount    Value of the amount
@@ -84,50 +72,12 @@ class Money(
      * Overloaded constructor.
      * Accepts strings as arguments and parses them to create the Money object
      *
-     * @param amount       Numerical value of the Money
-     * @param currencyCode Currency code as specified by ISO 4217
-     */
-    constructor(amount: String?, currencyCode: String) : this(
-        BigDecimal(amount),
-        currencyCode
-    )
-
-    /**
-     * Overloaded constructor.
-     * Accepts strings as arguments and parses them to create the Money object
-     *
-     * @param amount       Numerical value of the Money
-     * @param currencyCode Currency code as specified by ISO 4217
-     */
-    constructor(amount: Double, currencyCode: String) : this(
-        BigDecimal(amount),
-        currencyCode
-    )
-
-    /**
-     * Overloaded constructor.
-     * Accepts strings as arguments and parses them to create the Money object
-     *
      * @param amount    Numerical value of the Money
      * @param commodity Commodity of the money
      */
     constructor(amount: String?, commodity: Commodity) : this(
         BigDecimal(amount),
         commodity
-    )
-
-    /**
-     * Constructs a new money amount given the numerator and denominator of the amount.
-     * The rounding mode used for the division is [BigDecimal.ROUND_HALF_EVEN]
-     *
-     * @param numerator    Numerator as integer
-     * @param denominator  Denominator as integer
-     * @param currencyCode 3-character currency code string
-     */
-    //FIXME beware of 64-bit overflow - only use BigInteger for numerator
-    constructor(numerator: Long, denominator: Long, currencyCode: String) : this(
-        toBigDecimal(numerator, denominator),
-        currencyCode
     )
 
     /**
@@ -253,6 +203,10 @@ class Money(
         return amount.toByte()
     }
 
+    @Deprecated(
+        "Direct conversion to Char is deprecated. Use toInt().toChar() or Char constructor instead.\nIf you override toChar() function in your Number inheritor, it's recommended to gradually deprecate the overriding function and then remove it.\nSee https://youtrack.jetbrains.com/issue/KT-46465 for details about the migration",
+        replaceWith = ReplaceWith("this.toInt().toChar()")
+    )
     override fun toChar(): Char {
         return amount.toInt().toChar()
     }
@@ -619,17 +573,6 @@ class Money(
     }
 
     companion object {
-        /**
-         * Creates a new Money instance with 0 amount and the `currencyCode`
-         *
-         * @param currencyCode Currency to use for this money instance
-         * @return Money object with value 0 and currency `currencyCode`
-         */
-        fun createZeroInstance(currencyCode: String): Money {
-            val commodity = Commodity.getInstance(currencyCode)
-            return createZeroInstance(commodity)
-        }
-
         /**
          * Creates a new Money instance with 0 amount and the `currencyCode`
          *

@@ -37,7 +37,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
 import org.gnucash.android.app.getParcelableArrayListCompat
@@ -66,7 +66,7 @@ import java.math.BigDecimal
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class SplitEditorFragment : MenuFragment() {
+class SplitEditorFragment : DatabaseFragment() {
     private var accountNameAdapter: QualifiedAccountNameAdapter? = null
     private val splitViewHolders = mutableListOf<SplitViewHolder>()
     private var account: Account? = null
@@ -97,7 +97,7 @@ class SplitEditorFragment : MenuFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = FragmentSplitEditorBinding.inflate(inflater, container, false)
         this.binding = binding
         return binding.root
@@ -128,7 +128,8 @@ class SplitEditorFragment : MenuFragment() {
         imbalanceWatcher = BalanceTextWatcher(binding)
         colorBalanceZero = binding.imbalanceTextview.currentTextColor
 
-        accountNameAdapter = QualifiedAccountNameAdapter(context, viewLifecycleOwner)
+        val accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
+        accountNameAdapter = QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
             .load { adapter ->
                 account = adapter.getAccountDb(accountUID)
                 if (account == null) {

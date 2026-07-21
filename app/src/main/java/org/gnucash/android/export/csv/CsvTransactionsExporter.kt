@@ -20,6 +20,7 @@ import com.opencsv.CSVWriterBuilder
 import com.opencsv.ICSVWriter
 import com.opencsv.ICSVWriter.RFC4180_LINE_END
 import org.gnucash.android.R
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.forEach
 import org.gnucash.android.export.ExportParams
 import org.gnucash.android.export.Exporter
@@ -208,7 +209,8 @@ class CsvTransactionsExporter(
                 splitCsvString.split(SEPARATOR_CSV.toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray()
             return if (tokens.size < 8) { //old format splits
-                val amount = Money(tokens[0], tokens[1])
+                val currency = CommoditiesDbAdapter.getInstance(tokens[1])
+                val amount = Money(tokens[0], currency)
                 val split = Split(amount, tokens[2])
                 split.transactionUID = tokens[3]
                 split.type = TransactionType.of(tokens[4])
@@ -219,12 +221,12 @@ class CsvTransactionsExporter(
             } else {
                 val valueNum = tokens[1].toLong()
                 val valueDenom = tokens[2].toLong()
-                val valueCurrencyCode = tokens[3]
+                val valueCurrency = CommoditiesDbAdapter.getInstance(tokens[3])
                 val quantityNum = tokens[4].toLong()
                 val quantityDenom = tokens[5].toLong()
-                val qtyCurrencyCode = tokens[6]
-                val value = Money(valueNum, valueDenom, valueCurrencyCode)
-                val quantity = Money(quantityNum, quantityDenom, qtyCurrencyCode)
+                val qtyCurrency = CommoditiesDbAdapter.getInstance(tokens[6])
+                val value = Money(valueNum, valueDenom, valueCurrency)
+                val quantity = Money(quantityNum, quantityDenom, qtyCurrency)
                 val split = Split(value, tokens[8])
                 split.setUID(tokens[0])
                 split.quantity = quantity

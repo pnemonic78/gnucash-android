@@ -26,7 +26,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withInputType
 import androidx.test.rule.ActivityTestRule
 import org.gnucash.android.R
-import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.test.ui.util.SoftwareKeyboard.isKeyboardOpen
@@ -42,8 +41,7 @@ import org.junit.Rule
 import org.junit.Test
 
 // TODO: Find out how to press the keys in the KeyboardView.
-class CalculatorEditTextTest : GnuAndroidTest() {
-    private lateinit var accountsDbAdapter: AccountsDbAdapter
+class CalculatorEditTextTest : DatabaseTest() {
     private lateinit var transactionsActivity: TransactionsActivity
 
     @Rule
@@ -52,10 +50,8 @@ class CalculatorEditTextTest : GnuAndroidTest() {
 
     @Before
     fun setUp() {
-        accountsDbAdapter = AccountsDbAdapter.instance
         accountsDbAdapter.deleteAllRecords()
 
-        val commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
         val commodity = commoditiesDbAdapter.getCurrency(CURRENCY_CODE)!!
 
         val account = Account(DUMMY_ACCOUNT_NAME, commodity)

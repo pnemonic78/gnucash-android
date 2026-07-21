@@ -41,7 +41,7 @@ object PreferencesHelper {
      */
     fun setLastExportTime(context: Context, lastExportTime: Timestamp) {
         Timber.v("Saving last export time for the currently active book")
-        setLastExportTime(context, lastExportTime, activeBookUID!!)
+        setLastExportTime(context, lastExportTime, activeBookUID)
     }
 
     /**
@@ -65,7 +65,7 @@ object PreferencesHelper {
      * @return A [Timestamp] with the time.
      */
     fun getLastExportTime(context: Context): Timestamp {
-        return getLastExportTime(context, activeBookUID!!)
+        return getLastExportTime(context, activeBookUID)
     }
 
     /**

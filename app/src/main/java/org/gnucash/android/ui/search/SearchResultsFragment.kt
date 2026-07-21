@@ -10,11 +10,14 @@ import androidx.appcompat.app.ActionBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.app.actionBar
@@ -31,8 +34,16 @@ import org.gnucash.android.ui.transaction.dialog.BulkMoveDialogFragment
 import org.gnucash.android.util.BackupManager.backupActiveBookAsync
 import timber.log.Timber
 
-class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultListener {
-    private val viewModel by viewModels<SearchResultsViewModel>()
+class SearchResultsFragment : DatabaseFragment(), SearchResultCallback, FragmentResultListener {
+    private val viewModel: SearchResultsViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+                return SearchResultsViewModel(transactionsDbAdapter) as T
+            }
+        }
+    }
     private var binding: FragmentTransactionsListBinding? = null
     private var transactionsAdapter: SearchResultsAdapter? = null
     private var isDoubleEntry = true
@@ -44,7 +55,8 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
         viewModel.where = requireArguments().getString(EXTRA_FORM)
         isDoubleEntry = isDoubleEntryEnabled(context)
 
-        transactionsAdapter = SearchResultsAdapter(null, isDoubleEntry, this)
+        val accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
+        transactionsAdapter = SearchResultsAdapter(null, accountsDbAdapter, isDoubleEntry, this)
         lifecycleScope.launch {
             viewModel.results.collect { cursor ->
                 transactionsAdapter?.changeCursor(cursor)
@@ -56,7 +68,7 @@ class SearchResultsFragment : Fragment(), SearchResultCallback, FragmentResultLi
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = FragmentTransactionsListBinding.inflate(inflater, container, false)
         this.binding = binding
         return binding.root
