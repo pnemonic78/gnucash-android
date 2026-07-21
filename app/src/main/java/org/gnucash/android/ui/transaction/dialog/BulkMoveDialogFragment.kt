@@ -21,7 +21,9 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.databinding.DialogBulkMoveBinding
+import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
@@ -38,10 +40,29 @@ import org.gnucash.android.ui.snackLong
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 class BulkMoveDialogFragment : DialogFragment() {
+    private var dbHelper: DatabaseHelper? = null
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val context: Context = requireContext()
+        val bookUID = GnuCashApplication.activeBookUID
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
+        val holder = dbHelper.holder
+        accountsDbAdapter = holder.accountsDbAdapter
+        transactionsDbAdapter = holder.transactionsDbAdapter
+    }
+
+    override fun onDestroy() {
+        dbHelper?.close()
+        super.onDestroy()
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val binding = DialogBulkMoveBinding.inflate(layoutInflater)
         val context = binding.root.context
-        val accountsDbAdapter = AccountsDbAdapter.instance
 
         val args = requireArguments()
         val selectedTransactionUIDs = args.getStringArray(UxArgument.SELECTED_TRANSACTION_UIDS)
@@ -91,8 +112,6 @@ class BulkMoveDialogFragment : DialogFragment() {
             return
         }
 
-        val trxnAdapter = TransactionsDbAdapter.instance
-        val accountsDbAdapter = AccountsDbAdapter.instance
         val currencySrc = accountsDbAdapter.getCommodity(srcAccountUID)
         val currencyDst = accountsDbAdapter.getCommodity(dstAccountUID)
         if (currencySrc != currencyDst) {
@@ -101,7 +120,7 @@ class BulkMoveDialogFragment : DialogFragment() {
         }
 
         for (transactionUID in transactionUIDs) {
-            trxnAdapter.moveTransaction(transactionUID, srcAccountUID, dstAccountUID)
+            transactionsDbAdapter.moveTransaction(transactionUID, srcAccountUID, dstAccountUID)
         }
 
         WidgetConfigurationActivity.updateAllWidgets(context)

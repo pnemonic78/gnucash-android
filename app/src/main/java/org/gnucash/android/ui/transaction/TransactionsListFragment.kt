@@ -41,11 +41,11 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
 import org.gnucash.android.app.GnuCashApplication.Companion.isAbsoluteDate
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
-import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.CardviewTransactionBinding
@@ -70,12 +70,12 @@ import timber.log.Timber
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class TransactionsListFragment : MenuFragment(),
+class TransactionsListFragment : DatabaseFragment(),
     Refreshable,
     LoaderManager.LoaderCallbacks<Cursor>,
     FragmentResultListener {
-    private var accountsDbAdapter: AccountsDbAdapter = AccountsDbAdapter.instance
-    private var transactionsDbAdapter: TransactionsDbAdapter = TransactionsDbAdapter.instance
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
     private var accountUID: String? = null
     private var scrollTransactionUID: String? = null
 
@@ -112,8 +112,8 @@ class TransactionsListFragment : MenuFragment(),
             )
         }
 
-        accountsDbAdapter = AccountsDbAdapter.instance
-        transactionsDbAdapter = TransactionsDbAdapter.instance
+        accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
+        transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -246,7 +246,7 @@ class TransactionsListFragment : MenuFragment(),
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
         Timber.d("Creating transactions loader")
-        return TransactionsCursorLoader(requireContext(), accountUID!!)
+        return TransactionsCursorLoader(requireContext(), accountUID!!, transactionsDbAdapter)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
@@ -272,14 +272,15 @@ class TransactionsListFragment : MenuFragment(),
      *
      * @author Ngewi Fet <ngewif@gmail.com>
      */
-    private class TransactionsCursorLoader(context: Context, private val accountUID: String) :
-        DatabaseCursorLoader<TransactionsDbAdapter>(context) {
-        init {
-            this.databaseAdapter = TransactionsDbAdapter.instance
-        }
-
-        override fun loadInBackground(): Cursor? {
-            return databaseAdapter?.fetchTransactionsForAccount(accountUID, false)
+    private class TransactionsCursorLoader(
+        context: Context,
+        private val accountUID: String,
+        private val transactionsDbAdapter: TransactionsDbAdapter
+    ) : DatabaseCursorLoader<TransactionsDbAdapter>(context) {
+        override fun loadInBackground(): Cursor {
+            val databaseAdapter: TransactionsDbAdapter = transactionsDbAdapter
+            this.databaseAdapter = databaseAdapter
+            return databaseAdapter.fetchTransactionsForAccount(accountUID, false)
         }
     }
 
@@ -365,6 +366,7 @@ class TransactionsListFragment : MenuFragment(),
         fun bind(cursor: Cursor) {
             val context = itemView.context
             val accountUID = accountUID!!
+            val account = accountsDbAdapter.getRecord(accountUID)
             val transaction = transactionsDbAdapter.buildModelInstance(cursor)
             this.transaction = transaction
             val transactionUID = transaction.uid
@@ -372,7 +374,7 @@ class TransactionsListFragment : MenuFragment(),
             primaryText.text = transaction.description
             iconRepeating.isVisible = !transaction.scheduledActionUID.isNullOrEmpty()
 
-            val amount = transaction.getBalance(accountUID)
+            val amount = transaction.getBalance(account)
             transactionAmount.displayBalance(amount, colorBalanceZero)
 
             val dateText = if (useAbsoluteDate) {
@@ -397,9 +399,8 @@ class TransactionsListFragment : MenuFragment(),
                     if (splits[0].isPairOf(splits[1])) {
                         for (split in splits) {
                             if (split.accountUID != accountUID) {
-                                text = accountsDbAdapter.getFullyQualifiedAccountName(
-                                    split.accountUID!!
-                                )
+                                text =
+                                    accountsDbAdapter.getFullyQualifiedAccountName(split.accountUID!!)
                                 break
                             }
                         }

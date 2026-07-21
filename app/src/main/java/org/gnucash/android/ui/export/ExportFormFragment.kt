@@ -40,9 +40,9 @@ import androidx.core.view.isVisible
 import androidx.preference.PreferenceManager
 import com.codetroopers.betterpickers.recurrencepicker.RecurrencePickerDialogFragment.OnRecurrenceSetListener
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
-import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
 import org.gnucash.android.app.getActivity
@@ -51,8 +51,6 @@ import org.gnucash.android.app.takePersistableUriPermission
 import org.gnucash.android.databinding.FragmentExportFormBinding
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.DatabaseAdapter
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.db.toTimestamp
 import org.gnucash.android.export.DropboxHelper.authenticateDropbox
 import org.gnucash.android.export.DropboxHelper.hasDropboxToken
@@ -94,7 +92,7 @@ import java.util.Calendar
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class ExportFormFragment : MenuFragment(),
+class ExportFormFragment : DatabaseFragment(),
     OnRecurrenceSetListener,
     DatePickerDialog.OnDateSetListener,
     TimePickerDialog.OnTimeSetListener {
@@ -199,9 +197,10 @@ class ExportFormFragment : MenuFragment(),
         }
         exportParams.exportFormat = exportFormat
 
-        var timestamp = getLastExportTime(context, activeBookUID!!)
+        var timestamp = getLastExportTime(context, activeBookUID)
         if (timestamp.time <= 0L) {
-            timestamp = TransactionsDbAdapter.instance.timestampOfFirstModification
+            val transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+            timestamp = transactionsDbAdapter.timestampOfFirstModification
         }
         exportStartCalendar.timeInMillis = timestamp.time
         val isExportAll =
@@ -249,7 +248,7 @@ class ExportFormFragment : MenuFragment(),
             bindForm(binding, exportParams)
             return
         }
-        val scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
+        val scheduledActionDbAdapter = dbHelper.readableHolder.scheduledActionDbAdapter
         val scheduledAction = scheduledActionDbAdapter.getRecordOrNull(scheduledUID)
         if (scheduledAction != null) {
             this.scheduledAction = scheduledAction
@@ -371,7 +370,8 @@ class ExportFormFragment : MenuFragment(),
                 updateMethod = DatabaseAdapter.UpdateMethod.Insert
             }
             scheduledAction.setExportParams(exportParameters)
-            ScheduledActionDbAdapter.instance.addRecord(scheduledAction, updateMethod)
+            val scheduledActionDbAdapter = dbHelper.readableHolder.scheduledActionDbAdapter
+            scheduledActionDbAdapter.addRecord(scheduledAction, updateMethod)
         }
 
         finish()
@@ -554,7 +554,9 @@ class ExportFormFragment : MenuFragment(),
      * Open a chooser for user to pick a file to export to
      */
     private fun selectExportFile() {
-        val bookName = BooksDbAdapter.instance.activeBookDisplayName
+        val booksDbAdapter = BooksDbAdapter.instance
+        val book = booksDbAdapter.activeBook
+        val bookName = book.displayName ?: "Book"
         val exportFormat = exportParams.exportFormat
         val isCompressed = isCompressedForFormat(exportFormat, exportParams.isCompressed)
         val filename = buildExportFilename(exportFormat, isCompressed, bookName)
@@ -636,7 +638,7 @@ class ExportFormFragment : MenuFragment(),
     private fun isCompressedForFormat(exportFormat: ExportFormat, compressed: Boolean): Boolean {
         // Does QIF have multiple currencies that need to be zipped?
         if (!compressed && exportFormat == ExportFormat.QIF) {
-            val transactionsDbAdapter = TransactionsDbAdapter.instance
+            val transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
             val commodities =
                 transactionsDbAdapter.getAllCommoditiesInUse(false, exportParams.exportStartTime)
             return commodities.size > 1

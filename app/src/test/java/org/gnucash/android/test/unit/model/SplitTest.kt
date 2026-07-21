@@ -9,7 +9,7 @@ import org.gnucash.android.model.Money.Companion.createZeroInstance
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
-import org.gnucash.android.test.unit.GnuCashTest
+import org.gnucash.android.test.unit.db.DatabaseTest
 import org.junit.Test
 import java.math.BigDecimal
 
@@ -18,15 +18,15 @@ import java.math.BigDecimal
  *
  * @author Ngewi
  */
-class SplitTest : GnuCashTest() {
+class SplitTest : DatabaseTest() {
     @Test
     fun amounts_shouldBeStoredUnsigned() {
-        val split = Split(Money("-1", "USD"), Money("-2", "EUR"), "account-UID")
+        val split = Split(Money("-1", Commodity.USD), Money("-2", Commodity.EUR), "account-UID")
         assertThat(split.value.isNegative).isFalse()
         assertThat(split.quantity.isNegative).isFalse()
 
-        split.value = Money("-3", "USD")
-        split.quantity = Money("-4", "EUR")
+        split.value = Money("-3", Commodity.USD)
+        split.quantity = Money("-4", Commodity.EUR)
         assertThat(split.value.isNegative).isFalse()
         assertThat(split.quantity.isNegative).isFalse()
     }
@@ -44,7 +44,7 @@ class SplitTest : GnuCashTest() {
 
     @Test
     fun testCloning() {
-        val split = Split(Money(BigDecimal.TEN, Commodity.getInstance("EUR")), "random-account")
+        val split = Split(Money(BigDecimal.TEN, Commodity.EUR), "random-account")
         split.transactionUID = "terminator-trx"
         split.type = TransactionType.CREDIT
 
@@ -62,7 +62,7 @@ class SplitTest : GnuCashTest() {
      */
     @Test
     fun shouldCreateInversePair() {
-        val split = Split(Money("2", "USD"), "dummy")
+        val split = Split(Money("2", Commodity.USD), "dummy")
         split.type = TransactionType.CREDIT
         split.transactionUID = "random-trx"
         val pair = split.createPair("test")
@@ -75,7 +75,7 @@ class SplitTest : GnuCashTest() {
 
     @Test
     fun shouldGenerateValidCsv() {
-        val split = Split(Money(BigDecimal.TEN, Commodity.getInstance("EUR")), "random-account")
+        val split = Split(Money(BigDecimal.TEN, Commodity.EUR), "random-account")
         split.transactionUID = "terminator-trx"
         split.type = TransactionType.CREDIT
 
@@ -87,8 +87,8 @@ class SplitTest : GnuCashTest() {
     fun shouldParseCsv() {
         val csv =
             "test-split-uid;490;100;USD;490;100;USD;trx-action;test-account;DEBIT;Didn't you get the memo?"
-        val split = parseSplit(csv)
-        assertThat(split.value.numerator).isEqualTo(Money("4.90", "USD").numerator)
+        val split = parseSplit(csv, commoditiesDbAdapter)
+        assertThat(split.value.numerator).isEqualTo(Money("4.90", Commodity.USD).numerator)
         assertThat(split.transactionUID).isEqualTo("trx-action")
         assertThat(split.accountUID).isEqualTo("test-account")
         assertThat(split.type).isEqualTo(TransactionType.DEBIT)

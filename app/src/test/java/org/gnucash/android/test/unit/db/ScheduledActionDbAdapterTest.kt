@@ -15,14 +15,7 @@ import org.junit.Test
 /**
  * Test the scheduled actions database adapter
  */
-class ScheduledActionDbAdapterTest : GnuCashTest() {
-    private lateinit var scheduledActionDbAdapter: ScheduledActionDbAdapter
-
-    @Before
-    fun setUp() {
-        scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
-    }
-
+class ScheduledActionDbAdapterTest : DatabaseTest() {
     fun shouldFetchOnlyEnabledScheduledActions() {
         var scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION) {
             setRecurrence(Recurrence(PeriodType.MONTH))
@@ -116,7 +109,7 @@ class ScheduledActionDbAdapterTest : GnuCashTest() {
         assertThat(scheduledActionFromDb.isEnabled).isEqualTo(scheduledAction.isEnabled)
         assertThat(scheduledActionFromDb.startDate).isEqualTo(scheduledAction.startDate)
         assertThat(scheduledActionFromDb.endDate).isEqualTo(scheduledAction.endDate)
-        assertThat(scheduledActionFromDb.lastRunTime).isEqualTo(scheduledAction.lastRunTime)
+        assertThat(scheduledActionFromDb.lastRunDate).isEqualTo(scheduledAction.lastRunDate)
         assertThat(scheduledActionFromDb.instanceCount).isEqualTo(scheduledAction.instanceCount)
         assertThat(scheduledActionFromDb.recurrence).isEqualTo(scheduledAction.recurrence)
         assertThat(scheduledActionFromDb.tag).isEqualTo(scheduledAction.tag)

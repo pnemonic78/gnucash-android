@@ -39,9 +39,9 @@ import androidx.core.widget.addTextChangedListener
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import com.codetroopers.betterpickers.recurrencepicker.RecurrencePickerDialogFragment.OnRecurrenceSetListener
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication.Companion.getDefaultTransactionType
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
-import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.getParcelableArrayListCompat
 import org.gnucash.android.databinding.FragmentTransactionFormBinding
@@ -87,20 +87,14 @@ import java.util.Calendar
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class TransactionFormFragment : MenuFragment(),
+class TransactionFormFragment : DatabaseFragment(),
     OnRecurrenceSetListener,
     OnTransferFundsListener {
-    /**
-     * Transactions database adapter
-     */
-    private var transactionsDbAdapter = TransactionsDbAdapter.instance
 
-    /**
-     * Accounts database adapter
-     */
-    private var accountsDbAdapter = AccountsDbAdapter.instance
-    private var pricesDbAdapter = PricesDbAdapter.instance
-    private var scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var transactionsDbAdapter: TransactionsDbAdapter
+    private lateinit var pricesDbAdapter: PricesDbAdapter
+    private lateinit var scheduledActionDbAdapter: ScheduledActionDbAdapter
 
     /**
      * Adapter for transfer account spinner
@@ -239,10 +233,11 @@ class TransactionFormFragment : MenuFragment(),
 
         useDoubleEntry = isDoubleEntryEnabled(context)
 
-        accountsDbAdapter = AccountsDbAdapter.instance
-        transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
-        pricesDbAdapter = accountsDbAdapter.pricesDbAdapter
-        scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
+        val dbHolder = dbHelper.holder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        transactionsDbAdapter = dbHolder.transactionsDbAdapter
+        pricesDbAdapter = dbHolder.pricesDbAdapter
+        scheduledActionDbAdapter = dbHolder.scheduledActionDbAdapter
 
         rootAccountUID = accountsDbAdapter.rootAccountUID
         val account = requireAccount()
@@ -307,10 +302,9 @@ class TransactionFormFragment : MenuFragment(),
         override fun bindView(view: View, context: Context, cursor: Cursor) {
             super.bindView(view, context, cursor)
             val account = requireAccount()
-            val accountUID = account.uid
             val transactionUID =
                 cursor.getString(cursor.getColumnIndexOrThrow(TransactionEntry.COLUMN_UID))
-            val balance = transactionsDbAdapter.getBalance(transactionUID, accountUID, true)
+            val balance = transactionsDbAdapter.getBalance(transactionUID, account, true)
 
             val timestamp =
                 cursor.getLong(cursor.getColumnIndexOrThrow(TransactionEntry.COLUMN_DATE_POSTED))

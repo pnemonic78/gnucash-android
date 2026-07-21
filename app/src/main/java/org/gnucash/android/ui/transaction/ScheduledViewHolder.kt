@@ -22,11 +22,10 @@ import org.gnucash.android.util.formatMediumDateTime
 import org.gnucash.android.util.set
 
 abstract class ScheduledViewHolder(
+    protected val scheduledActionDbAdapter: ScheduledActionDbAdapter,
     protected val binding: ListItemScheduledTrxnBinding,
     protected val refreshable: Refreshable
 ) : RecyclerView.ViewHolder(binding.root), PopupMenu.OnMenuItemClickListener {
-    protected val scheduledActionDbAdapter: ScheduledActionDbAdapter =
-        ScheduledActionDbAdapter.instance
 
     protected val primaryTextView: TextView = binding.primaryText
     protected val descriptionTextView: TextView = binding.secondaryText

@@ -34,11 +34,12 @@ import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter
 import com.codetroopers.betterpickers.recurrencepicker.RecurrencePickerDialogFragment.OnRecurrenceSetListener
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
 import org.gnucash.android.app.getParcelableArrayListCompat
 import org.gnucash.android.databinding.FragmentBudgetFormBinding
+import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
 import org.gnucash.android.lang.trim
 import org.gnucash.android.model.Budget
@@ -59,12 +60,13 @@ import java.util.Calendar
 /**
  * Fragment for creating or editing Budgets
  */
-class BudgetFormFragment : MenuFragment(), OnRecurrenceSetListener,
+class BudgetFormFragment : DatabaseFragment(), OnRecurrenceSetListener,
     DatePickerDialog.OnDateSetListener {
     var eventRecurrence: EventRecurrence = EventRecurrence()
     var recurrenceRule: String? = null
 
-    private var budgetsDbAdapter: BudgetsDbAdapter = BudgetsDbAdapter.instance
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var budgetsDbAdapter: BudgetsDbAdapter
 
     private var budget: Budget? = null
     private val startDate: Calendar = Calendar.getInstance()
@@ -75,7 +77,8 @@ class BudgetFormFragment : MenuFragment(), OnRecurrenceSetListener,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        budgetsDbAdapter = BudgetsDbAdapter.instance
+        accountsDbAdapter = dbHelper.holder.accountsDbAdapter
+        budgetsDbAdapter = dbHelper.holder.budgetDbAdapter
         budgetAmounts = emptyList()
     }
 
@@ -113,7 +116,7 @@ class BudgetFormFragment : MenuFragment(), OnRecurrenceSetListener,
             TransactionFormFragment.DATE_FORMATTER.print(startDate.timeInMillis)
 
         val context = binding.root.context
-        accountNameAdapter = QualifiedAccountNameAdapter(context, viewLifecycleOwner)
+        accountNameAdapter = QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
             .load()
         binding.budgetAmountLayout.inputBudgetAccountSpinner.adapter = accountNameAdapter
 

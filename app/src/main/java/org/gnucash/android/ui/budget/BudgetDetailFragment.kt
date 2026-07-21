@@ -40,7 +40,7 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.CardviewBudgetAmountBinding
@@ -63,15 +63,18 @@ import java.math.RoundingMode
 /**
  * Fragment for displaying budget details
  */
-class BudgetDetailFragment : MenuFragment(), Refreshable {
+class BudgetDetailFragment : DatabaseFragment(), Refreshable {
     private var budgetUID: String? = null
-    private var budgetsDbAdapter = BudgetsDbAdapter.instance
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var budgetsDbAdapter: BudgetsDbAdapter
 
     private var binding: FragmentBudgetDetailBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        budgetsDbAdapter = BudgetsDbAdapter.instance
+        val holder = dbHelper.readableHolder
+        accountsDbAdapter = holder.accountsDbAdapter
+        budgetsDbAdapter = holder.budgetDbAdapter
         budgetUID = requireArguments().getString(UxArgument.BUDGET_UID)
     }
 
@@ -79,7 +82,7 @@ class BudgetDetailFragment : MenuFragment(), Refreshable {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val binding = FragmentBudgetDetailBinding.inflate(inflater, container, false)
         this.binding = binding
         return binding.root
@@ -199,7 +202,6 @@ class BudgetDetailFragment : MenuFragment(), Refreshable {
         fun bind(budget: Budget, budgetAmount: BudgetAmount) {
             val budgetAccountUID = budgetAmount.accountUID!!
             val projectedAmount = budgetAmount.amount
-            val accountsDbAdapter = AccountsDbAdapter.instance
             val spentAmount = accountsDbAdapter.getAccountBalance(
                 budgetAccountUID,
                 budget.startOfCurrentPeriod,
@@ -254,11 +256,10 @@ class BudgetDetailFragment : MenuFragment(), Refreshable {
         ) {
             // FIXME: 25.10.15 chart is broken
 
-            val accountsDbAdapter = AccountsDbAdapter.instance
             val budgetAccountUID = budgetAmount.accountUID!!
 
             //todo: refactor getNumberOfPeriods into budget
-            var budgetPeriods = budget.numberOfPeriods.toInt()
+            var budgetPeriods = budget.numberOfPeriods
             budgetPeriods = if (budgetPeriods <= 0) 12 else budgetPeriods
             val periods = budget.recurrence.getNumberOfPeriods(budgetPeriods)
 

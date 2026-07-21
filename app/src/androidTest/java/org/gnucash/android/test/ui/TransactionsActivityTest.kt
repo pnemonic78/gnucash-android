@@ -38,12 +38,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
-import org.gnucash.android.db.adapter.RecurrenceDbAdapter
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
-import org.gnucash.android.db.adapter.SplitsDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
@@ -78,7 +72,7 @@ import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
-class TransactionsActivityTest : GnuAndroidTest() {
+class TransactionsActivityTest : DatabaseTest() {
     private lateinit var transaction: Transaction
     private var transactionTimeMillis: Long = 0
 
@@ -92,8 +86,9 @@ class TransactionsActivityTest : GnuAndroidTest() {
     @Rule
     @JvmField
     val scheduledActionsActivityRule =
-        ActivityTestRule(ScheduledActionsActivity::class.java, true, false)
+        ActivityTestRule(ScheduledActionsActivity::class.java, false, false)
 
+    private lateinit var COMMODITY: Commodity
     private lateinit var baseAccount: Account
     private lateinit var transferAccount: Account
 
@@ -103,6 +98,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         setDoubleEntryEnabled(true)
         setDefaultTransactionType(TransactionType.DEBIT)
 
+        COMMODITY = commoditiesDbAdapter.getCurrency("USD")!!
         accountsDbAdapter.deleteAllRecords()
 
         baseAccount = Account(TRANSACTIONS_ACCOUNT_NAME, COMMODITY)
@@ -121,7 +117,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transaction.commodity = COMMODITY
         transaction.notes = "What up?"
         transaction.datePosted = transactionTimeMillis
-        val split = Split(Money(TRANSACTION_AMOUNT, CURRENCY_CODE), TRANSACTIONS_ACCOUNT_UID)
+        val split = Split(Money(TRANSACTION_AMOUNT, Commodity.USD), TRANSACTIONS_ACCOUNT_UID)
         split.type = TransactionType.DEBIT
 
         transaction.addSplit(split)
@@ -200,10 +196,12 @@ class TransactionsActivityTest : GnuAndroidTest() {
         onView(withId(R.id.input_transaction_name))
             .check(matches(withText(transaction.description)))
 
-        val balance = transaction.getBalance(TRANSACTIONS_ACCOUNT_UID)
-        val formatter = NumberFormat.getInstance(Locale.getDefault())
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
+        val account = accountsDbAdapter.getRecord(TRANSACTIONS_ACCOUNT_UID)
+        val balance = transaction.getBalance(account)
+        val formatter = NumberFormat.getInstance(Locale.getDefault()).apply {
+            minimumFractionDigits = 2
+            maximumFractionDigits = 2
+        }
         onView(withId(R.id.input_transaction_amount))
             .check(matches(withText(formatter.format(balance.toDouble()))))
         onView(withId(R.id.input_date))
@@ -264,7 +262,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     fun testAddMultiCurrencyTransaction() {
         transactionsDbAdapter.deleteTransactionsForAccount(TRANSACTIONS_ACCOUNT_UID)
 
-        val euro = Commodity.getInstance("EUR")
+        val euro = Commodity.EUR
         val euroAccount = Account("Euro Konto", euro)
         accountsDbAdapter.addRecord(euroAccount)
 
@@ -304,8 +302,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         accountUID.contains(euroAccount.uid)
 
         val euroSplit = multiTrans.getSplits(euroAccount.uid)[0]
-        val expectedQty = Money("5", euro.currencyCode)
-        val expectedValue = Money(BigDecimal.TEN, COMMODITY)
+        val expectedQty = Money("5", euro)
+        val expectedValue = Money(BigDecimal.TEN, Commodity.DEFAULT_COMMODITY)
         assertThat(euroSplit.quantity).isEqualTo(expectedQty)
         assertThat(euroSplit.value).isEqualTo(expectedValue)
 
@@ -541,7 +539,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         assertThat(transactions).hasSize(1)
         val trx = transactions[0]
         assertThat(trx.splits).hasSize(2) //auto-balancing of splits
-        assertThat(trx.getBalance(TRANSACTIONS_ACCOUNT_UID).isNegative).isTrue()
+        val account = accountsDbAdapter.getRecord(TRANSACTIONS_ACCOUNT_UID)
+        assertThat(trx.getBalance(account).isNegative).isTrue()
     }
 
     @Test
@@ -564,7 +563,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
             .isEqualTo(TIME_FORMATTER.print(trxDate))
 
         val baseSplit = transaction.getSplits(TRANSACTIONS_ACCOUNT_UID)[0]
-        val expectedAmount = Money(TRANSACTION_AMOUNT, CURRENCY_CODE)
+        val expectedAmount = Money(TRANSACTION_AMOUNT, Commodity.USD)
         assertThat(baseSplit.value).isEqualTo(expectedAmount)
         assertThat(baseSplit.quantity).isEqualTo(expectedAmount)
         assertThat(baseSplit.type).isEqualTo(TransactionType.DEBIT)
@@ -645,8 +644,9 @@ class TransactionsActivityTest : GnuAndroidTest() {
         assertThat(transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)).isZero
         assertThat(transactionsDbAdapter.getCountByAccount(account.uid)).isOne
 
+        val currency = commoditiesDbAdapter.getCurrency(CURRENCY_CODE)!!
         assertThat(accountsDbAdapter.getAccountBalance(account))
-            .isEqualTo(Money("1024", CURRENCY_CODE))
+            .isEqualTo(Money("1024", currency))
     }
 
     @Test
@@ -683,7 +683,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         TransactionRecorder().onReceive(transactionsActivity, transactionIntent)
 
-        val afterCount = transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
+        val account = accountsDbAdapter.getRecord(TRANSACTIONS_ACCOUNT_UID)
+        val afterCount = transactionsDbAdapter.getCountByAccount(account)
 
         assertThat(beforeCount + 1).isEqualTo(afterCount)
 
@@ -692,9 +693,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         for (transaction in transactions) {
             if (transaction.description == "Power intents") {
                 assertThat(transaction.notes).isEqualTo("Intents for sale")
-                assertThat(
-                    transaction.getBalance(TRANSACTIONS_ACCOUNT_UID).toDouble()
-                ).isEqualTo(4.99)
+                assertThat(transaction.getBalance(account).toDouble()).isEqualTo(4.99)
             }
         }
     }
@@ -764,7 +763,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         assertThat(baseSplit.quantity).isEqualTo(expectedValueAmount)
 
         val transferSplit = transaction.getSplits(account.uid)[0]
-        val convertedQuantity = Money("5", "BGN")
+        val currencyBGN = commoditiesDbAdapter.getCurrency("BGN")!!
+        val convertedQuantity = Money("5", currencyBGN)
         assertThat(transferSplit.value).isEqualTo(expectedValueAmount)
         assertThat(transferSplit.quantity).isEqualTo(convertedQuantity)
     }
@@ -788,8 +788,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         accountsDbAdapter.addRecord(euroAccount)
 
-        val expectedValue = Money(BigDecimal.TEN, COMMODITY)
-        val expectedQty = Money("5", "EUR")
+        val expectedValue = Money(BigDecimal.TEN, Commodity.DEFAULT_COMMODITY)
+        val expectedQty = Money("5", euroCommodity)
 
         val trnDescription = "Multicurrency Test Trn"
         val multiTransaction = Transaction(trnDescription)
@@ -863,6 +863,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         val currencyOther = if ("EUR" == COMMODITY.currencyCode) "USD" else "EUR"
         val commodityOther = commoditiesDbAdapter.getCurrency(currencyOther)!!
         val accountOther = Account("Other Account", commodityOther)
+        val account = accountsDbAdapter.getRecord(TRANSACTIONS_ACCOUNT_UID)
+        val accountTransfer = accountsDbAdapter.getRecord(TRANSFER_ACCOUNT_UID)
 
         accountsDbAdapter.addRecord(accountOther)
 
@@ -871,7 +873,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         val trnDescription = "Multicurrency Test Trn"
         val multiTransaction = Transaction(trnDescription)
-        val split1 = Split(expectedValue, TRANSACTIONS_ACCOUNT_UID)
+        val split1 = Split(expectedValue, account)
         split1.type = TransactionType.CREDIT
         val split2 = Split(expectedValue, expectedQty, accountOther)
         split2.type = TransactionType.DEBIT
@@ -888,8 +890,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
             .contains(expectedValue)
 
         assertThat(
-            savedTransaction.getSplits(TRANSACTIONS_ACCOUNT_UID)[0]
-                .isEquivalentTo(multiTransaction.getSplits(TRANSACTIONS_ACCOUNT_UID)[0])
+            savedTransaction.getSplits(account)[0]
+                .isEquivalentTo(multiTransaction.getSplits(account)[0])
         ).isTrue()
 
         refreshTransactionsList()
@@ -925,22 +927,22 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         val editedTransaction = transactionsDbAdapter.getRecord(multiTransaction.uid)
         assertThat(
-            editedTransaction.getSplits(TRANSACTIONS_ACCOUNT_UID)[0]
-                .isEquivalentTo(savedTransaction.getSplits(TRANSACTIONS_ACCOUNT_UID)[0])
+            editedTransaction.getSplits(account)[0]
+                .isEquivalentTo(savedTransaction.getSplits(account)[0])
         ).isTrue()
 
-        val firstAcctBalance = accountsDbAdapter.getAccountBalance(TRANSACTIONS_ACCOUNT_UID)
+        val firstAcctBalance = accountsDbAdapter.getAccountBalance(account)
         assertThat(firstAcctBalance)
-            .isEqualTo(editedTransaction.getBalance(TRANSACTIONS_ACCOUNT_UID))
+            .isEqualTo(editedTransaction.getBalance(account))
 
-        val transferBalance = accountsDbAdapter.getAccountBalance(TRANSFER_ACCOUNT_UID)
+        val transferBalance = accountsDbAdapter.getAccountBalance(accountTransfer)
         assertThat(transferBalance)
-            .isEqualTo(editedTransaction.getBalance(TRANSFER_ACCOUNT_UID))
+            .isEqualTo(editedTransaction.getBalance(accountTransfer))
 
-        assertThat(editedTransaction.getBalance(TRANSFER_ACCOUNT_UID))
+        assertThat(editedTransaction.getBalance(accountTransfer))
             .isEqualTo(expectedValue)
 
-        val transferAcctSplit = editedTransaction.getSplits(TRANSFER_ACCOUNT_UID)[0]
+        val transferAcctSplit = editedTransaction.getSplits(accountTransfer)[0]
         assertThat(transferAcctSplit.quantity).isEqualTo(expectedValue)
         assertThat(transferAcctSplit.value).isEqualTo(expectedValue)
     }
@@ -1190,15 +1192,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
         private const val TRANSFER_ACCOUNT_UID = "transfer_account"
         private const val CURRENCY_CODE = "USD"
 
-        private var COMMODITY: Commodity = Commodity.DEFAULT_COMMODITY
-
-        private lateinit var accountsDbAdapter: AccountsDbAdapter
-        private lateinit var transactionsDbAdapter: TransactionsDbAdapter
-        private lateinit var splitsDbAdapter: SplitsDbAdapter
-        private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
-        private lateinit var scheduledActionDbAdapter: ScheduledActionDbAdapter
-        private lateinit var recurrenceDbAdapter: RecurrenceDbAdapter
-
         @ClassRule
         @JvmField
         val disableAnimationsRule = DisableAnimationsRule()
@@ -1208,14 +1201,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
         fun prepareTestCase() {
             configureDevice()
             preventFirstRunDialogs()
-
-            accountsDbAdapter = AccountsDbAdapter.instance
-            transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
-            splitsDbAdapter = transactionsDbAdapter.splitsDbAdapter
-            commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
-            scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
-            recurrenceDbAdapter = scheduledActionDbAdapter.recurrenceDbAdapter
-            COMMODITY = commoditiesDbAdapter.getCurrency(CURRENCY_CODE)!!
         }
     }
 }

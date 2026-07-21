@@ -190,12 +190,5 @@ class BudgetsDbAdapter
         private const val INDEX_COLUMN_DESCRIPTION = INDEX_COLUMN_NAME + 1
         private const val INDEX_COLUMN_RECURRENCE_UID = INDEX_COLUMN_DESCRIPTION + 1
         private const val INDEX_COLUMN_NUM_PERIODS = INDEX_COLUMN_RECURRENCE_UID + 1
-
-        /**
-         * Returns an instance of the budget database adapter
-         *
-         * @return BudgetsDbAdapter instance
-         */
-        val instance: BudgetsDbAdapter get() = GnuCashApplication.budgetDbAdapter!!
     }
 }

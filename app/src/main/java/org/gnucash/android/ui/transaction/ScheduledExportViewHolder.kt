@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import org.gnucash.android.R
 import org.gnucash.android.databinding.ListItemScheduledTrxnBinding
+import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
@@ -12,9 +13,10 @@ import org.gnucash.android.util.getDocumentName
 import timber.log.Timber
 
 internal class ScheduledExportViewHolder(
+    scheduledActionDbAdapter: ScheduledActionDbAdapter,
     binding: ListItemScheduledTrxnBinding,
     refreshable: Refreshable
-) : ScheduledViewHolder(binding, refreshable) {
+) : ScheduledViewHolder(scheduledActionDbAdapter, binding, refreshable) {
 
     override fun bind(scheduledAction: ScheduledAction) {
         super.bind(scheduledAction)
