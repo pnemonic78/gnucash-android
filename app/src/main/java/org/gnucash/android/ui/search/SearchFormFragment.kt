@@ -10,12 +10,13 @@ import android.widget.AdapterView
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.FragmentSearchFormBinding
 import org.gnucash.android.databinding.ItemSearchAccountBinding
 import org.gnucash.android.databinding.ItemSearchDateBinding
@@ -24,6 +25,7 @@ import org.gnucash.android.databinding.ItemSearchMemoBinding
 import org.gnucash.android.databinding.ItemSearchNotesBinding
 import org.gnucash.android.databinding.ItemSearchNumberBinding
 import org.gnucash.android.databinding.ItemSearchNumericBinding
+import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter
 import org.gnucash.android.ui.adapter.SpinnerArrayAdapter
@@ -31,18 +33,20 @@ import org.gnucash.android.ui.adapter.SpinnerItem
 import org.gnucash.android.ui.search.SearchResultsFragment.Companion.EXTRA_FORM
 import org.gnucash.android.ui.text.DefaultTextWatcher
 import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment
-import org.gnucash.android.ui.util.widget.CalculatorEditText.OnValueChangedListener
 import org.gnucash.android.util.toMillis
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
-import java.math.BigDecimal
 
-class SearchFormFragment : Fragment() {
+class SearchFormFragment : DatabaseFragment() {
     private val viewModel by viewModels<SearchFormViewModel>()
     private var binding: FragmentSearchFormBinding? = null
 
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        accountsDbAdapter = readableDatabaseHolder.accountsDbAdapter
 
         lifecycleScope.launch {
             viewModel.query.collect { sql ->
@@ -77,11 +81,9 @@ class SearchFormFragment : Fragment() {
     }
 
     private fun showResults(sqlWhere: String) {
-        val args = Bundle()
-        args.putString(EXTRA_FORM, sqlWhere)
-
-        val fragment = SearchResultsFragment()
-        fragment.arguments = args
+        val fragment = SearchResultsFragment().withArguments {
+            putString(EXTRA_FORM, sqlWhere)
+        }
 
         val fm = parentFragmentManager
         fm.beginTransaction()
@@ -323,14 +325,19 @@ class SearchFormFragment : Fragment() {
         binding.comparison.post {
             binding.comparison.setSelection(adapter.getValuePosition(criterion.compare))
         }
-        val accountsAdapter = QualifiedAccountNameAdapter(context, viewLifecycleOwner)
-            .load { adapter ->
-                criterion.value?.let { account ->
-                    binding.accountsListSpinner.post {
-                        binding.accountsListSpinner.setSelection(adapter.getValuePosition(account))
+        val accountsAdapter =
+            QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
+                .load { adapter ->
+                    criterion.value?.let { account ->
+                        binding.accountsListSpinner.post {
+                            binding.accountsListSpinner.setSelection(
+                                adapter.getValuePosition(
+                                    account
+                                )
+                            )
+                        }
                     }
                 }
-            }
         binding.accountsListSpinner.adapter = accountsAdapter
         binding.accountsListSpinner.onItemSelectedListener =
             DefaultItemSelectedListener { parent: AdapterView<*>,

@@ -20,9 +20,6 @@ import android.text.format.DateUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.db.toTimestamp
 import org.gnucash.android.export.ExportFormat
 import org.gnucash.android.export.ExportParams
@@ -66,8 +63,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
     private val transferAccount = Account("Transfer Account")
 
     @Before
-    override fun setUp() {
-        super.setUp()
+    fun setUp() {
         baseAccount.commodity = Commodity.DEFAULT_COMMODITY
         transferAccount.commodity = Commodity.DEFAULT_COMMODITY
 
@@ -84,11 +80,9 @@ class ScheduledActionServiceTest : BookHelperTest() {
         actionUID = templateTransaction.uid
         Timber.v("action ID: $actionUID")
 
-        val accountsDbAdapter = AccountsDbAdapter.instance
         accountsDbAdapter.addRecord(baseAccount)
         accountsDbAdapter.addRecord(transferAccount)
 
-        transactionsDbAdapter = TransactionsDbAdapter.instance
         transactionsDbAdapter.insert(templateTransaction)
     }
 
@@ -158,7 +152,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
             byDays = listOf(Calendar.MONDAY)
         }
         scheduledAction.setRecurrence(recurrence)
-        ScheduledActionDbAdapter.instance.insert(scheduledAction)
+        scheduledActionDbAdapter.insert(scheduledAction)
 
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
@@ -176,7 +170,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
 
         scheduledAction.setRecurrence(PeriodType.WEEK, 2)
         scheduledAction.endDate = DateTime(2017, 8, 16, 9, 0).millis
-        ScheduledActionDbAdapter.instance.insert(scheduledAction)
+        scheduledActionDbAdapter.insert(scheduledAction)
 
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
@@ -211,7 +205,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
             byDays = listOf(Calendar.MONDAY)
         }
         scheduledAction.setRecurrence(recurrence)
-        ScheduledActionDbAdapter.instance.insert(scheduledAction)
+        scheduledActionDbAdapter.insert(scheduledAction)
 
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 

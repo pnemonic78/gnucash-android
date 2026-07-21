@@ -2,6 +2,7 @@ package org.gnucash.android.test.ui
 
 import android.app.Activity
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.view.View
 import androidx.annotation.IdRes
@@ -19,6 +20,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import org.gnucash.android.R
@@ -36,11 +38,13 @@ import org.hamcrest.Matchers.not
 import org.junit.FixMethodOrder
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import java.io.File
 import java.io.InputStream
 import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@SdkSuppress(minSdkVersion = 30)// SDK 30+ for Java 11
 abstract class GnuAndroidTest {
 
     protected val context: Context = GnuCashApplication.appContext
@@ -177,8 +181,9 @@ abstract class GnuAndroidTest {
     }
 
     protected fun importGnuCash(filename: String): String {
+        val uri = Uri.fromFile(File(filename))
         val inputStream = getInputStream(openAssetStream(contextTest, filename))
-        val bookUID = GncXmlImporter.parse(context, inputStream)
+        val bookUID = GncXmlImporter.parse(context, uri, inputStream)
         BookUtils.activateBook(bookUID)
         return bookUID
     }
