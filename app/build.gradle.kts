@@ -59,7 +59,14 @@ android {
 
     signingConfigs {
         getByName("debug") {
-            storeFile = file("../debug.keystore")
+            if (project.hasProperty("RELEASE_STORE_FILE")) {
+                storeFile = file(project.properties["RELEASE_STORE_FILE"] as String)
+                storePassword = project.properties["RELEASE_STORE_PASSWORD"] as String
+                keyAlias = project.properties["RELEASE_KEY_ALIAS"] as String
+                keyPassword = project.properties["RELEASE_KEY_PASSWORD"] as String
+            } else {
+                storeFile = file("../debug.keystore")
+            }
         }
 
         create("release") {
