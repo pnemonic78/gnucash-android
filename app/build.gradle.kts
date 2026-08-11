@@ -30,7 +30,8 @@ android {
         minSdk = 23
         targetSdk = 37
         versionCode = (((((versionMajor * 100) + versionMinor) * 1000) + versionPatch) * 1000) + versionBuild
-        versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
+        versionName = "${versionMajor}.${versionMinor}.${versionPatch}.${versionBuild}"
+        println("default, version: $versionName")
         resValue("string", "app_name", "GnuCash")
         resValue("string", "app_playstore_url", "market://details?id=${applicationId}")
         resValue("string", "app_version_name", "$versionName")
@@ -104,6 +105,7 @@ android {
             applicationIdSuffix = ".devel"
             versionName =
                 "${versionMajor}.${versionMinor}.${versionPatch}.${versionBuild}-$gitCommit"
+            println("$name, version: $versionName")
             resValue("string", "app_name", "GnuCash dev")
             resValue("string", "app_version_name", versionName.toString())
 
@@ -113,6 +115,7 @@ android {
         create("beta") {
             dimension = "stability"
             versionName = "${versionMajor}.${versionMinor}.${versionPatch}.${versionBuild}"
+            println("$name, version: $versionName")
             resValue("string", "app_name", "GnuCash beta")
             resValue("string", "app_version_name", versionName.toString())
 
@@ -122,6 +125,8 @@ android {
 
         create("production") {
             dimension = "stability"
+            versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
+            println("$name, version: $versionName")
 
             buildConfigField("Boolean", "GOOGLE_GCM", "true")
             extraProperties["useGoogleGcm"] = true
