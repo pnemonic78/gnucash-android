@@ -18,6 +18,7 @@ package org.gnucash.android.test.ui
 import android.content.ContentValues
 import android.content.Intent
 import androidx.core.content.edit
+import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.clearText
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
@@ -25,6 +26,7 @@ import androidx.test.espresso.action.ViewActions.pressBack
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
 import androidx.test.espresso.matcher.ViewMatchers.isChecked
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -38,6 +40,7 @@ import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
+import org.gnucash.android.db.adapter.RecurrenceDbAdapter
 import org.gnucash.android.db.adapter.SplitsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
@@ -57,6 +60,8 @@ import org.gnucash.android.ui.transaction.TransactionsActivity
 import org.gnucash.android.ui.transaction.TransactionsListFragment
 import org.gnucash.android.util.set
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.instanceOf
+import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Before
@@ -979,6 +984,45 @@ class TransactionsActivityTest : GnuAndroidTest() {
         }
     }
 
+    @Test
+    fun testScheduleTransaction() {
+        assertThat(transaction.scheduledActionUID).isNull()
+
+        validateTransactionListDisplayed()
+
+        waitForView(R.id.edit_transaction)
+        sleep(1000)
+        clickViewId(R.id.edit_transaction)
+
+        sleep(1000)
+        validateEditTransactionFields(transaction)
+
+        clickViewId(R.id.input_recurrence)
+        // Enable repeat
+        clickViewId(R.id.repeat_switch)
+        // Set the recurrence to monthly.
+        clickViewId(R.id.freqSpinner)
+        val monthlyLabel =
+            context.resources.getStringArray(com.codetroopers.betterpickers.R.array.recurrence_freq)[3]
+        onData(allOf(
+            `is`(instanceOf(String::class.java)),
+            `is`(monthlyLabel))
+        ).inRoot(isPlatformPopup())
+            .performClick()
+        clickViewId(com.codetroopers.betterpickers.R.id.done_button)
+        clickViewId(R.id.menu_save)
+
+        val editedTransaction = transactionsDbAdapter.getRecord(transaction.uid)
+        assertThat(editedTransaction.scheduledActionUID).isNotNull()
+        val schedule = recurrenceDbAdapter.getRecord(editedTransaction.scheduledActionUID!!)
+        assertThat(schedule.multiplier).isOne()
+        assertThat(schedule.count).isZero()
+        assertThat(schedule.occurrences).isZero()
+        assertThat(schedule.periodEnd).isNull()
+        assertThat(schedule.occurrences).isZero()
+        assertThat(schedule.ruleString).startsWith("FREQ=MONTHLY")
+    }
+
     companion object {
         private const val TRANSACTION_AMOUNT = "9.99"
         private const val TRANSACTION_NAME = "Pizza"
@@ -995,6 +1039,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         private lateinit var transactionsDbAdapter: TransactionsDbAdapter
         private lateinit var splitsDbAdapter: SplitsDbAdapter
         private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
+        private lateinit var recurrenceDbAdapter: RecurrenceDbAdapter
 
         @ClassRule
         @JvmField
@@ -1010,6 +1055,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
             transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
             splitsDbAdapter = transactionsDbAdapter.splitsDbAdapter
             commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
+            recurrenceDbAdapter = RecurrenceDbAdapter.instance
             COMMODITY = commoditiesDbAdapter.getCurrency(CURRENCY_CODE)!!
         }
     }
