@@ -144,9 +144,7 @@ class ScheduledActionService {
          * @param dbHolder        Database holder
          * @param scheduledAction The scheduled action.
          */
-        //made public static for testing. Do not call these methods directly
-        @VisibleForTesting
-        fun processScheduledAction(dbHolder: DatabaseHolder, scheduledAction: ScheduledAction) {
+        internal fun processScheduledAction(dbHolder: DatabaseHolder, scheduledAction: ScheduledAction) {
             val now = System.currentTimeMillis()
             val totalPlannedExecutions = scheduledAction.totalPlannedExecutionCount
             val executionCount = scheduledAction.instanceCount
@@ -186,7 +184,6 @@ class ScheduledActionService {
             }
 
             if (executionCount > 0) {
-                scheduledAction.lastRunDate = System.currentTimeMillis()
                 // Set the execution count in the object because it will be checked
                 // for the next iteration in the calling loop.
                 // This call is important, do not remove!!
@@ -194,8 +191,7 @@ class ScheduledActionService {
                 // Update the last run time and execution count
                 val contentValues = ContentValues()
                 contentValues[ScheduledActionEntry.COLUMN_LAST_OCCUR] = scheduledAction.lastRunDate
-                contentValues[ScheduledActionEntry.COLUMN_INSTANCE_COUNT] =
-                    scheduledAction.instanceCount
+                contentValues[ScheduledActionEntry.COLUMN_INSTANCE_COUNT] = scheduledAction.instanceCount
 
                 val db = dbHolder.db
                 val where = ScheduledActionEntry.COLUMN_UID + " = ?"
@@ -232,6 +228,7 @@ class ScheduledActionService {
                 Timber.w("Backup/export did not occur. There might have been no new transactions to export")
                 return 0
             }
+            scheduledAction.lastRunDate = System.currentTimeMillis()
             return 1
         }
 
@@ -295,15 +292,18 @@ class ScheduledActionService {
             while (transactionTime <= endTime) {
                 val transaction = template.copy(datePosted = transactionTime)
                 transaction.scheduledActionUID = scheduledAction.uid
+                transaction.isTemplate = false
                 for (split in transaction.splits) {
                     if (split.scheduledActionAccountUID.isNullOrEmpty()) continue
                     split.accountUID = split.scheduledActionAccountUID
                     split.scheduledActionAccountUID = null
+                    split.quantity = split.value
                 }
 
                 transactionsDbAdapter.insert(transaction)
-                //required for computingNextScheduledExecutionTime
+                // required for computing next scheduled execution time
                 scheduledAction.instanceCount = previousExecutionCount + ++executionCount
+                scheduledAction.lastRunDate = transactionTime
 
                 if (totalPlannedExecutions in 1..executionCount) {
                     break //if we hit the total planned executions set, then abort

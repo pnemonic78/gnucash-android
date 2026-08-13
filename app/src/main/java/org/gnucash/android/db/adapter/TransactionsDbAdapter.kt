@@ -187,13 +187,16 @@ class TransactionsDbAdapter(
      * @param accountUID GUID of account
      * @return Cursor with set of transactions
      */
-    fun fetchTransactionsForAccount(accountUID: String): Cursor {
+    fun fetchTransactionsForAccount(accountUID: String, isTemplate: Boolean? = null): Cursor {
         val table = TransactionEntry.TABLE_NAME + " t" +
                 " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON " +
                 "t." + TransactionEntry.COLUMN_UID + " = " +
                 "s." + SplitEntry.COLUMN_TRANSACTION_UID
         val projectionIn = allColumnsPrefix("t.")
-        val selection = "s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
+        var selection = "s." + SplitEntry.COLUMN_ACCOUNT_UID + " = ?"
+        if (isTemplate != null) {
+            selection += " AND t." + TransactionEntry.COLUMN_TEMPLATE + " = " + if (isTemplate) "1" else "0"
+        }
         val selectionArgs = arrayOf<String?>(accountUID)
         val sortOrder = "t." + TransactionEntry.COLUMN_DATE_POSTED + " DESC, " +
                 "t." + TransactionEntry.COLUMN_NUMBER + " DESC, " +

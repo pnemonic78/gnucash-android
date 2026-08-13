@@ -21,6 +21,7 @@ import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter
 import org.gnucash.android.R
 import org.gnucash.android.ui.util.RecurrenceParser
+import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.dayOfWeek
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfWeek
@@ -47,6 +48,7 @@ import kotlin.math.max
 class Recurrence(periodType: PeriodType) : BaseModel() {
 
     private val event = EventRecurrence()
+    val eventRaw get() = event
 
     /**
      * Return the [PeriodType] for this recurrence
@@ -61,7 +63,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * Timestamp of start of recurrence
      */
     var periodStart: Long
-        get() = event.startDate.toMillis(true)
+        get() = event.startDate?.toMillis(true) ?: NEVER
         set(value) {
             event.startDate = Time().apply { set(value) }
         }
@@ -82,8 +84,8 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
         }
 
     init {
+        // Force calling the setter.
         this.periodType = periodType
-        this.periodStart = System.currentTimeMillis()
         this.multiplier = 1
     }
 
@@ -125,6 +127,21 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
                 .append(context.getString(R.string.repeat_until_date, endDateString))
         }
         return repeatBuilder.toString()
+    }
+
+    /**
+     * Returns the event schedule (start, end and recurrence)
+     *
+     * @return String description of repeat schedule
+     */
+    fun getRepeatStringBuilder(context: Context): StringBuilder {
+        val repeatBuilder = StringBuilder(frequencyRepeatString(context))
+        periodEnd?.let { periodEnd ->
+            val endDateString = DateFormat.getDateInstance().format(Date(periodEnd))
+            repeatBuilder.append(", ")
+                .append(context.getString(R.string.repeat_until_date, endDateString))
+        }
+        return repeatBuilder
     }
 
     /**
@@ -352,12 +369,15 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * @return String describing the period type
      */
     fun frequencyRepeatString(context: Context): String {
-        val res = context.resources
         return try {
-            EventRecurrenceFormatter.getRepeatString(context, res, event, true)
-        } catch (e: Exception) {
+            EventRecurrenceFormatter.getRepeatString(context, context.resources, event, true)
+        } catch (_: Exception) {
             "?"
         }
+    }
+
+    fun isEmpty(): Boolean {
+        return (periodType == PeriodType.ONCE) && (count == 0) && (occurrences == 0)
     }
 
     companion object {

@@ -64,6 +64,7 @@ import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
+import org.gnucash.android.service.ScheduledActionService
 import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.UxArgument
@@ -847,26 +848,19 @@ class TransactionFormFragment : MenuFragment(),
         this.transaction = transaction
 
         try {
-            if (transaction.isTemplate) { //template is automatically checked when a transaction is scheduled
-                if (editMode && wasScheduled) {
-                    transaction.scheduledActionUID = scheduledActionUID
-                    scheduleRecurringTransaction(transaction)
-                } else { //means it was new transaction, so a new template
-                    val templateTransaction = transaction.copy()
-                    templateTransaction.isTemplate = true
-                    transactionsDbAdapter.insert(templateTransaction)
-                    scheduleRecurringTransaction(templateTransaction)
-                }
+            // template is automatically checked when a transaction is scheduled
+            if (transaction.isTemplate) {
+                transaction.scheduledActionUID = scheduledActionUID
+                scheduleRecurringTransaction(transaction)
+            } else if (wasScheduled) {
+                // we were editing a schedule and it was turned off
+                scheduledActionDbAdapter.deleteRecord(scheduledActionUID)
             }
 
             // 1) Transactions may be existing or non-existing
             // 2) when transaction exists in the db, the splits may exist or not exist in the db
             // So replace is chosen.
             transactionsDbAdapter.replace(transaction)
-
-            if (!transaction.isTemplate && wasScheduled) { //we were editing a schedule and it was turned off
-                scheduledActionDbAdapter.deleteRecord(scheduledActionUID)
-            }
 
             finish(Activity.RESULT_OK)
         } catch (ae: ArithmeticException) {
@@ -878,7 +872,6 @@ class TransactionFormFragment : MenuFragment(),
     }
 
     private fun maybeSaveTransaction(binding: FragmentTransactionFormBinding) {
-        val view = binding.root
         if (canSave(binding)) {
             saveTransaction(binding)
         } else {
@@ -908,11 +901,22 @@ class TransactionFormFragment : MenuFragment(),
 
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
         scheduledAction.setRecurrence(recurrence)
+        scheduledAction.startDate = transaction.datePosted
 
         var scheduledActionUID = transaction.scheduledActionUID
 
-        if (!scheduledActionUID.isNullOrEmpty()) { //if we are editing an existing schedule
-            if (recurrence == null) {
+        if (scheduledActionUID.isNullOrEmpty()) {
+            if (!recurrence.isEmpty()) {
+                scheduledAction.actionUID = transactionUID
+                scheduledActionDbAdapter.replace(scheduledAction)
+                scheduledActionUID = scheduledAction.uid
+                transaction.scheduledActionUID = scheduledActionUID
+                ScheduledActionService.processScheduledAction(scheduledActionDbAdapter.holder, scheduledAction)
+                snackLong(R.string.toast_scheduled_recurring_transaction)
+            }
+        } else {
+            // if we are editing an existing schedule
+            if (recurrence.isEmpty()) {
                 scheduledActionDbAdapter.deleteRecord(scheduledActionUID)
                 transaction.scheduledActionUID = null
             } else {
@@ -920,17 +924,8 @@ class TransactionFormFragment : MenuFragment(),
                 scheduledActionDbAdapter.updateRecurrenceAttributes(scheduledAction)
                 snackLong(R.string.toast_updated_transaction_recurring_schedule)
             }
-        } else {
-            if (recurrence != null) {
-                scheduledAction.actionUID = transactionUID
-                scheduledActionDbAdapter.replace(scheduledAction)
-                scheduledActionUID = scheduledAction.uid
-                transaction.scheduledActionUID = scheduledActionUID
-                snackLong(R.string.toast_scheduled_recurring_transaction)
-            }
         }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
