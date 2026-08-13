@@ -38,6 +38,7 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.unit.BookHelperTest
+import org.gnucash.android.test.unit.importer.GncXmlHandlerTest.Companion.testCommon1
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import org.gnucash.android.util.set
 import org.gnucash.android.util.toMillis
@@ -449,7 +450,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
     }
 
     @Test
-    fun `common accounts with 1 of each type - once`() {
+    fun `simple accounts with 1 of each type - once`() {
         val bookUID = importGnuCashXml("simpleScheduledTransactionImport.xml")
         assertSimpleScheduledTransactionImport(bookUID)
         val actions = scheduledActionDbAdapter.allRecords
@@ -467,7 +468,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
     }
 
     @Test
-    fun `common accounts with 1 of each type - 1 month`() {
+    fun `simple accounts with 1 of each type - 1 month`() {
         val bookUID = importGnuCashXml("simpleScheduledTransactionImport.xml")
         assertSimpleScheduledTransactionImport(bookUID)
         val actions = scheduledActionDbAdapter.allRecords
@@ -487,7 +488,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
     }
 
     @Test
-    fun `common accounts with 1 of each type - 109 months`() {
+    fun `simple accounts with 1 of each type - 109 months`() {
         val bookUID = importGnuCashXml("simpleScheduledTransactionImport.xml")
         assertSimpleScheduledTransactionImport(bookUID)
         val actions = scheduledActionDbAdapter.allRecords
@@ -580,5 +581,52 @@ class ScheduledActionServiceTest : BookHelperTest() {
         assertThat(splitCredit.value).isEqualTo(Money(20.00, Commodity.USD))
 
         assertThat(splitDebit.isPairOf(splitCredit)).isTrue()
+    }
+
+    @Test
+    fun `common accounts with 1 of each type - schedule`() {
+        val bookUID = importGnuCashXml("common_1.gnucash")
+        testCommon1(
+            bookUID,
+            accountsDbAdapter,
+            booksDbAdapter,
+            budgetsDbAdapter,
+            commoditiesDbAdapter,
+            pricesDbAdapter,
+            recurrenceDbAdapter,
+            scheduledActionDbAdapter,
+            transactionsDbAdapter,
+        )
+
+        val actions = scheduledActionDbAdapter.allRecords
+        val scheduledAction = actions[0]
+        assertThat(scheduledAction.uid).isEqualTo("11d621073ed745debd5027325d7853a4")
+        assertThat(scheduledAction.instanceCount).isOne
+        assertThat(scheduledAction.isEnabled).isTrue
+        assertThat(scheduledAction.isAutoCreate).isFalse
+        assertThat(scheduledAction.isAutoCreateNotify).isFalse
+        val recurrence = scheduledAction.recurrence
+        assertThat(recurrence.periodType).isEqualTo(PeriodType.END_OF_MONTH)
+        assertThat(recurrence.periodStart).isEqualTo(1748649600000L)
+
+        ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
+        val count = scheduledAction.instanceCount - 1
+        assertThat(count).isGreaterThanOrEqualTo(15)
+
+        // 4+ regular transactions + 1 template transaction
+        assertThat(transactionsDbAdapter.recordsCount).isEqualTo(3L + count)
+
+        val transactions = transactionsDbAdapter.allRecords
+        val transaction = transactions[transactions.lastIndex]
+        assertThat(transaction.description).isEqualTo("AT&T")
+        val splits = transaction.splits
+        assertThat(splits[0].type).isEqualTo(TransactionType.DEBIT)
+        assertThat(splits[0].accountUID).isEqualTo("84e8882f38514ee8b9c7ad6ede968a8b")
+        assertThat(splits[0].value.toDouble()).isEqualTo(99.90)
+        assertThat(splits[0].quantity.toDouble()).isEqualTo(99.90)
+        assertThat(splits[1].type).isEqualTo(TransactionType.CREDIT)
+        assertThat(splits[1].accountUID).isEqualTo("64eaf21b57a04b9d8ebe7455db238b89")
+        assertThat(splits[1].value.toDouble()).isEqualTo(99.90)
+        assertThat(splits[1].quantity.toDouble()).isEqualTo(99.90)
     }
 }

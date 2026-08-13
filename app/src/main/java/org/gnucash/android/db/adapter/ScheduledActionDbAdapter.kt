@@ -237,6 +237,14 @@ class ScheduledActionDbAdapter(
         return getRecordsCount(where, whereArgs)
     }
 
+    override fun deleteRecord(model: ScheduledAction): Boolean {
+        val result = super.deleteRecord(model)
+        if (result) {
+            recurrenceDbAdapter.deleteRecord(model.recurrence)
+        }
+        return result
+    }
+
     companion object {
         private val entryColumns = arrayOf(
             ScheduledActionEntry.COLUMN_ACTION_UID,

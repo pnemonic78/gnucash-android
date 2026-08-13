@@ -295,6 +295,8 @@ class GncXmlHandler(
             db.enableWriteAheadLogging()
         } catch (e: SQLException) {
             Timber.e(e)
+        } catch (e: IllegalStateException) {
+            Timber.e(e)
         }
         // disable foreign key. The database structure should be ensured by the data inserted.
         // it will make insertion much faster.
@@ -1111,9 +1113,12 @@ class GncXmlHandler(
                 val commodity = getCommodityForAccount(accountUID)
 
                 split.value = Money(value, commodity)
+                split.quantity = split.value
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {
+            Timber.e(e, "Error parsing template split formula [%s]", value)
+        } catch (e: ParseException) {
             Timber.e(e, "Error parsing template split formula [%s]", value)
         }
     }
@@ -1138,6 +1143,7 @@ class GncXmlHandler(
                 val commodity = getCommodityForAccount(accountUID)
 
                 split.value = Money(value, commodity)
+                split.quantity = split.value
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {

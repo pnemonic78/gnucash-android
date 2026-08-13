@@ -46,7 +46,7 @@ abstract class ScheduledViewHolder(
         if (scheduledAction == null) return null
 
         val context = itemView.context
-        val lastTime = scheduledAction.lastRunTime
+        val lastTime = scheduledAction.lastRunDate
         if (lastTime > 0) {
             val endTime = scheduledAction.endDate
             val period = if (endTime > 0 && endTime < System.currentTimeMillis()) {
