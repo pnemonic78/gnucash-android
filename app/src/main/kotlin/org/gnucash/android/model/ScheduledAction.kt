@@ -147,8 +147,7 @@ class ScheduledAction    //all actions are enabled by default
             val count = instanceCount
             if (count <= 0) return -1
             var startDate = LocalDateTime(startDate)
-            val multiplier = recurrence.multiplier
-            val factor = (count - 1) * multiplier
+            val factor = (count - 1) * recurrence.multiplier
             startDate = when (recurrence.periodType) {
                 PeriodType.ONCE -> startDate
                 PeriodType.HOUR -> startDate.plusHours(factor)
@@ -173,7 +172,7 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time in milliseconds
      */
     fun computeNextCountBasedScheduledExecutionTime(): Long {
-        return computeNextScheduledExecutionTimeStartingAt(timeOfLastSchedule)
+        return computeNextScheduledExecutionTimeStartingAt(recurrence.periodStart)
     }
 
     /**
@@ -196,32 +195,28 @@ class ScheduledAction    //all actions are enabled by default
      * This method does not consider the end time, or number of times it should be run.
      * It only considers when the next execution would theoretically be due.
      *
-     * @param startTime time in milliseconds to use as start to compute the next schedule.
+     * @param startAt time in milliseconds to use as start to compute the next schedule.
      * @return Next run time in milliseconds
      */
-    private fun computeNextScheduledExecutionTimeStartingAt(startTime: Long): Long {
-        if (startTime <= 0) { // has never been run
-            return startDate
-        }
-        val recurrence = recurrence
-        val multiplier = recurrence.multiplier
-        val startDate = LocalDateTime(startTime)
+    private fun computeNextScheduledExecutionTimeStartingAt(startAt: Long): Long {
+        val count = instanceCount
+        if (count <= 0) return startDate
+        val factor = (count - 1) * recurrence.multiplier
+        val startDate = LocalDateTime(startAt)
         val nextScheduledExecution: LocalDateTime = when (recurrence.periodType) {
-            PeriodType.ONCE -> if (instanceCount < multiplier) {
-                startDate
-            } else {
+            PeriodType.ONCE -> {
                 val endTime = endDate
                 return if (endTime > 0) endTime else System.currentTimeMillis()
             }
 
-            PeriodType.HOUR -> startDate.plusHours(multiplier)
-            PeriodType.DAY -> startDate.plusDays(multiplier)
-            PeriodType.WEEK -> computeNextWeeklyExecutionStartingAt(recurrence, startDate)
-            PeriodType.MONTH -> startDate.plusMonths(multiplier)
-            PeriodType.YEAR -> startDate.plusYears(multiplier)
-            PeriodType.LAST_WEEKDAY -> startDate.plusMonths(multiplier).lastDayOfWeek(startDate)
-            PeriodType.NTH_WEEKDAY -> startDate.plusMonths(multiplier).dayOfWeek(startDate)
-            PeriodType.END_OF_MONTH -> startDate.plusMonths(multiplier).lastDayOfMonth()
+            PeriodType.HOUR -> startDate.plusHours(factor)
+            PeriodType.DAY -> startDate.plusDays(factor)
+            PeriodType.WEEK -> computeNextWeeklyExecutionStartingAt(startDate)
+            PeriodType.MONTH -> startDate.plusMonths(factor)
+            PeriodType.YEAR -> startDate.plusYears(factor)
+            PeriodType.LAST_WEEKDAY -> startDate.plusMonths(factor).lastDayOfWeek(startDate)
+            PeriodType.NTH_WEEKDAY -> startDate.plusMonths(factor).dayOfWeek(startDate)
+            PeriodType.END_OF_MONTH -> startDate.plusMonths(factor).lastDayOfMonth()
         }
         return nextScheduledExecution.toDateTime().millis
     }
@@ -237,12 +232,10 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time as a LocalDateTime. A date in the future, if no days of the week
      * were set in the Recurrence.
      */
-    private fun computeNextWeeklyExecutionStartingAt(
-        recurrence: Recurrence,
-        startTime: LocalDateTime
-    ): LocalDateTime {
-        if (recurrence.byDays.isEmpty())
-            return LocalDateTime.now().plusDays(1) // Just a date in the future
+    private fun computeNextWeeklyExecutionStartingAt(startTime: LocalDateTime): LocalDateTime {
+        val recurrence = recurrence
+        if (recurrence.byDays.isEmpty()) return LocalDateTime.now()
+            .plusDays(1) // Just a date in the future
 
         // Look into the week of startTime for another scheduled day of the week
         for (dayOfWeek in recurrence.byDays) {
@@ -252,8 +245,9 @@ class ScheduledAction    //all actions are enabled by default
         }
 
         // Return the first scheduled day of the week from the next due week
+        val factor = recurrence.multiplier - 1
         val firstScheduledDayOfWeek = convertCalendarDayOfWeekToJoda(recurrence.byDays[0])
-        return startTime.plusWeeks(recurrence.multiplier)
+        return startTime.plusWeeks(factor)
             .withDayOfWeek(firstScheduledDayOfWeek)
     }
 
@@ -336,7 +330,7 @@ class ScheduledAction    //all actions are enabled by default
      * @return String description of repeat schedule
      */
     fun getRepeatString(context: Context): String {
-        val ruleBuilder = StringBuilder(recurrence.getRepeatString(context))
+        val ruleBuilder = recurrence.getRepeatStringBuilder(context)
         if (endDate <= 0 && totalPlannedExecutionCount > 0) {
             ruleBuilder.append(", ")
                 .append(context.getString(R.string.repeat_x_times, totalPlannedExecutionCount))
@@ -353,7 +347,6 @@ class ScheduledAction    //all actions are enabled by default
      */
     val ruleString: String
         get() {
-            val recurrence = recurrence ?: return ""
             val ruleBuilder = StringBuilder(recurrence.ruleString)
             if (endDate > 0) {
                 val df = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss'Z'").withZoneUTC()
