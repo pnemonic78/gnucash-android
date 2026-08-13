@@ -511,6 +511,7 @@ class GncXmlHandlerTest : BookHelperTest() {
             val currencyUSD = commoditiesDbAdapter.getCurrency("USD")!!
             assertThat(currencyUSD.symbol).isEqualTo("$")
 
+            assertThat(booksDbAdapter.recordsCount).isGreaterThanOrEqualTo(1)
             assertThat(bookUID).isEqualTo("a7682e5d878e43cea216611401f08463")
             val book = booksDbAdapter.getRecord(bookUID)
             assertThat(book.uid).isEqualTo("a7682e5d878e43cea216611401f08463")
