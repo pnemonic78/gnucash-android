@@ -1,18 +1,22 @@
 package org.gnucash.android.ui.transaction
 
+import android.content.ContentValues
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
 import org.gnucash.android.app.findActivity
 import org.gnucash.android.databinding.ListItemScheduledTrxnBinding
+import org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.ui.common.Refreshable
 import org.gnucash.android.util.BackupManager.backupActiveBookAsync
 import org.gnucash.android.util.formatMediumDateTime
+import org.gnucash.android.util.set
 
 abstract class ScheduledViewHolder(
     protected val binding: ListItemScheduledTrxnBinding,
@@ -24,6 +28,7 @@ abstract class ScheduledViewHolder(
     protected val primaryTextView: TextView = binding.primaryText
     protected val descriptionTextView: TextView = binding.secondaryText
     protected val amountTextView: TextView = binding.rightText
+    protected val enabledView: SwitchCompat = binding.enabledSwitch
     private val menuView: View = binding.optionsMenu
 
     private var scheduledAction: ScheduledAction? = null
@@ -40,6 +45,14 @@ abstract class ScheduledViewHolder(
 
     open fun bind(scheduledAction: ScheduledAction) {
         this.scheduledAction = scheduledAction
+
+        enabledView.isChecked = scheduledAction.isEnabled
+        enabledView.setOnCheckedChangeListener { _, value ->
+            persistEnabled(
+                scheduledAction,
+                value
+            )
+        }
     }
 
     protected fun formatSchedule(scheduledAction: ScheduledAction?): String? {
@@ -80,4 +93,11 @@ abstract class ScheduledViewHolder(
     }
 
     protected abstract fun deleteSchedule(scheduledAction: ScheduledAction)
+
+    private fun persistEnabled(scheduledAction: ScheduledAction, enabled: Boolean) {
+        scheduledAction.isEnabled = enabled
+        val contentValues = ContentValues()
+        contentValues[ScheduledActionEntry.COLUMN_ENABLED] = enabled
+        scheduledActionDbAdapter.updateRecord(scheduledAction.uid, contentValues)
+    }
 }
