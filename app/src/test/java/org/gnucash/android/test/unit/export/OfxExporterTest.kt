@@ -87,9 +87,31 @@ class OfxExporterTest : BookHelperTest() {
 
     @Test
     fun testDateTime() {
-        val tz = TimeZone.getTimeZone("EST")
-        val cal = Calendar.getInstance()
-        cal.timeZone = tz
+        val tzUTC = TimeZone.getTimeZone("UTC")
+        val tz = TimeZone.getTimeZone("America/New_York")
+        var cal = Calendar.getInstance(tzUTC)
+        cal[Calendar.YEAR] = 1996
+        cal[Calendar.MONTH] = Calendar.DECEMBER
+        cal[Calendar.DAY_OF_MONTH] = 5
+        cal[Calendar.HOUR_OF_DAY] = 18
+        cal[Calendar.MINUTE] = 22
+        cal[Calendar.SECOND] = 0
+        cal[Calendar.MILLISECOND] = 124
+
+        val timeInMillisDecember = 849810120124L
+        val timeInMillisJuly = 836590920124L
+
+        // UTC
+        assertThat(cal.timeInMillis).isEqualTo(timeInMillisDecember)
+        var formatted = OfxHelper.formatTime(cal.timeInMillis, tzUTC)
+        assertThat(formatted).isEqualTo("19961205182200.124[0:UTC]")
+        cal[Calendar.MONTH] = Calendar.JULY
+        assertThat(cal.timeInMillis).isEqualTo(timeInMillisJuly)
+        formatted = OfxHelper.formatTime(cal.timeInMillis, tzUTC)
+        assertThat(formatted).isEqualTo("19960705182200.124[0:UTC]")
+
+        // local
+        cal = Calendar.getInstance(tz)
         cal[Calendar.YEAR] = 1996
         cal[Calendar.MONTH] = Calendar.DECEMBER
         cal[Calendar.DAY_OF_MONTH] = 5
@@ -98,12 +120,17 @@ class OfxExporterTest : BookHelperTest() {
         cal[Calendar.SECOND] = 0
         cal[Calendar.MILLISECOND] = 124
 
-        var formatted = OfxHelper.formatTime(cal.timeInMillis, tz)
-        assertThat(formatted).isEqualTo("19961205132200.124[-5:EST]")
-
-        cal[Calendar.MONTH] = Calendar.OCTOBER
+        // local regular
+        assertThat(cal.timeInMillis).isEqualTo(timeInMillisDecember)
         formatted = OfxHelper.formatTime(cal.timeInMillis, tz)
-        assertThat(formatted).isEqualTo("19961005142200.124[-4:EDT]")
+        assertThat(formatted).isEqualTo("19961205132200.124[-5:GMT-05:00]")
+
+        // local "Daylight Savings"
+        cal[Calendar.MONTH] = Calendar.JULY
+        cal[Calendar.HOUR_OF_DAY]++
+        assertThat(cal.timeInMillis).isEqualTo(timeInMillisJuly)
+        formatted = OfxHelper.formatTime(cal.timeInMillis, tz)
+        assertThat(formatted).isEqualTo("19960705142200.124[-4:GMT-04:00]")
     }
 
     @Test
