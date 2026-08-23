@@ -388,9 +388,7 @@ class TransactionFormFragment : MenuFragment(),
      * This method is called if the fragment is used for editing a transaction
      */
     private fun bind(binding: FragmentTransactionFormBinding, transaction: Transaction) {
-        val context = binding.root.context
         val account = requireAccount()
-        val accountUID = account.uid
         binding.inputTransactionName.setTextToEnd(transaction.description)
 
         //when autocompleting, only change the amount if the user has not manually changed it already
@@ -411,12 +409,18 @@ class TransactionFormFragment : MenuFragment(),
         binding.currencySymbol.text = accountCommodity.symbol
         binding.inputTransactionAmount.commodity = accountCommodity
 
+        binding.inputRecurrence.isEnabled = false
         val scheduledActionUID = transaction.scheduledActionUID
-        if (!scheduledActionUID.isNullOrEmpty()) {
+        if (scheduledActionUID.isNullOrEmpty()) {
+            onRecurrenceSet(null)
+            binding.inputRecurrence.isEnabled = true
+        } else {
             val scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID)
             onRecurrenceSet(scheduledAction.ruleString)
-        } else {
-            this.recurrenceRule = null
+            // Instances should not change their schedules - only the owner template.
+            if (transaction.id == 0L || transaction.isTemplate) {
+                binding.inputRecurrence.isEnabled = true
+            }
         }
     }
 
@@ -688,7 +692,10 @@ class TransactionFormFragment : MenuFragment(),
      *
      * @return List of splits in the view or [.splitsList] is there are more than 2 splits in the transaction
      */
-    private fun extractSplitsFromView(binding: FragmentTransactionFormBinding, account: Account): List<Split> {
+    private fun extractSplitsFromView(
+        binding: FragmentTransactionFormBinding,
+        account: Account
+    ): List<Split> {
         if (splitEditorUsed(binding)) {
             return splitsList
         }
@@ -825,6 +832,7 @@ class TransactionFormFragment : MenuFragment(),
      * and save a transaction
      */
     private fun saveTransaction(binding: FragmentTransactionFormBinding) {
+        val context = binding.root.context
         binding.inputTransactionAmount.error = null
 
         //determine whether we need to do currency conversion
@@ -836,31 +844,31 @@ class TransactionFormFragment : MenuFragment(),
 
         val transactionOld = transaction
         val transaction = extractTransactionFromView(binding)
-        var scheduledActionUID: String? = null
-
-        if (transactionOld != null) { //if editing an existing transaction
-            transaction.setUID(transactionOld.uid)
-            transaction.isTemplate = transactionOld.isTemplate
-            scheduledActionUID = transactionOld.scheduledActionUID
-        }
-        val wasScheduled = !scheduledActionUID.isNullOrEmpty()
-
-        this.transaction = transaction
 
         try {
-            // template is automatically checked when a transaction is scheduled
-            if (transaction.isTemplate) {
-                transaction.scheduledActionUID = scheduledActionUID
-                scheduleRecurringTransaction(transaction)
-            } else if (wasScheduled) {
-                // we were editing a schedule and it was turned off
-                scheduledActionDbAdapter.deleteRecord(scheduledActionUID)
+            if (transactionOld == null || transactionOld.id == 0L) {
+                if (transaction.isTemplate) {
+                    saveNewRecur(transaction)
+                    scheduleRecurringTransaction(context)
+                } else {
+                    saveNewRegular(transaction)
+                }
+            } else if (transaction.isTemplate) {
+                if (transactionOld.scheduledActionUID.isNullOrEmpty()) {
+                    if (transaction.scheduledActionUID.isNullOrEmpty()) {
+                        saveNewRecur(transaction)
+                        scheduleRecurringTransaction(context)
+                    } else {
+                        saveOldRecur(transaction, transactionOld)
+                        scheduleRecurringTransaction(context)
+                    }
+                } else {
+                    saveOldRecur(transaction, transactionOld)
+                    scheduleRecurringTransaction(context)
+                }
+            } else {
+                saveOldRegular(transaction, transactionOld)
             }
-
-            // 1) Transactions may be existing or non-existing
-            // 2) when transaction exists in the db, the splits may exist or not exist in the db
-            // So replace is chosen.
-            transactionsDbAdapter.replace(transaction)
 
             finish(Activity.RESULT_OK)
         } catch (ae: ArithmeticException) {
@@ -894,37 +902,9 @@ class TransactionFormFragment : MenuFragment(),
      *
      * @see .saveNewTransaction
      */
-    private fun scheduleRecurringTransaction(transaction: Transaction) {
-        val transactionUID = transaction.uid
-
-        val recurrence = parse(eventRecurrence)
-
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
-        scheduledAction.setRecurrence(recurrence)
-        scheduledAction.startDate = transaction.datePosted
-
-        var scheduledActionUID = transaction.scheduledActionUID
-
-        if (scheduledActionUID.isNullOrEmpty()) {
-            if (!recurrence.isEmpty()) {
-                scheduledAction.actionUID = transactionUID
-                scheduledActionDbAdapter.replace(scheduledAction)
-                scheduledActionUID = scheduledAction.uid
-                transaction.scheduledActionUID = scheduledActionUID
-                ScheduledActionService.processScheduledAction(scheduledActionDbAdapter.holder, scheduledAction)
-                snackLong(R.string.toast_scheduled_recurring_transaction)
-            }
-        } else {
-            // if we are editing an existing schedule
-            if (recurrence.isEmpty()) {
-                scheduledActionDbAdapter.deleteRecord(scheduledActionUID)
-                transaction.scheduledActionUID = null
-            } else {
-                scheduledAction.setUID(scheduledActionUID)
-                scheduledActionDbAdapter.updateRecurrenceAttributes(scheduledAction)
-                snackLong(R.string.toast_updated_transaction_recurring_schedule)
-            }
-        }
+    private fun scheduleRecurringTransaction(context: Context) {
+        ScheduledActionService.schedulePeriodicActions(context)
+        snackLong(R.string.toast_scheduled_recurring_transaction)
     }
 
     override fun onDestroyView() {
@@ -1099,6 +1079,61 @@ class TransactionFormFragment : MenuFragment(),
             throw IllegalArgumentException("Account required")
         }
         return account
+    }
+
+    private fun saveNewRegular(transaction: Transaction) {
+        transaction.id = 0L
+        transaction.isTemplate = false
+        transaction.scheduledActionUID = null
+        transaction.splits.forEach { split ->
+            split.scheduledActionAccountUID = null
+        }
+        saveToDb(transaction)
+    }
+
+    private fun saveOldRegular(transaction: Transaction, transactionOld: Transaction) {
+        transaction.id = transactionOld.id
+        transaction.setUID(transactionOld.uid)
+        transaction.isTemplate = false
+        transaction.scheduledActionUID = null
+        transaction.splits.forEach { split ->
+            split.scheduledActionAccountUID = null
+        }
+        saveToDb(transaction)
+    }
+
+    private fun saveNewRecur(transaction: Transaction) {
+        val recurrence = parse(eventRecurrence)
+
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
+        scheduledAction.setRecurrence(recurrence)
+        scheduledAction.startDate = transaction.datePosted
+        scheduledAction.actionUID = transaction.uid
+        scheduledAction.instanceCount = 1
+        scheduledAction.isAutoCreate = true
+        scheduledActionDbAdapter.insert(scheduledAction)
+
+        transaction.scheduledActionUID = scheduledAction.uid
+        for (split in transaction.splits) {
+            split.scheduledActionAccountUID = split.accountUID
+        }
+        saveToDb(transaction)
+    }
+
+    private fun saveOldRecur(transaction: Transaction, transactionOld: Transaction) {
+        transaction.id = transactionOld.id
+        transaction.setUID(transactionOld.uid)
+        transaction.isTemplate = transactionOld.isTemplate
+        transaction.scheduledActionUID = transactionOld.scheduledActionUID
+        // Did schedule change? Write new schedule anyway.
+        saveNewRecur(transaction)
+    }
+
+    private fun saveToDb(transaction: Transaction) {
+        // 1) Transactions may be existing or non-existing
+        // 2) when transaction exists in the db, the splits may exist or not exist in the db
+        // So replace is chosen.
+        this.transaction = transactionsDbAdapter.replace(transaction)
     }
 
     companion object {

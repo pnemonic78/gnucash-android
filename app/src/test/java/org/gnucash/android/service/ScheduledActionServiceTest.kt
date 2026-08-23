@@ -146,7 +146,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
         scheduledAction.startDate = startTime.millis
         val endTime = DateTime(2016, 9, 12, 8, 0) //end just before last appointment
         scheduledAction.endDate = endTime.millis
-
+        scheduledAction.instanceCount = 1
         scheduledAction.actionUID = actionUID
 
         val recurrence = Recurrence(PeriodType.WEEK)
@@ -192,10 +192,12 @@ class ScheduledActionServiceTest : BookHelperTest() {
      */
     @Test
     fun scheduledTransactionsWithEndTimeInPast_shouldBeExecuted() {
+        val instanceCountInitial = 1
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
         val startTime = DateTime(2016, 6, 6, 9, 0)
         scheduledAction.startDate = startTime.millis
         scheduledAction.actionUID = actionUID
+        scheduledAction.instanceCount = instanceCountInitial
 
         val recurrence = Recurrence(PeriodType.WEEK)
         recurrence.multiplier = 2
@@ -208,8 +210,14 @@ class ScheduledActionServiceTest : BookHelperTest() {
 
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
 
+        // Occurrences on Monday through the end date are:
+        // 1. 2016-06-06
+        // 2. 2016-06-20
+        // 3. 2016-07-04
+        // 4. 2016-07-18
+        // 5. 2016-08-01
         val expectedCount = 5
-        assertThat(scheduledAction.instanceCount).isEqualTo(expectedCount)
+        assertThat(scheduledAction.instanceCount).isEqualTo(instanceCountInitial + expectedCount)
         assertThat(transactionsDbAdapter.recordsCount)
             .isEqualTo(expectedCount.toLong()) //would be 6 if the end time is not respected
     }
@@ -334,7 +342,6 @@ class ScheduledActionServiceTest : BookHelperTest() {
         val scheduledBackup = ScheduledAction(ScheduledAction.ActionType.EXPORT).apply {
             startDate = now.minusDays(15).toDate().time
             lastRunDate = now.minusDays(8).toDate().time
-            instanceCount = 1
             val recurrence = Recurrence(PeriodType.WEEK).apply {
                 multiplier = 1
                 byDays = listOf(Calendar.WEDNESDAY)
@@ -455,16 +462,16 @@ class ScheduledActionServiceTest : BookHelperTest() {
         assertSimpleScheduledTransactionImport(bookUID)
         val actions = scheduledActionDbAdapter.allRecords
         val scheduledAction = actions[0]
+        assertThat(scheduledAction.uid).isEqualTo("9def659b35e85b09fe2bfade35053487")
+        assertThat(scheduledAction.instanceCount).isOne
 
-        var executedCount = scheduledAction.instanceCount
         val recurrence = scheduledAction.recurrence
         scheduledAction.setRecurrence(PeriodType.ONCE, 1)
-        scheduledAction.instanceCount = 0
+        scheduledAction.instanceCount = 1
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
-        executedCount += scheduledAction.instanceCount
         scheduledAction.setRecurrence(recurrence)
 
-        assertThat(executedCount).isEqualTo(2)
+        assertThat(scheduledAction.instanceCount).isEqualTo(2)
     }
 
     @Test
@@ -475,7 +482,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
         val scheduledAction = actions[0]
 
         // 2016-09-24 to 2016-10-27
-        // 1 months from the start date to the end date
+        // 1 month from the start date
         val endDate = Calendar.getInstance().apply {
             set(Calendar.YEAR, 2016)
             set(Calendar.MONTH, Calendar.OCTOBER)
@@ -484,7 +491,8 @@ class ScheduledActionServiceTest : BookHelperTest() {
         scheduledAction.endDate = endDate.timeInMillis
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
 
-        assertThat(scheduledAction.instanceCount).isEqualTo(2)
+        // Instances are only posted for 2016-09-24 and 2016-10-24 => instance count = 1 + 2
+        assertThat(scheduledAction.instanceCount).isEqualTo(3)
     }
 
     @Test
@@ -497,14 +505,15 @@ class ScheduledActionServiceTest : BookHelperTest() {
         // 2016-09-24 to 2025-10-27
         // 109 months from the start date to the end date
         val endDate = Calendar.getInstance().apply {
-            set(Calendar.YEAR, 2025)
-            set(Calendar.MONTH, Calendar.OCTOBER)
-            set(Calendar.DAY_OF_MONTH, 27)
+            timeInMillis = scheduledAction.startDate
+            add(Calendar.MONTH, 109)
+            add(Calendar.DAY_OF_MONTH, 3)
         }
         scheduledAction.endDate = endDate.timeInMillis
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
 
-        assertThat(scheduledAction.instanceCount).isEqualTo(110)
+        // Instances are only posted from 2016-09-24 to 2025-10-24 => instance count = 1 + 110
+        assertThat(scheduledAction.instanceCount).isEqualTo(111)
     }
 
     private fun assertSimpleScheduledTransactionImport(bookUID: String) {

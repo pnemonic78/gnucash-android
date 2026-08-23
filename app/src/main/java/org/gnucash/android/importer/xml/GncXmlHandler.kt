@@ -1056,25 +1056,43 @@ class GncXmlHandler(
             KEY_EXPORTED -> transaction?.isExported = slot.asString.toBoolean()
 
             KEY_SCHED_XACTION -> {
+                val transaction = this.transaction ?: return
                 val split = this.split ?: return
                 for (s in slot.asFrame) {
                     when (s.key) {
                         KEY_SPLIT_ACCOUNT_SLOT -> split.scheduledActionAccountUID = s.asGUID
 
-                        KEY_CREDIT_FORMULA -> handleEndSlotTemplateFormula(
-                            split,
-                            s.asString,
-                            TransactionType.CREDIT
-                        )
+                        KEY_CREDIT_FORMULA ->
+                            handleEndSlotTemplateFormula(
+                                transaction,
+                                split,
+                                s.asString,
+                                TransactionType.CREDIT
+                            )
 
                         KEY_CREDIT_NUMERIC ->
-                            handleEndSlotTemplateNumeric(split, s.asNumeric, TransactionType.CREDIT)
+                            handleEndSlotTemplateNumeric(
+                                transaction,
+                                split,
+                                s.asNumeric,
+                                TransactionType.CREDIT
+                            )
 
                         KEY_DEBIT_FORMULA ->
-                            handleEndSlotTemplateFormula(split, s.asString, TransactionType.DEBIT)
+                            handleEndSlotTemplateFormula(
+                                transaction,
+                                split,
+                                s.asString,
+                                TransactionType.DEBIT
+                            )
 
                         KEY_DEBIT_NUMERIC ->
-                            handleEndSlotTemplateNumeric(split, s.asNumeric, TransactionType.DEBIT)
+                            handleEndSlotTemplateNumeric(
+                                transaction,
+                                split,
+                                s.asNumeric,
+                                TransactionType.DEBIT
+                            )
                     }
                 }
             }
@@ -1098,6 +1116,7 @@ class GncXmlHandler(
      * @param value Parsed characters containing split amount
      */
     private fun handleEndSlotTemplateFormula(
+        transaction: Transaction,
         split: Split,
         value: String,
         splitType: TransactionType
@@ -1113,7 +1132,7 @@ class GncXmlHandler(
                 val commodity = getCommodityForAccount(accountUID)
 
                 split.value = Money(value, commodity)
-                split.quantity = split.value
+                split.quantity = Money(0.0, transaction.commodity)
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {
@@ -1129,6 +1148,7 @@ class GncXmlHandler(
      * @param value Parsed characters containing split amount
      */
     private fun handleEndSlotTemplateNumeric(
+        transaction: Transaction,
         split: Split,
         value: Numeric,
         splitType: TransactionType
@@ -1143,7 +1163,7 @@ class GncXmlHandler(
                 val commodity = getCommodityForAccount(accountUID)
 
                 split.value = Money(value, commodity)
-                split.quantity = split.value
+                split.quantity = Money(0.0, transaction.commodity)
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {
