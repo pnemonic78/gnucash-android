@@ -42,11 +42,15 @@ import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.RecurrenceDbAdapter
+import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.db.adapter.SplitsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
+import org.gnucash.android.model.PeriodType
+import org.gnucash.android.model.Recurrence
+import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
@@ -55,6 +59,7 @@ import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.test.ui.util.performClick
 import org.gnucash.android.test.ui.util.withTagValue
 import org.gnucash.android.ui.common.UxArgument
+import org.gnucash.android.ui.transaction.ScheduledActionsActivity
 import org.gnucash.android.ui.transaction.TransactionFormFragment.Companion.DATE_FORMATTER
 import org.gnucash.android.ui.transaction.TransactionFormFragment.Companion.TIME_FORMATTER
 import org.gnucash.android.ui.transaction.TransactionsActivity
@@ -79,16 +84,23 @@ class TransactionsActivityTest : GnuAndroidTest() {
     private var transactionTimeMillis: Long = 0
 
     private lateinit var transactionsActivity: TransactionsActivity
+    private lateinit var templatesActivity: ScheduledActionsActivity
 
     @Rule
     @JvmField
     val activityRule = ActivityTestRule(TransactionsActivity::class.java, true, false)
+
+    @Rule
+    @JvmField
+    val scheduledActionsActivityRule =
+        ActivityTestRule(ScheduledActionsActivity::class.java, true, false)
 
     private lateinit var baseAccount: Account
     private lateinit var transferAccount: Account
 
     @Before
     fun setUp() {
+        disableAnimationsRule.disable()
         setDoubleEntryEnabled(true)
         setDefaultTransactionType(TransactionType.DEBIT)
 
@@ -117,28 +129,34 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transaction.addSplit(split.createPair(TRANSFER_ACCOUNT_UID))
 
         transactionsDbAdapter.insert(transaction)
-        assertThat(transactionsDbAdapter.recordsCount).isOne()
+        assertThat(transactionsDbAdapter.recordsCount).isOne
 
         val intent = Intent(Intent.ACTION_VIEW)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, TRANSACTIONS_ACCOUNT_UID)
         transactionsActivity = activityRule.launchActivity(intent)
+
+        validateTransactionListDisplayed()
     }
 
     @After
     fun tearDown() {
+        if (::templatesActivity.isInitialized) {
+            templatesActivity.finish()
+        }
         if (::transactionsActivity.isInitialized) {
             transactionsActivity.finish()
         }
+        disableAnimationsRule.enable()
     }
 
     private fun validateTransactionListDisplayed() {
-        waitForView(android.R.id.list)
-        onView(
-            allOf(
-                withId(android.R.id.list),
-                withTagValue(TransactionsListFragment.TAG)
-            )
-        ).check(matches(isDisplayed()))
+        val matcher = allOf(
+            withId(android.R.id.list),
+            withTagValue(TransactionsListFragment.TAG)
+        )
+        waitForView(matcher)
+        onView(matcher).check(matches(isDisplayed()))
+        sleep(1000L) // wait for slide animation to finish
     }
 
     private val transactionCount: Int
@@ -157,9 +175,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
     @Test
     fun testAddTransactionShouldRequireAmount() {
-        validateTransactionListDisplayed()
+        val beforeCount = transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
 
-        val beforeCount = transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
         clickViewId(R.id.fab_add)
 
         waitForView(R.id.fragment_transaction_form)
@@ -175,7 +192,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         assertToastDisplayed(transactionsActivity, R.string.toast_transaction_amount_required)
 
-        val afterCount = transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
+        val afterCount = transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
         assertThat(afterCount).isEqualTo(beforeCount)
     }
 
@@ -204,7 +221,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
     @Test
     fun testAddTransaction() {
         setDefaultTransactionType(TransactionType.DEBIT)
-        validateTransactionListDisplayed()
 
         waitForView(R.id.fab_add)
         clickViewId(R.id.fab_add)
@@ -253,9 +269,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         val euroAccount = Account("Euro Konto", euro)
         accountsDbAdapter.addRecord(euroAccount)
 
-        val transactionCount = transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
+        val transactionCount = transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
         setDefaultTransactionType(TransactionType.DEBIT)
-        validateTransactionListDisplayed()
 
         clickViewId(R.id.fab_add)
 
@@ -301,8 +316,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
     @Test
     fun testEditTransaction() {
-        validateTransactionListDisplayed()
-
         waitForView(R.id.edit_transaction)
         clickViewId(R.id.edit_transaction)
 
@@ -339,7 +352,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
         var imbalanceAcctUID = accountsDbAdapter.getImbalanceAccountUID(context, COMMODITY)
         assertThat(imbalanceAcctUID).isNull()
 
-        validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
 
         waitForView(R.id.fragment_transaction_form)
@@ -353,8 +365,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
             .check(matches(not(isDisplayed())))
         clickViewId(R.id.menu_save)
 
-        assertThat(transactionsDbAdapter.recordsCount).isOne()
-        val transaction = transactionsDbAdapter.allTransactions[0]
+        assertThat(transactionsDbAdapter.recordsCount).isOne
+        val transaction = transactionsDbAdapter.allRecords[0]
         assertThat(transaction.splits).hasSize(2)
         imbalanceAcctUID = accountsDbAdapter.getImbalanceAccountUID(context, COMMODITY)
         assertThat(imbalanceAcctUID).isNotNull()
@@ -380,7 +392,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
         var imbalanceAcctUID = accountsDbAdapter.getImbalanceAccountUID(context, COMMODITY)
         assertThat(imbalanceAcctUID).isNull()
 
-        validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
 
         waitForView(R.id.fragment_transaction_form)
@@ -421,7 +432,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         clickViewId(R.id.menu_save)
 
-        val transactions = transactionsDbAdapter.allTransactions
+        val transactions = transactionsDbAdapter.allRecords
         assertThat(transactions).hasSize(1)
 
         val transaction = transactions[0]
@@ -509,8 +520,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
     @Test
     fun testToggleTransactionType() {
-        validateTransactionListDisplayed()
-
         clickViewId(R.id.edit_transaction)
 
         validateEditTransactionFields(transaction)
@@ -541,8 +550,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
     @Test
     fun testOpenTransactionEditShouldNotModifyTransaction() {
-        validateTransactionListDisplayed()
-
         clickViewId(R.id.edit_transaction)
         validateTimeInput(transactionTimeMillis)
 
@@ -579,9 +586,9 @@ class TransactionsActivityTest : GnuAndroidTest() {
         clickViewText(R.string.menu_delete)
 
         // wait for backup to finish
-        sleep(1000)
+        sleep(2000)
 
-        assertThat(transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)).isZero()
+        assertThat(transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)).isZero
     }
 
     @Test
@@ -623,7 +630,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         clickViewId(R.id.menu_save)
 
-        assertThat(transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)).isOne()
+        assertThat(transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)).isOne
 
         sleep(500)
         clickViewText("Test Split")
@@ -643,13 +650,12 @@ class TransactionsActivityTest : GnuAndroidTest() {
         clickViewId(R.id.menu_save)
 
         assertThat(
-            transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
-        ).isZero()
+            transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
+        ).isZero
 
         assertThat(
             accountsDbAdapter.getAccountBalance(account)
-        )
-            .isEqualTo(Money("1024", CURRENCY_CODE))
+        ).isEqualTo(Money("1024", CURRENCY_CODE))
     }
 
     @Test
@@ -674,7 +680,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
     //TODO: add normal transaction recording
     @Test
     fun testLegacyIntentTransactionRecording() {
-        val beforeCount = transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
+        val beforeCount = transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
         val transactionIntent = Intent(Intent.ACTION_INSERT)
             .setType(Transaction.MIME_TYPE)
             .putExtra(Intent.EXTRA_TITLE, "Power intents")
@@ -686,7 +692,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
 
         TransactionRecorder().onReceive(transactionsActivity, transactionIntent)
 
-        val afterCount = transactionsDbAdapter.getTransactionsCount(TRANSACTIONS_ACCOUNT_UID)
+        val afterCount = transactionsDbAdapter.getCountByAccount(TRANSACTIONS_ACCOUNT_UID)
 
         assertThat(beforeCount + 1).isEqualTo(afterCount)
 
@@ -954,7 +960,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
         transactionsDbAdapter.deleteAllRecords()
         assertThat(transactionsDbAdapter.recordsCount).isZero
 
-        validateTransactionListDisplayed()
         clickViewId(R.id.fab_add)
 
         waitForView(R.id.fragment_transaction_form)
@@ -974,8 +979,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
         clickViewId(R.id.input_transaction_type)
         clickViewId(R.id.menu_save)
 
-        assertThat(transactionsDbAdapter.recordsCount).isOne()
-        val transaction = transactionsDbAdapter.allTransactions[0]
+        assertThat(transactionsDbAdapter.recordsCount).isOne
+        val transaction = transactionsDbAdapter.allRecords[0]
         val splits = transaction.splits
         assertThat(splits).hasSize(2)
         assertThat(splits[0].value.toDouble()).isEqualTo(100.00)
@@ -996,17 +1001,16 @@ class TransactionsActivityTest : GnuAndroidTest() {
     }
 
     @Test
-    fun testScheduleTransaction() {
-        assertThat(transaction.scheduledActionUID).isNull()
+    fun add_scheduled_template_transaction() {
+        clickViewId(R.id.fab_add)
 
-        validateTransactionListDisplayed()
+        waitForView(R.id.fragment_transaction_form)
 
-        waitForView(R.id.edit_transaction)
-        sleep(1000)
-        clickViewId(R.id.edit_transaction)
-
-        sleep(1000)
-        validateEditTransactionFields(transaction)
+        onView(withId(R.id.input_transaction_name))
+            .perform(typeText("Amazon"))
+        onView(withId(R.id.input_transaction_amount))
+            .perform(typeText("100"))
+        clickViewId(R.id.input_transaction_type) // Expense
 
         clickViewId(R.id.input_recurrence)
         // Enable repeat
@@ -1015,23 +1019,143 @@ class TransactionsActivityTest : GnuAndroidTest() {
         clickViewId(R.id.freqSpinner)
         val monthlyLabel =
             context.resources.getStringArray(com.codetroopers.betterpickers.R.array.recurrence_freq)[3]
-        onData(allOf(
-            `is`(instanceOf(String::class.java)),
-            `is`(monthlyLabel))
+        onData(
+            allOf(
+                `is`(instanceOf(String::class.java)),
+                `is`(monthlyLabel)
+            )
         ).inRoot(isPlatformPopup())
             .performClick()
         clickViewId(com.codetroopers.betterpickers.R.id.done_button)
         clickViewId(R.id.menu_save)
 
+        assertThat(transactionsDbAdapter.recordsCount).isOne // without templates
+        val records = transactionsDbAdapter.allRecords
+        assertThat(records.size).isEqualTo(2)
+        val transaction = records[1]
+        assertThat(transaction.isTemplate).isTrue
+        assertThat(transaction.scheduledActionUID).isNotNull()
+        val scheduledAction = scheduledActionDbAdapter.getRecord(transaction.scheduledActionUID!!)
+        assertThat(scheduledAction.isEnabled).isTrue
+        assertThat(scheduledAction.actionUID).isEqualTo(transaction.uid)
+        assertThat(scheduledAction.instanceCount).isOne
+        assertThat(scheduledAction.isAutoCreate).isTrue
+        val recurrence = scheduledAction.recurrence
+        assertThat(recurrence.multiplier).isOne
+        assertThat(recurrence.count).isZero
+        assertThat(recurrence.periodEnd).isNull()
+        assertThat(recurrence.occurrences).isEqualTo(-1)
+        assertThat(recurrence.ruleString).startsWith("FREQ=MONTHLY")
+    }
+
+    @Test
+    fun edit_scheduled_transaction() {
+        // Add a schedule to the regular transaction.
+        val recurrenceTx = Recurrence(PeriodType.WEEK)
+        recurrenceTx.periodStart = System.currentTimeMillis()
+        val scheduledActionTx = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
+        scheduledActionTx.setRecurrence(recurrenceTx)
+        scheduledActionTx.startDate = transaction.datePosted
+        scheduledActionTx.actionUID = transaction.uid
+        scheduledActionTx.isAutoCreate = true
+        scheduledActionDbAdapter.insert(scheduledActionTx)
+
+        transaction.scheduledActionUID = scheduledActionTx.uid
+        transactionsDbAdapter.replace(transaction)
+
+        // Edit the scheduled transaction.
+        waitForView(R.id.edit_transaction)
+        clickViewId(R.id.edit_transaction)
+
+        validateEditTransactionFields(transaction)
+
+        val txName = "Pasta"
+        waitForView(R.id.fragment_transaction_form)
+        onView(withId(R.id.input_transaction_name))
+            .perform(clearText(), typeText(txName))
+        clickViewId(R.id.menu_save)
+
         val editedTransaction = transactionsDbAdapter.getRecord(transaction.uid)
+        assertThat(editedTransaction.uid).isEqualTo(transaction.uid)
+        assertThat(editedTransaction.description).isEqualTo(txName)
+        assertThat(editedTransaction.splits).hasSize(2)
+
+        assertThat(transactionsDbAdapter.recordsCount).isOne // without templates
+        assertThat(editedTransaction.isTemplate).isFalse
         assertThat(editedTransaction.scheduledActionUID).isNotNull()
-        val schedule = recurrenceDbAdapter.getRecord(editedTransaction.scheduledActionUID!!)
-        assertThat(schedule.multiplier).isOne()
-        assertThat(schedule.count).isZero()
-        assertThat(schedule.occurrences).isZero()
-        assertThat(schedule.periodEnd).isNull()
-        assertThat(schedule.occurrences).isZero()
-        assertThat(schedule.ruleString).startsWith("FREQ=MONTHLY")
+        val scheduledAction =
+            scheduledActionDbAdapter.getRecord(editedTransaction.scheduledActionUID!!)
+        assertThat(scheduledAction.isEnabled).isTrue
+        assertThat(scheduledAction.actionUID).isEqualTo(editedTransaction.uid)
+        assertThat(scheduledAction.instanceCount).isOne
+        assertThat(scheduledAction.isAutoCreate).isTrue
+        val recurrence = scheduledAction.recurrence
+        assertThat(recurrence.multiplier).isOne
+        assertThat(recurrence.count).isZero
+        assertThat(recurrence.periodEnd).isNull()
+        assertThat(recurrence.occurrences).isEqualTo(-1)
+        assertThat(recurrence.ruleString).startsWith("FREQ=WEEKLY")
+    }
+
+    @Test
+    fun edit_scheduled_template_transaction() {
+        // Make the regular transaction into a template transaction.
+        val recurrenceTx = Recurrence(PeriodType.WEEK)
+        recurrenceTx.periodStart = System.currentTimeMillis()
+        val scheduledActionTx = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
+        scheduledActionTx.setRecurrence(recurrenceTx)
+        scheduledActionTx.startDate = transaction.datePosted
+        scheduledActionTx.actionUID = transaction.uid
+        scheduledActionTx.isAutoCreate = true
+        scheduledActionDbAdapter.insert(scheduledActionTx)
+
+        transaction.scheduledActionUID = scheduledActionTx.uid
+        transaction.isTemplate = true
+        transactionsDbAdapter.replace(transaction)
+
+        refreshTransactionsList()
+        // Transactions list shows no templates.
+        onView(withId(android.R.id.empty))
+            .check(matches(isDisplayed()))
+            .check(matches(withText(R.string.label_no_transactions)))
+        // Edit the scheduled transaction:
+        // 1. Show scheduled actions screen.
+        // 2. Show scheduled transactions tab.
+        val intent = Intent(Intent.ACTION_VIEW)
+            .putExtra(UxArgument.EXTRA_TAB_INDEX, ScheduledActionsActivity.TAB_TRANSACTIONS)
+        templatesActivity = scheduledActionsActivityRule.launchActivity(intent)
+        sleep(1000) // wait for animations to finish
+        // 3. Click the transaction.
+        clickViewText(transaction.description)
+
+        validateEditTransactionFields(transaction)
+
+        val txName = "Pasta"
+        waitForView(R.id.fragment_transaction_form)
+        onView(withId(R.id.input_transaction_name))
+            .perform(clearText(), typeText(txName))
+        clickViewId(R.id.menu_save)
+
+        val editedTransaction = transactionsDbAdapter.getRecord(transaction.uid)
+        assertThat(editedTransaction.uid).isEqualTo(transaction.uid)
+        assertThat(editedTransaction.description).isEqualTo(txName)
+        assertThat(editedTransaction.splits).hasSize(2)
+
+        assertThat(transactionsDbAdapter.recordsCount).isZero // without templates
+        assertThat(editedTransaction.isTemplate).isTrue
+        assertThat(editedTransaction.scheduledActionUID).isNotNull()
+        val scheduledAction =
+            scheduledActionDbAdapter.getRecord(editedTransaction.scheduledActionUID!!)
+        assertThat(scheduledAction.isEnabled).isTrue
+        assertThat(scheduledAction.actionUID).isEqualTo(editedTransaction.uid)
+        assertThat(scheduledAction.instanceCount).isOne
+        assertThat(scheduledAction.isAutoCreate).isTrue
+        val recurrence = scheduledAction.recurrence
+        assertThat(recurrence.multiplier).isOne
+        assertThat(recurrence.count).isZero
+        assertThat(recurrence.periodEnd).isNull()
+        assertThat(recurrence.occurrences).isEqualTo(-1)
+        assertThat(recurrence.ruleString).startsWith("FREQ=WEEKLY")
     }
 
     companion object {
@@ -1050,6 +1174,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
         private lateinit var transactionsDbAdapter: TransactionsDbAdapter
         private lateinit var splitsDbAdapter: SplitsDbAdapter
         private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
+        private lateinit var scheduledActionDbAdapter: ScheduledActionDbAdapter
         private lateinit var recurrenceDbAdapter: RecurrenceDbAdapter
 
         @ClassRule
@@ -1066,7 +1191,8 @@ class TransactionsActivityTest : GnuAndroidTest() {
             transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
             splitsDbAdapter = transactionsDbAdapter.splitsDbAdapter
             commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
-            recurrenceDbAdapter = RecurrenceDbAdapter.instance
+            scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
+            recurrenceDbAdapter = scheduledActionDbAdapter.recurrenceDbAdapter
             COMMODITY = commoditiesDbAdapter.getCurrency(CURRENCY_CODE)!!
         }
     }

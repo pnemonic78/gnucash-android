@@ -298,11 +298,11 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
         }
 
     /**
-     * Computes the number of occurrences of this recurrences between start and end date
+     * Computes the number of occurrences between start and end date.
      *
-     * If there is no end date or the PeriodType is unknown, it returns -1
+     * If there is no end date or the PeriodType is unknown, it returns `-1`
      *
-     * @return Number of occurrences, or` -1` if there is no end date
+     * @return Number of occurrences, or `-1` if there is no end date.
      */
     val occurrences: Int
         get() {
