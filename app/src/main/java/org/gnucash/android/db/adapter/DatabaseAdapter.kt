@@ -284,7 +284,7 @@ abstract class DatabaseAdapter<Model : BaseModel>(
         }
         sql.append(CommonColumns.COLUMN_UID)
             .append(") VALUES (")
-        for (i in 0 until columnsCount) {
+        repeat(columnsCount) {
             sql.append("?,")
         }
         sql.append("?)")
@@ -343,7 +343,7 @@ abstract class DatabaseAdapter<Model : BaseModel>(
         }
         sql.append(CommonColumns.COLUMN_UID)
             .append(") VALUES (")
-        for (i in 0 until columnsCount) {
+        repeat(columnsCount) {
             sql.append("?,")
         }
         sql.append("?)")

@@ -200,6 +200,8 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(transactionsDbAdapter.recordsCount).isOne()
 
         val transaction = transactionsDbAdapter.getRecord("ded49386f8ea319ccaee043ba062b3e1")
+        val amountValue = Money("20", "USD")
+        val amountQuantity = Money("17.93", "EUR")
 
         // Ensure it's the correct one
         assertThat(transaction.description).isEqualTo("Salad express")
@@ -216,10 +218,10 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitDebit.type).isEqualTo(TransactionType.DEBIT)
         assertThat(splitDebit.value.numerator).isEqualTo(2000)
         assertThat(splitDebit.value.denominator).isEqualTo(100)
-        assertThat(splitDebit.value).isEqualTo(Money("20", "USD"))
+        assertThat(splitDebit.value).isEqualTo(amountValue)
         assertThat(splitDebit.quantity.numerator).isEqualTo(2000)
         assertThat(splitDebit.quantity.denominator).isEqualTo(100)
-        assertThat(splitDebit.quantity).isEqualTo(Money("20", "USD"))
+        assertThat(splitDebit.quantity).isEqualTo(amountValue)
 
         val splitCredit = transaction.splits[1]
         assertThat(splitCredit.uid).isEqualTo("e0dd885065bfe3c9ef63552fe84c6d23")
@@ -228,10 +230,10 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitCredit.type).isEqualTo(TransactionType.CREDIT)
         assertThat(splitCredit.value.numerator).isEqualTo(2000)
         assertThat(splitCredit.value.denominator).isEqualTo(100)
-        assertThat(splitCredit.value).isEqualTo(Money("20", "USD"))
+        assertThat(splitCredit.value).isEqualTo(amountValue)
         assertThat(splitCredit.quantity.numerator).isEqualTo(1793)
         assertThat(splitCredit.quantity.denominator).isEqualTo(100)
-        assertThat(splitCredit.quantity).isEqualTo(Money("17.93", "EUR"))
+        assertThat(splitCredit.quantity).isEqualTo(amountQuantity)
         assertThat(splitCredit.isPairOf(splitDebit)).isTrue()
 
         // Check prices
@@ -298,20 +300,21 @@ class GncXmlHandlerTest : BookHelperTest() {
         // Check splits
         assertThat(scheduledTransaction.splits).hasSize(2)
 
-        val amount = Money("20", "USD")
+        val amountValue = Money("20", "USD")
+
         val splitCredit = scheduledTransaction.splits[0]
         assertThat(splitCredit.accountUID).isEqualTo("2e9b02b5ed6fb07c7d4536bb8a03599e")
         assertThat(splitCredit.scheduledActionAccountUID).isEqualTo("6a7cf8267314992bdddcee56d71a3908")
         assertThat(splitCredit.type).isEqualTo(TransactionType.CREDIT)
-        assertThat(splitCredit.value).isEqualTo(amount)
-        assertThat(splitCredit.quantity.isAmountZero).isTrue()
+        assertThat(splitCredit.value).isEqualTo(amountValue)
+        assertThat(splitCredit.quantity.isAmountZero).isTrue
 
         val splitDebit = scheduledTransaction.splits[1]
         assertThat(splitDebit.accountUID).isEqualTo("2e9b02b5ed6fb07c7d4536bb8a03599e")
         assertThat(splitDebit.scheduledActionAccountUID).isEqualTo("dae686a1636addc0dae1ae670701aa4a")
         assertThat(splitDebit.type).isEqualTo(TransactionType.DEBIT)
-        assertThat(splitDebit.value).isEqualTo(amount)
-        assertThat(splitDebit.quantity.isAmountZero).isTrue()
+        assertThat(splitDebit.value).isEqualTo(amountValue)
+        assertThat(splitDebit.quantity.isAmountZero).isTrue
         assertThat(splitDebit.isPairOf(splitCredit)).isTrue()
     }
 
@@ -359,6 +362,8 @@ class GncXmlHandlerTest : BookHelperTest() {
             .isEqualTo(2)
 
         var transaction = transactionsDbAdapter.getRecord("ded49386f8ea319ccaee043ba062b3e1")
+        val amountValue = Money("20", "USD")
+        val amountQuantity = Money("17.93", "EUR")
 
         // Ensure it's the correct one
         assertThat(transaction.description).isEqualTo("Salad express")
@@ -375,10 +380,10 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitDebit.type).isEqualTo(TransactionType.DEBIT)
         assertThat(splitDebit.value.numerator).isEqualTo(2000)
         assertThat(splitDebit.value.denominator).isEqualTo(100)
-        assertThat(splitDebit.value).isEqualTo(Money("20", "USD"))
+        assertThat(splitDebit.value).isEqualTo(amountValue)
         assertThat(splitDebit.quantity.numerator).isEqualTo(2000)
         assertThat(splitDebit.quantity.denominator).isEqualTo(100)
-        assertThat(splitDebit.quantity).isEqualTo(Money("20", "USD"))
+        assertThat(splitDebit.quantity).isEqualTo(amountValue)
 
         var splitCredit = transaction.splits[1]
         assertThat(splitCredit.uid).isEqualTo("e0dd885065bfe3c9ef63552fe84c6d23")
@@ -387,10 +392,10 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitCredit.type).isEqualTo(TransactionType.CREDIT)
         assertThat(splitCredit.value.numerator).isEqualTo(2000)
         assertThat(splitCredit.value.denominator).isEqualTo(100)
-        assertThat(splitCredit.value).isEqualTo(Money("20", "USD"))
+        assertThat(splitCredit.value).isEqualTo(amountValue)
         assertThat(splitCredit.quantity.numerator).isEqualTo(1793)
         assertThat(splitCredit.quantity.denominator).isEqualTo(100)
-        assertThat(splitCredit.quantity).isEqualTo(Money("17.93", "EUR"))
+        assertThat(splitCredit.quantity).isEqualTo(amountQuantity)
         assertThat(splitCredit.isPairOf(splitDebit)).isTrue()
 
         assertThat(scheduledActionDbAdapter.recordsCount).isOne()
@@ -427,8 +432,8 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitDebit.type).isEqualTo(TransactionType.DEBIT)
         assertThat(splitDebit.value.numerator).isEqualTo(2000)
         assertThat(splitDebit.value.denominator).isEqualTo(100)
-        assertThat(splitDebit.value).isEqualTo(Money("20", "USD"))
-        assertThat(splitDebit.quantity.isAmountZero).isTrue()
+        assertThat(splitDebit.value).isEqualTo(amountValue)
+        assertThat(splitDebit.quantity.isAmountZero).isTrue
 
         splitCredit = transaction.splits[1]
         assertThat(splitCredit.uid).isEqualTo("7a61df8f81a64741a31e276a6d82ac9f")
@@ -438,8 +443,8 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(splitCredit.type).isEqualTo(TransactionType.CREDIT)
         assertThat(splitCredit.value.numerator).isEqualTo(2000)
         assertThat(splitCredit.value.denominator).isEqualTo(100)
-        assertThat(splitCredit.value).isEqualTo(Money("20", "USD"))
-        assertThat(splitCredit.quantity.isAmountZero).isTrue()
+        assertThat(splitCredit.value).isEqualTo(amountValue)
+        assertThat(splitCredit.quantity.isAmountZero).isTrue
         assertThat(splitCredit.isPairOf(splitDebit)).isTrue()
     }
 
