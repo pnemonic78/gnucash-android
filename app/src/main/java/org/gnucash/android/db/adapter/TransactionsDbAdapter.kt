@@ -429,7 +429,7 @@ class TransactionsDbAdapter(
      * @param accountUID GUID of the account
      * @return Number of transactions with splits in the account
      */
-    fun getTransactionsCount(accountUID: String): Int {
+    fun getCountByAccount(accountUID: String): Int {
         val cursor = fetchTransactionsForAccount(accountUID)
         return cursor.use { cursor ->
             cursor.count

@@ -138,15 +138,16 @@ class Split : BaseModel, Parcelable {
      * maintain the one from source
      */
     fun copy(generateUID: Boolean = true): Split {
-        val clone = Split(value, quantity, accountUID)
-        if (!generateUID) {
-            clone.setUID(uid)
+        val original = this
+        return Split(value, quantity, accountUID).apply {
+            if (!generateUID) {
+                setUID(original.uid)
+            }
+            memo = original.memo
+            scheduledActionAccountUID = original.scheduledActionAccountUID
+            transactionUID = original.transactionUID
+            type = original.type
         }
-        clone.memo = memo
-        clone.scheduledActionAccountUID = scheduledActionAccountUID
-        clone.transactionUID = transactionUID
-        clone.type = type
-        return clone
     }
 
     /**

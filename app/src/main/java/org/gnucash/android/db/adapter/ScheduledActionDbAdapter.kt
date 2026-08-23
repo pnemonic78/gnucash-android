@@ -205,9 +205,8 @@ class ScheduledActionDbAdapter(
      */
     val allEnabledScheduledActions: List<ScheduledAction>
         get() {
-            val where = ScheduledActionEntry.COLUMN_ENABLED + "=1"
-            val cursor = db.query(tableName, allColumns, where, null, null, null, null)
-            return getRecords(cursor)
+            val where = ScheduledActionEntry.COLUMN_ENABLED + "=1 AND " + ScheduledActionEntry.COLUMN_AUTO_CREATE + "=1"
+            return getAllRecords(where, null)
         }
 
     /**
@@ -217,12 +216,9 @@ class ScheduledActionDbAdapter(
      * @return Number of transactions created from scheduled action
      */
     fun getActionInstanceCount(scheduledActionUID: String?): Long {
-        return DatabaseUtils.queryNumEntries(
-            db,
-            TransactionEntry.TABLE_NAME,
-            TransactionEntry.COLUMN_SCHEDX_ACTION_UID + "=?",
-            arrayOf<String?>(scheduledActionUID)
-        )
+        val where = TransactionEntry.COLUMN_SCHEDX_ACTION_UID + "=?"
+        val whereArgs = arrayOf(scheduledActionUID)
+        return DatabaseUtils.queryNumEntries(db, TransactionEntry.TABLE_NAME, where, whereArgs)
     }
 
     fun getRecords(actionType: ScheduledAction.ActionType): List<ScheduledAction> {

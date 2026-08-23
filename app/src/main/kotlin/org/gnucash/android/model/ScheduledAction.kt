@@ -172,7 +172,11 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time in milliseconds
      */
     fun computeNextCountBasedScheduledExecutionTime(): Long {
-        return computeNextScheduledExecutionTimeStartingAt(recurrence.periodStart)
+        val startAt = startDate
+        val count = instanceCount
+        if (count <= 0) return startAt
+        val factor = (count - 1) * recurrence.multiplier
+        return computeNextScheduledExecutionTimeStartingAt(startAt, factor)
     }
 
     /**
@@ -185,7 +189,10 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time in milliseconds
      */
     fun computeNextTimeBasedScheduledExecutionTime(): Long {
-        return computeNextScheduledExecutionTimeStartingAt(lastRunDate)
+        val startAt = lastRunDate
+        if (startAt <= 0L) return startDate
+        val factor = recurrence.multiplier
+        return computeNextScheduledExecutionTimeStartingAt(startAt, factor)
     }
 
     /**
@@ -198,10 +205,7 @@ class ScheduledAction    //all actions are enabled by default
      * @param startAt time in milliseconds to use as start to compute the next schedule.
      * @return Next run time in milliseconds
      */
-    private fun computeNextScheduledExecutionTimeStartingAt(startAt: Long): Long {
-        val count = instanceCount
-        if (count <= 0) return startDate
-        val factor = (count - 1) * recurrence.multiplier
+    private fun computeNextScheduledExecutionTimeStartingAt(startAt: Long, factor: Int): Long {
         val startDate = LocalDateTime(startAt)
         val nextScheduledExecution: LocalDateTime = when (recurrence.periodType) {
             PeriodType.ONCE -> {
@@ -211,7 +215,7 @@ class ScheduledAction    //all actions are enabled by default
 
             PeriodType.HOUR -> startDate.plusHours(factor)
             PeriodType.DAY -> startDate.plusDays(factor)
-            PeriodType.WEEK -> computeNextWeeklyExecutionStartingAt(startDate)
+            PeriodType.WEEK -> computeNextWeeklyExecutionStartingAt(startDate, factor)
             PeriodType.MONTH -> startDate.plusMonths(factor)
             PeriodType.YEAR -> startDate.plusYears(factor)
             PeriodType.LAST_WEEKDAY -> startDate.plusMonths(factor).lastDayOfWeek(startDate)
@@ -232,10 +236,11 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time as a LocalDateTime. A date in the future, if no days of the week
      * were set in the Recurrence.
      */
-    private fun computeNextWeeklyExecutionStartingAt(startTime: LocalDateTime): LocalDateTime {
+    private fun computeNextWeeklyExecutionStartingAt(startTime: LocalDateTime, factor: Int): LocalDateTime {
         val recurrence = recurrence
-        if (recurrence.byDays.isEmpty()) return LocalDateTime.now()
-            .plusDays(1) // Just a date in the future
+        if (recurrence.byDays.isEmpty()) {
+            return LocalDateTime.now().plusDays(1) // Just a date in the future
+        }
 
         // Look into the week of startTime for another scheduled day of the week
         for (dayOfWeek in recurrence.byDays) {
@@ -245,7 +250,6 @@ class ScheduledAction    //all actions are enabled by default
         }
 
         // Return the first scheduled day of the week from the next due week
-        val factor = recurrence.multiplier - 1
         val firstScheduledDayOfWeek = convertCalendarDayOfWeekToJoda(recurrence.byDays[0])
         return startTime.plusWeeks(factor)
             .withDayOfWeek(firstScheduledDayOfWeek)
@@ -264,27 +268,11 @@ class ScheduledAction    //all actions are enabled by default
         return LocalDateTime.fromCalendarFields(cal).dayOfWeek
     }
 
-    /**
-     * Returns the period of this scheduled action in milliseconds.
-     *
-     * @return Period in milliseconds since Epoch
-     */
-    @get:Deprecated("Uses fixed values for time of months and years (which actually vary depending on number of days in month or leap year)")
-    val period: Long
-        get() = recurrence.period
-
     /** "Date for the first occurrence for the scheduled transaction." */
     var startDate: Long = 0L
         set(startDate) {
             field = startDate
             recurrence.periodStart = startDate
-        }
-
-    @Deprecated("renamed", ReplaceWith("startDate"))
-    var startTime: Long
-        get() = startDate
-        set(value) {
-            startDate = value
         }
 
     /**
@@ -294,13 +282,6 @@ class ScheduledAction    //all actions are enabled by default
         set(endDate) {
             field = endDate
             recurrence.periodEnd = endDate
-        }
-
-    @Deprecated("renamed", ReplaceWith("endDate"))
-    var endTime: Long
-        get() = endDate
-        set(value) {
-            endDate = value
         }
 
     private var _templateAccountUID: String? = null

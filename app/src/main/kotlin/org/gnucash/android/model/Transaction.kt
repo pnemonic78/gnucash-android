@@ -89,19 +89,21 @@ class Transaction : BaseModel {
      * The export flag and the template flag are not copied from the old transaction to the new.
      *
      * @param generateNewUID Flag to determine if new UID should be assigned or not
-     * @param time The date posted.
+     * @param datePosted The date posted.
      */
     fun copy(generateNewUID: Boolean = true, datePosted: Long? = null): Transaction {
-        val clone = Transaction(description)
-        if (!generateNewUID) {
-            clone.setUID(uid)
+        val original = this
+        return Transaction(description).apply {
+            if (!generateNewUID) {
+                setUID(original.uid)
+            }
+            commodity = original.commodity
+            notes = original.notes
+            number = original.number
+            scheduledActionUID = null
+            splits = original.splits.map { it.copy(generateNewUID) }
+            this.datePosted = datePosted ?: original.datePosted
         }
-        clone.commodity = commodity
-        clone.notes = notes
-        clone.number = number
-        clone.splits = splits.map { it.copy(generateNewUID) }
-        clone.datePosted = datePosted ?: this.datePosted
-        return clone
     }
 
     /**
@@ -403,7 +405,11 @@ class Transaction : BaseModel {
             }
             var balance = Money.createZeroInstance(accountCommodity)
             for (split in splits) {
-                if (split.accountUID != accountUID) continue
+                var splitAccountUID = split.accountUID
+                if (!split.scheduledActionAccountUID.isNullOrEmpty()) {
+                    splitAccountUID = split.scheduledActionAccountUID
+                }
+                if (splitAccountUID != accountUID) continue
                 val amount: Money = if (split.value.commodity == accountCommodity) {
                     split.value
                 } else { //if this split belongs to the account, then either its value or quantity is in the account currency
