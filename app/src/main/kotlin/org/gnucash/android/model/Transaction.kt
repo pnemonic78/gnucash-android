@@ -102,6 +102,7 @@ class Transaction : BaseModel {
             number = original.number
             scheduledActionUID = null
             splits = original.splits.map { it.copy(generateNewUID) }
+            isTemplate = original.isTemplate
             this.datePosted = datePosted ?: original.datePosted
         }
     }
@@ -127,7 +128,7 @@ class Transaction : BaseModel {
      */
     fun createAutoBalanceSplit(): Split? {
         val imbalance = imbalance //returns imbalance of 0 for multi-currency transactions
-        if (!imbalance.isAmountZero) {
+        if (!imbalance.isZero) {
             // yes, this is on purpose the account UID is set to the currency.
             // This should be overridden before saving to db
             val split = Split(imbalance, accountUID = commodity.uid)
@@ -144,8 +145,9 @@ class Transaction : BaseModel {
      */
     override fun setUID(uid: String?) {
         super.setUID(uid)
+        val uidNew = uid ?: this.uid
         for (split in splits) {
-            split.transactionUID = uid
+            split.transactionUID = uidNew
         }
     }
 
@@ -157,6 +159,7 @@ class Transaction : BaseModel {
     var splits: List<Split>
         get() = _splits
         set(value) {
+            if (_splits === value) return
             _splits.clear()
             for (split in value) {
                 addSplit(split)
@@ -321,6 +324,7 @@ class Transaction : BaseModel {
     // Prefer DEBIT over CREDIT
     val defaultAccountUID: String? get() = getDefaultAccountUID(TransactionType.DEBIT)
 
+
     companion object {
         /**
          * Mime type for transactions in GnuCash.
@@ -392,7 +396,7 @@ class Transaction : BaseModel {
          *
          * @param account The account
          * @param splits  List of splits
-         * @return Money list of splits
+         * @return Money The balance.
          */
         fun computeBalance(account: Account, splits: List<Split>, display: Boolean = false): Money {
             val accountUID = account.uid

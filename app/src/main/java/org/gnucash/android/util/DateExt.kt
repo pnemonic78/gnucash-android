@@ -233,3 +233,15 @@ fun LocalDate.toDateTimeAtEndOfDay(zone: DateTimeZone?): DateTime {
     }
     return DateTime(calendar.timeInMillis, zone)
 }
+
+fun Calendar.toLocalDateTime(): LocalDateTime = LocalDateTime.fromCalendarFields(this)
+
+val toLocalDayOfWeek = mapOf(
+    Calendar.SUNDAY to DateTimeConstants.SUNDAY,
+    Calendar.MONDAY to DateTimeConstants.MONDAY,
+    Calendar.TUESDAY to DateTimeConstants.TUESDAY,
+    Calendar.WEDNESDAY to DateTimeConstants.WEDNESDAY,
+    Calendar.THURSDAY to DateTimeConstants.THURSDAY,
+    Calendar.FRIDAY to DateTimeConstants.FRIDAY,
+    Calendar.SATURDAY to DateTimeConstants.SATURDAY,
+)

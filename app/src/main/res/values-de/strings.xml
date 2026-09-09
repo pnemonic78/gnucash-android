@@ -431,4 +431,5 @@
     <string name="title_progress_processing_prices">Preisverwaltung</string>
     <string name="title_progress_processing_schedules">Terminplanung</string>
     <string name="title_progress_processing_transactions">Transaktionsverwaltung</string>
+    <string name="execute">Ausführen</string>
 </resources>

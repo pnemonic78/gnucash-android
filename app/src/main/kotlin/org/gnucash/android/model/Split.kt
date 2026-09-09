@@ -3,6 +3,7 @@ package org.gnucash.android.model
 import android.os.Parcel
 import android.os.Parcelable
 import org.gnucash.android.db.adapter.AccountsDbAdapter
+import org.gnucash.android.model.Money.CurrencyMismatchException
 import org.gnucash.android.model.Split.Companion.CREATOR
 import org.gnucash.android.model.Split.Companion.getFormattedAmount
 
@@ -159,6 +160,28 @@ class Split : BaseModel, Parcelable {
             field = value.abs()
         }
 
+    operator fun plus(rhs: Split): Split {
+        val split = copy()
+        split += rhs
+        return split
+    }
+
+    /**
+     * Combines [rhs] into this split in place.
+     *
+     * Amounts of the same type are added; opposite types cancel.
+     * For example: CREDIT of $499.00 + DEBIT of $99.00 becomes CREDIT of $400.00
+     */
+    @Throws(CurrencyMismatchException::class)
+    operator fun plusAssign(rhs: Split) {
+        val valueNew = plus(value, type, rhs.value, rhs.type)
+        value = valueNew
+        quantity = plus(quantity, type, rhs.quantity, rhs.type)
+        if (valueNew.isNegative) {
+            type = !type
+        }
+    }
+
     /**
      * Creates a split which is a pair of this instance.
      * A pair split has all the same attributes except that the SplitType is inverted and it belongs
@@ -170,7 +193,7 @@ class Split : BaseModel, Parcelable {
      */
     fun createPair(accountUID: String): Split {
         val pair = Split(value, accountUID)
-        pair.type = type.invert()
+        pair.type = !type
         pair.memo = memo
         pair.transactionUID = transactionUID
         pair.quantity = quantity
@@ -200,7 +223,7 @@ class Split : BaseModel, Parcelable {
      * @return whether the two splits are a pair
      */
     fun isPairOf(other: Split): Boolean {
-        return value == other.value && type.invert() == other.type
+        return value == other.value && type.opposite == other.type
     }
 
     /**
@@ -342,6 +365,16 @@ class Split : BaseModel, Parcelable {
     }
 
     companion object {
+        @Throws(CurrencyMismatchException::class)
+        private fun plus(
+            amount1: Money,
+            type1: TransactionType,
+            amount2: Money,
+            type2: TransactionType
+        ): Money {
+            return if (type1 == type2) amount1 + amount2 else amount1 - amount2
+        }
+
         /**
          * Flag indicating that the split has been reconciled
          */
