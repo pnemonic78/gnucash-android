@@ -198,6 +198,8 @@ class Price : BaseModel {
         }
     }
 
+    operator fun not(): Price = invert()
+
     fun copy(
         id: Long? = null,
         uid: String? = null,
