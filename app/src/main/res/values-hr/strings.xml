@@ -434,4 +434,5 @@
     <string name="title_progress_processing_prices">Obrada cijene</string>
     <string name="title_progress_processing_schedules">Obrada rasporedi</string>
     <string name="title_progress_processing_transactions">Obrada transakcija</string>
+    <string name="execute">Izvrši</string>
 </resources>

@@ -214,7 +214,7 @@ class BudgetDetailFragment : MenuFragment(), Refreshable {
             budgetLeft.text = projectedAmount.minus(spentAmountAbs).formattedString()
 
             var budgetProgress = 0f
-            if (!projectedAmount.isAmountZero) {
+            if (!projectedAmount.isZero) {
                 budgetProgress = spentAmount.toBigDecimal().divide(
                     projectedAmount.toBigDecimal(),
                     spentAmount.commodity.smallestFractionDigits,

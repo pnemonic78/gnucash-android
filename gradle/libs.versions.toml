@@ -59,7 +59,7 @@ assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 betterpickers = { module = "com.code-troopers.betterpickers:library", version.ref = "betterpickers" }
 chart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "chart" }
 crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "crashlytics" }
-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs_nio", version.ref = "desugar_jdk_libs" }
 dropbox = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropbox" }
 espresso-contrib = { module = "androidx.test.espresso:espresso-contrib", version.ref = "android-test-espresso" }
 espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "android-test-espresso" }

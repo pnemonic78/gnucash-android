@@ -23,10 +23,11 @@ import org.gnucash.android.export.ExportParams
 import org.gnucash.android.util.dayOfWeek
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfWeek
+import org.gnucash.android.util.toLocalDayOfWeek
+import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import timber.log.Timber
-import java.util.Calendar
 import java.util.Locale
 
 /**
@@ -34,8 +35,7 @@ import java.util.Locale
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class ScheduledAction    //all actions are enabled by default
-    (
+class ScheduledAction(
     /**
      * Type of event being scheduled
      */
@@ -95,6 +95,7 @@ class ScheduledAction    //all actions are enabled by default
 
     /**
      * "TRUE if the scheduled transaction is enabled."
+     * All actions are enabled by default.
      */
     var isEnabled = true
 
@@ -134,6 +135,10 @@ class ScheduledAction    //all actions are enabled by default
      */
     var advanceRemindDays = 0
 
+    constructor(type: ActionType, builder: ScheduledAction.() -> Unit) : this(type) {
+        apply(builder)
+    }
+
     /**
      * Returns the time when the last schedule in the sequence of planned executions was executed.
      * This relies on the number of executions of the scheduled action
@@ -160,7 +165,7 @@ class ScheduledAction    //all actions are enabled by default
                 PeriodType.NTH_WEEKDAY -> startDate.plusMonths(factor).dayOfWeek(startDate)
                 PeriodType.END_OF_MONTH -> startDate.plusMonths(factor).lastDayOfMonth()
             }
-            return startDate.toDateTime().millis
+            return startDate.toMillis()
         }
 
     /**
@@ -194,7 +199,9 @@ class ScheduledAction    //all actions are enabled by default
      */
     fun computeNextTimeBasedScheduledExecutionTime(): Long {
         val startAt = lastRunDate
-        if (startAt <= 0L) return startDate
+        if (startAt < startDate) {
+            return computeNextScheduledExecutionTimeStartingAt(startDate, 0)
+        }
         val factor = recurrence.multiplier
         return computeNextScheduledExecutionTimeStartingAt(startAt, factor)
     }
@@ -210,6 +217,7 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time in milliseconds
      */
     private fun computeNextScheduledExecutionTimeStartingAt(startAt: Long, factor: Int): Long {
+        val recurrence = recurrence
         val startDate = LocalDateTime(startAt)
         val nextScheduledExecution: LocalDateTime = when (recurrence.periodType) {
             PeriodType.ONCE -> {
@@ -219,14 +227,14 @@ class ScheduledAction    //all actions are enabled by default
 
             PeriodType.HOUR -> startDate.plusHours(factor)
             PeriodType.DAY -> startDate.plusDays(factor)
-            PeriodType.WEEK -> computeNextWeeklyExecutionStartingAt(startDate, factor)
+            PeriodType.WEEK -> computeNextWeeklyExecutionStartingAt(recurrence, startDate, factor)
             PeriodType.MONTH -> startDate.plusMonths(factor)
             PeriodType.YEAR -> startDate.plusYears(factor)
             PeriodType.LAST_WEEKDAY -> startDate.plusMonths(factor).lastDayOfWeek(startDate)
             PeriodType.NTH_WEEKDAY -> startDate.plusMonths(factor).dayOfWeek(startDate)
             PeriodType.END_OF_MONTH -> startDate.plusMonths(factor).lastDayOfMonth()
         }
-        return nextScheduledExecution.toDateTime().millis
+        return nextScheduledExecution.toMillis()
     }
 
     /**
@@ -240,52 +248,43 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time as a LocalDateTime. A date in the future, if no days of the week
      * were set in the Recurrence.
      */
-    private fun computeNextWeeklyExecutionStartingAt(startTime: LocalDateTime, factor: Int): LocalDateTime {
-        val recurrence = recurrence
+    private fun computeNextWeeklyExecutionStartingAt(
+        recurrence: Recurrence,
+        startTime: LocalDateTime,
+        factor: Int
+    ): LocalDateTime {
         if (recurrence.byDays.isEmpty()) {
-            return LocalDateTime.now().plusDays(1) // Just a date in the future
+            return LocalDateTime.now().plusWeeks(1) // Just a date in the future
         }
 
-        // Look into the week of startTime for another scheduled day of the week
+        // Look into the week of `startTime` for another scheduled day of the week
         for (dayOfWeek in recurrence.byDays) {
-            val jodaDayOfWeek = convertCalendarDayOfWeekToJoda(dayOfWeek)
-            val candidateNextDueTime = startTime.withDayOfWeek(jodaDayOfWeek)
-            if (candidateNextDueTime.isAfter(startTime)) return candidateNextDueTime
+            val localDayOfWeek = toLocalDayOfWeek[dayOfWeek] ?: continue
+            val candidateNextDueTime = startTime.withDayOfWeek(localDayOfWeek)
+            if (candidateNextDueTime.isAfter(startTime)) {
+                return candidateNextDueTime
+            }
         }
 
         // Return the first scheduled day of the week from the next due week
-        val firstScheduledDayOfWeek = convertCalendarDayOfWeekToJoda(recurrence.byDays[0])
-        return startTime.plusWeeks(factor)
-            .withDayOfWeek(firstScheduledDayOfWeek)
-    }
-
-    /**
-     * Converts a java.util.Calendar day of the week constant to the
-     * org.joda.time.DateTimeConstants equivalent.
-     *
-     * @param calendarDayOfWeek day of the week constant from java.util.Calendar
-     * @return day of the week constant equivalent from org.joda.time.DateTimeConstants
-     */
-    private fun convertCalendarDayOfWeekToJoda(calendarDayOfWeek: Int): Int {
-        val cal = Calendar.getInstance()
-        cal[Calendar.DAY_OF_WEEK] = calendarDayOfWeek
-        return LocalDateTime.fromCalendarFields(cal).dayOfWeek
+        val localDayOfWeek = toLocalDayOfWeek[recurrence.byDays[0]] ?: return startTime
+        return startTime.withDayOfWeek(localDayOfWeek).plusWeeks(factor)
     }
 
     /** "Date for the first occurrence for the scheduled transaction." */
-    var startDate: Long = 0L
-        set(startDate) {
-            field = startDate
-            recurrence.periodStart = startDate
+    var startDate: Long
+        get() = recurrence.periodStart
+        set(value) {
+            recurrence.periodStart = value
         }
 
     /**
      * "Date for the scheduled transaction to end."
      */
-    var endDate: Long = 0L
-        set(endDate) {
-            field = endDate
-            recurrence.periodEnd = endDate
+    var endDate: Long
+        get() = recurrence.periodEnd ?: 0L
+        set(value) {
+            recurrence.periodEnd = value
         }
 
     private var _templateAccountUID: String? = null
@@ -332,6 +331,7 @@ class ScheduledAction    //all actions are enabled by default
      */
     val ruleString: String
         get() {
+            if (isEmpty()) return ""
             val ruleBuilder = StringBuilder(recurrence.ruleString)
             if (endDate > 0) {
                 val df = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss'Z'").withZoneUTC()
@@ -349,13 +349,11 @@ class ScheduledAction    //all actions are enabled by default
      * a recurrence every fortnight would give parameters: [PeriodType.WEEK], ordinal:2
      *
      * @param periodType Periodicity of the scheduled action
-     * @param ordinal    Ordinal of the periodicity. If unsure, specify 1
+     * @param multiplier    Ordinal of the periodicity. If unsure, specify 1
      * @see recurrence
      */
-    fun setRecurrence(periodType: PeriodType, ordinal: Int) {
-        val recurrence = Recurrence(periodType)
-        recurrence.multiplier = ordinal
-        setRecurrence(recurrence)
+    fun setRecurrence(periodType: PeriodType, multiplier: Int) {
+        setRecurrence(Recurrence(periodType, multiplier))
     }
 
     /**
@@ -366,22 +364,17 @@ class ScheduledAction    //all actions are enabled by default
      * @param recurrence [Recurrence] object
      */
     fun setRecurrence(recurrence: Recurrence?) {
+        val startDate = this.startDate
+        val endDate = this.endDate
         val recurrence = recurrence ?: Recurrence(PeriodType.ONCE)
         this.recurrence = recurrence
         //if we were parsing XML and parsed the start and end date from the scheduled action first,
         //then use those over the values which might be gotten from the recurrence
         if (startDate > 0) {
             recurrence.periodStart = startDate
-        } else {
-            startDate = recurrence.periodStart
         }
         if (endDate > 0) {
             recurrence.periodEnd = endDate
-        } else {
-            val periodEnd = recurrence.periodEnd
-            if (periodEnd != null) {
-                endDate = periodEnd
-            }
         }
     }
 
@@ -397,6 +390,10 @@ class ScheduledAction    //all actions are enabled by default
         val tag = tag ?: return null
         if (tag.isEmpty()) return null
         return ExportParams.parseTag(tag)
+    }
+
+    fun isEmpty(): Boolean {
+        return recurrence.isEmpty()
     }
 
     companion object {
