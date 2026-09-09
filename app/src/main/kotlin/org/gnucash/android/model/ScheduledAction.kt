@@ -240,7 +240,10 @@ class ScheduledAction    //all actions are enabled by default
      * @return Next run time as a LocalDateTime. A date in the future, if no days of the week
      * were set in the Recurrence.
      */
-    private fun computeNextWeeklyExecutionStartingAt(startTime: LocalDateTime, factor: Int): LocalDateTime {
+    private fun computeNextWeeklyExecutionStartingAt(
+        startTime: LocalDateTime,
+        factor: Int
+    ): LocalDateTime {
         val recurrence = recurrence
         if (recurrence.byDays.isEmpty()) {
             return LocalDateTime.now().plusDays(1) // Just a date in the future
@@ -273,19 +276,19 @@ class ScheduledAction    //all actions are enabled by default
     }
 
     /** "Date for the first occurrence for the scheduled transaction." */
-    var startDate: Long = 0L
-        set(startDate) {
-            field = startDate
-            recurrence.periodStart = startDate
+    var startDate: Long
+        get() = recurrence.periodStart
+        set(value) {
+            recurrence.periodStart = value
         }
 
     /**
      * "Date for the scheduled transaction to end."
      */
-    var endDate: Long = 0L
-        set(endDate) {
-            field = endDate
-            recurrence.periodEnd = endDate
+    var endDate: Long
+        get() = recurrence.periodEnd ?: 0L
+        set(value) {
+            recurrence.periodEnd = value
         }
 
     private var _templateAccountUID: String? = null
@@ -332,6 +335,7 @@ class ScheduledAction    //all actions are enabled by default
      */
     val ruleString: String
         get() {
+            if (isEmpty()) return ""
             val ruleBuilder = StringBuilder(recurrence.ruleString)
             if (endDate > 0) {
                 val df = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss'Z'").withZoneUTC()
@@ -366,22 +370,17 @@ class ScheduledAction    //all actions are enabled by default
      * @param recurrence [Recurrence] object
      */
     fun setRecurrence(recurrence: Recurrence?) {
+        val startDate = this.startDate
+        val endDate = this.endDate
         val recurrence = recurrence ?: Recurrence(PeriodType.ONCE)
         this.recurrence = recurrence
         //if we were parsing XML and parsed the start and end date from the scheduled action first,
         //then use those over the values which might be gotten from the recurrence
         if (startDate > 0) {
             recurrence.periodStart = startDate
-        } else {
-            startDate = recurrence.periodStart
         }
         if (endDate > 0) {
             recurrence.periodEnd = endDate
-        } else {
-            val periodEnd = recurrence.periodEnd
-            if (periodEnd != null) {
-                endDate = periodEnd
-            }
         }
     }
 
@@ -397,6 +396,10 @@ class ScheduledAction    //all actions are enabled by default
         val tag = tag ?: return null
         if (tag.isEmpty()) return null
         return ExportParams.parseTag(tag)
+    }
+
+    fun isEmpty(): Boolean {
+        return recurrence.isEmpty()
     }
 
     companion object {

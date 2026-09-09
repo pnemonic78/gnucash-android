@@ -20,6 +20,7 @@ import org.gnucash.android.model.PeriodType
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.test.unit.GnuCashTest
+import org.gnucash.android.util.NEVER
 import org.joda.time.DateTime
 import org.joda.time.LocalDateTime
 import org.junit.Test
@@ -67,7 +68,7 @@ class ScheduledActionTest : GnuCashTest() {
     @Test
     fun settingRecurrence_shouldSetScheduledActionStartTime() {
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        assertThat(scheduledAction.startDate).isZero()
+        assertThat(scheduledAction.startDate).isEqualTo(NEVER)
 
         val startTime = getTimeInMillis(2014, 8, 26)
         val recurrence = Recurrence(PeriodType.WEEK)
@@ -79,7 +80,7 @@ class ScheduledActionTest : GnuCashTest() {
     @Test
     fun settingRecurrence_shouldSetEndTime() {
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        assertThat(scheduledAction.startDate).isZero()
+        assertThat(scheduledAction.startDate).isEqualTo(NEVER)
 
         val endTime = getTimeInMillis(2017, 8, 26)
         val recurrence = Recurrence(PeriodType.WEEK)

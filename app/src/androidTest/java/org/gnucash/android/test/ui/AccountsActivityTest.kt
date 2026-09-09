@@ -483,6 +483,7 @@ class AccountsActivityTest : GnuAndroidTest() {
     private fun refreshAccountsList() {
         try {
             activityRule.runOnUiThread { accountsActivity.refresh() }
+            sleep(1000)  // for animations
             waitForView(android.R.id.list)
         } catch (_: Throwable) {
             System.err.println("Failed to refresh accounts")

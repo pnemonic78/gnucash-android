@@ -377,7 +377,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
     }
 
     fun isEmpty(): Boolean {
-        return (periodType == PeriodType.ONCE) && (count == 0) && (occurrences == 0)
+        return (periodType == PeriodType.ONCE) && (count <= 0) && (occurrences <= 0)
     }
 
     companion object {

@@ -440,13 +440,13 @@ class ExportFormFragment : MenuFragment(),
 
         binding.exportStartDate.setOnClickListener {
             val dateMillis = exportStartCalendar.timeInMillis
-            DatePickerDialogFragment.newInstance(this@ExportFormFragment, dateMillis)
+            DatePickerDialogFragment.newInstance(dateMillis, this@ExportFormFragment)
                 .show(parentFragmentManager, "date_picker_fragment")
         }
 
         binding.exportStartTime.setOnClickListener {
             val timeMillis = exportStartCalendar.timeInMillis
-            TimePickerDialogFragment.newInstance(this@ExportFormFragment, timeMillis)
+            TimePickerDialogFragment.newInstance(timeMillis, this@ExportFormFragment)
                 .show(parentFragmentManager, "time_picker_dialog_fragment")
         }
 
