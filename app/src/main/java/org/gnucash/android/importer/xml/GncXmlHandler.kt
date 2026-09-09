@@ -148,6 +148,7 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.model.WeekendAdjust
+import org.gnucash.android.service.ScheduledActionService
 import org.gnucash.android.util.AmountParser
 import org.gnucash.android.util.NotSet
 import org.gnucash.android.util.parseColor
@@ -498,7 +499,7 @@ class GncXmlHandler(
         saveToDatabase()
 
         // generate missed scheduled transactions.
-        //FIXME ScheduledActionService.schedulePeriodic(context);
+        ScheduledActionService.processScheduledBook(context, book)
     }
 
     /**
@@ -1126,7 +1127,7 @@ class GncXmlHandler(
         if (value.isEmpty()) return
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
-            if (split.value.isAmountZero) {
+            if (split.value.isZero) {
                 val amount = AmountParser.parse(value, Locale.ROOT)
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
@@ -1158,7 +1159,7 @@ class GncXmlHandler(
     ) {
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
-            if (split.value.isAmountZero) {
+            if (split.value.isZero) {
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
                     accountUID = split.accountUID!!

@@ -19,7 +19,6 @@ import android.content.Intent
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.export.csv.CsvTransactionsExporter.Companion.toCsv
-import org.gnucash.android.model.Transaction.Companion.computeBalance
 import org.gnucash.android.util.formatShortDate
 import java.math.BigDecimal
 import java.sql.Timestamp
@@ -102,6 +101,7 @@ class Transaction : BaseModel {
             number = original.number
             scheduledActionUID = null
             splits = original.splits.map { it.copy(generateNewUID) }
+            isTemplate = original.isTemplate
             this.datePosted = datePosted ?: original.datePosted
         }
     }
@@ -127,7 +127,7 @@ class Transaction : BaseModel {
      */
     fun createAutoBalanceSplit(): Split? {
         val imbalance = imbalance //returns imbalance of 0 for multi-currency transactions
-        if (!imbalance.isAmountZero) {
+        if (!imbalance.isZero) {
             // yes, this is on purpose the account UID is set to the currency.
             // This should be overridden before saving to db
             val split = Split(imbalance, accountUID = commodity.uid)
@@ -144,8 +144,9 @@ class Transaction : BaseModel {
      */
     override fun setUID(uid: String?) {
         super.setUID(uid)
+        val uidNew = uid ?: this.uid
         for (split in splits) {
-            split.transactionUID = uid
+            split.transactionUID = uidNew
         }
     }
 
@@ -157,6 +158,7 @@ class Transaction : BaseModel {
     var splits: List<Split>
         get() = _splits
         set(value) {
+            if (_splits === value) return
             _splits.clear()
             for (split in value) {
                 addSplit(split)
@@ -204,10 +206,10 @@ class Transaction : BaseModel {
      *
      * @param accountUID Unique Identifier of the account
      * @return Money balance of the transaction for the specified account
-     * @see computeBalance
+     * @see computeAccountBalance
      */
     fun getBalance(accountUID: String): Money {
-        return computeBalance(accountUID, splits, true)
+        return computeAccountBalance(accountUID, splits, true)
     }
 
     /**
@@ -217,10 +219,10 @@ class Transaction : BaseModel {
      *
      * @param account The account
      * @return Money balance of the transaction for the specified account
-     * @see computeBalance
+     * @see computeAccountBalance
      */
     fun getBalance(account: Account, display: Boolean): Money {
-        return computeBalance(account, splits, display)
+        return computeAccountBalance(account, splits, display)
     }
 
     /**
@@ -321,6 +323,7 @@ class Transaction : BaseModel {
     // Prefer DEBIT over CREDIT
     val defaultAccountUID: String? get() = getDefaultAccountUID(TransactionType.DEBIT)
 
+
     companion object {
         /**
          * Mime type for transactions in GnuCash.
@@ -377,10 +380,10 @@ class Transaction : BaseModel {
          * @param splits  List of splits
          * @return Money list of splits
          */
-        fun computeBalance(accountUID: String, splits: List<Split>, display: Boolean): Money {
+        fun computeAccountBalance(accountUID: String, splits: List<Split>, display: Boolean): Money {
             val accountsDbAdapter = AccountsDbAdapter.instance
             val account = accountsDbAdapter.getRecord(accountUID)
-            return computeBalance(account, splits, display)
+            return computeAccountBalance(account, splits, display)
         }
 
         /**
@@ -392,9 +395,9 @@ class Transaction : BaseModel {
          *
          * @param account The account
          * @param splits  List of splits
-         * @return Money list of splits
+         * @return Money The balance.
          */
-        fun computeBalance(account: Account, splits: List<Split>, display: Boolean = false): Money {
+        fun computeAccountBalance(account: Account, splits: List<Split>, display: Boolean = false): Money {
             val accountUID = account.uid
             val accountType = account.type
             val accountCommodity = account.commodity
