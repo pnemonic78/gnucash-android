@@ -29,7 +29,6 @@ import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Price
 import org.gnucash.android.model.PriceSource
-import org.gnucash.android.quote.QuoteCallback
 import org.gnucash.android.quote.QuoteProvider
 import org.gnucash.android.quote.YahooJson
 import org.gnucash.android.ui.text.DefaultTextWatcher
@@ -297,16 +296,14 @@ class TransferFundsDialogFragment : VolatileDialogFragment() {
         formatterRate.maximumFractionDigits = SCALE_RATE
 
         val provider: QuoteProvider = YahooJson()
-        provider.get(fromCommodity, targetCommodity, this, object : QuoteCallback {
-            override suspend fun onQuote(quote: Price?) {
-                if (quote != null) {
-                    priceQuoted = quote
-                    val rate = quote.toBigDecimal(SCALE_RATE)
-                    binding.inputExchangeRate.setText(formatterRate.format(rate))
-                }
-                binding.fetchExchangeRate.isEnabled = true
+        provider.get(fromCommodity, targetCommodity, viewLifecycleOwner) { quote ->
+            if (quote != null) {
+                priceQuoted = quote
+                val rate = quote.toBigDecimal(SCALE_RATE)
+                binding.inputExchangeRate.setText(formatterRate.format(rate))
             }
-        })
+            binding.fetchExchangeRate.isEnabled = true
+        }
     }
 
     companion object {

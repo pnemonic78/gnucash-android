@@ -25,6 +25,7 @@ import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.dayOfWeek
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfWeek
+import org.gnucash.android.util.toMillis
 import org.gnucash.android.util.weekOfMonth
 import org.joda.time.DateTime
 import org.joda.time.Days
@@ -35,9 +36,11 @@ import org.joda.time.ReadablePeriod
 import org.joda.time.Seconds
 import org.joda.time.Weeks
 import org.joda.time.Years
+import org.joda.time.format.DateTimeFormat
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
 /**
@@ -72,6 +75,17 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * End date of the recurrence period
      */
     var periodEnd: Long? = null
+        set(value) {
+            field = value
+            event.until = if (value == null || value == NEVER) {
+                null
+            } else {
+                val df = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss'Z'")
+                    .withLocale(Locale.ROOT)
+                    .withZoneUTC()
+                df.print(value)
+            }
+        }
 
     /**
      * The multiplier for the period type. The default multiplier is 1.
@@ -83,10 +97,19 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             event.interval = value
         }
 
+    var weekStart: Int
+        get() = toCalendarDayOfWeek[event.wkst] ?: Calendar.SUNDAY
+        set(value) {
+            event.wkst = toEventDayOfWeek[value] ?: EventRecurrence.SU
+        }
+
+    constructor(periodType: PeriodType, multiplier: Int) : this(periodType) {
+        this.multiplier = multiplier
+    }
+
     init {
         // Force calling the setter.
         this.periodType = periodType
-        this.multiplier = 1
     }
 
     /**
@@ -279,14 +302,14 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      *
      */
     var byDays: List<Int>
-        get() = event.byday?.map { dayToUtilDay[it] ?: -1 } ?: emptyList()
+        get() = event.byday?.map { toCalendarDayOfWeek[it] ?: -1 } ?: emptyList()
         set(value) {
             if (value.isEmpty()) {
                 event.byday = null
                 event.bydayNum = null
                 event.bydayCount = 0
             } else {
-                event.byday = value.map { weekdays[it] ?: 0 }.toIntArray()
+                event.byday = value.map { toEventDayOfWeek[it] ?: 0 }.toIntArray()
                 if (event.freq == EventRecurrence.MONTHLY) {
                     val weekOfMonth = DateTime(periodStart).weekOfMonth()
                     event.bydayNum = IntArray(value.size) { weekOfMonth }
@@ -321,7 +344,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             }
             var count = 0
             var startTime = LocalDateTime(periodStart)
-            while (startTime.toDateTime().millis < periodEnd) {
+            while (startTime.toMillis() < periodEnd) {
                 ++count
                 startTime += jodaPeriod
             }
@@ -360,7 +383,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             PeriodType.NTH_WEEKDAY -> localDate.plusMonths(occurrenceDuration).dayOfWeek(localDate)
             PeriodType.END_OF_MONTH -> localDate.plusMonths(occurrenceDuration).lastDayOfMonth()
         }
-        periodEnd = endDate.toDateTime().millis
+        periodEnd = endDate.toMillis()
     }
 
     /**
@@ -377,11 +400,11 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
     }
 
     fun isEmpty(): Boolean {
-        return (periodType == PeriodType.ONCE) && (count == 0) && (occurrences == 0)
+        return (periodType == PeriodType.ONCE) && (count <= 0) && (occurrences <= 0)
     }
 
     companion object {
-        private val weekdays = mapOf(
+        private val toEventDayOfWeek = mapOf(
             Calendar.SUNDAY to EventRecurrence.SU,
             Calendar.MONDAY to EventRecurrence.MO,
             Calendar.TUESDAY to EventRecurrence.TU,
@@ -391,7 +414,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             Calendar.SATURDAY to EventRecurrence.SA
         )
 
-        private val dayToUtilDay = mapOf(
+        private val toCalendarDayOfWeek = mapOf(
             EventRecurrence.SU to Calendar.SUNDAY,
             EventRecurrence.MO to Calendar.MONDAY,
             EventRecurrence.TU to Calendar.TUESDAY,

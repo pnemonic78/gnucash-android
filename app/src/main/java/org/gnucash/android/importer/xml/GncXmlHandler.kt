@@ -1124,7 +1124,7 @@ class GncXmlHandler(
         if (value.isEmpty()) return
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
-            if (split.value.isAmountZero) {
+            if (split.value.isZero) {
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
                     accountUID = split.accountUID!!
@@ -1155,7 +1155,7 @@ class GncXmlHandler(
     ) {
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
-            if (split.value.isAmountZero) {
+            if (split.value.isZero) {
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
                     accountUID = split.accountUID!!
