@@ -41,7 +41,7 @@ import org.gnucash.android.model.AccountType
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
 import org.gnucash.android.model.Transaction
-import org.gnucash.android.model.Transaction.Companion.computeBalance
+import org.gnucash.android.model.Transaction.Companion.computeAccountBalance
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import org.gnucash.android.util.TimestampHelper.timestampFromEpochZero
 import org.gnucash.android.util.TimestampHelper.timestampFromNow
@@ -393,7 +393,7 @@ class TransactionsDbAdapter(
      */
     fun getBalance(transactionUID: String, accountUID: String, display: Boolean): Money {
         val splits = splitsDbAdapter.getSplitsForTransactionInAccount(transactionUID, accountUID)
-        return computeBalance(accountUID, splits, display)
+        return computeAccountBalance(accountUID, splits, display)
     }
 
     /**

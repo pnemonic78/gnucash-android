@@ -178,6 +178,8 @@ class ScheduledActionDbAdapter(
 
         val scheduledAction = ScheduledAction(actionType)
         populateBaseModelAttributes(cursor, scheduledAction)
+        //TODO: optimize by doing overriding fetchRecord(String) and join the two tables
+        scheduledAction.setRecurrence(recurrenceDbAdapter.getRecord(recurrenceUID))
         scheduledAction.startDate = startTime
         scheduledAction.endDate = endTime
         scheduledAction.actionUID = actionUID
@@ -190,8 +192,6 @@ class ScheduledActionDbAdapter(
         scheduledAction.isAutoCreateNotify = autoNotify
         scheduledAction.advanceCreateDays = advanceCreate
         scheduledAction.advanceRemindDays = advanceNotify
-        //TODO: optimize by doing overriding fetchRecord(String) and join the two tables
-        scheduledAction.setRecurrence(recurrenceDbAdapter.getRecord(recurrenceUID))
         scheduledAction.setTemplateAccountUID(templateAccountUID)
         scheduledAction.name = name
 
@@ -205,7 +205,8 @@ class ScheduledActionDbAdapter(
      */
     val allEnabledScheduledActions: List<ScheduledAction>
         get() {
-            val where = ScheduledActionEntry.COLUMN_ENABLED + "=1 AND " + ScheduledActionEntry.COLUMN_AUTO_CREATE + "=1"
+            val where =
+                ScheduledActionEntry.COLUMN_ENABLED + "=1 AND " + ScheduledActionEntry.COLUMN_AUTO_CREATE + "=1"
             return getAllRecords(where, null)
         }
 
@@ -224,12 +225,26 @@ class ScheduledActionDbAdapter(
     fun getRecords(actionType: ScheduledAction.ActionType): List<ScheduledAction> {
         val where = ScheduledActionEntry.COLUMN_TYPE + "=?"
         val whereArgs = arrayOf<String?>(actionType.value)
+        if (actionType == ScheduledAction.ActionType.TRANSACTION) {
+            val projection =
+                TransactionEntry.TABLE_NAME + " t LEFT OUTER JOIN " + tableName + " sa ON " +
+                        "t." + TransactionEntry.COLUMN_UID + " = " + "sa." + ScheduledActionEntry.COLUMN_ACTION_UID
+            val columns = allColumnsPrefix("sa.")
+            val orderBy = ScheduledActionEntry.COLUMN_LAST_OCCUR + " DESC"
+            return getRecords(db.query(projection, columns, where, whereArgs, null, null, orderBy))
+        }
         return getAllRecords(where, whereArgs)
     }
 
     fun getRecordsCount(actionType: ScheduledAction.ActionType): Long {
         val where = ScheduledActionEntry.COLUMN_TYPE + "=?"
         val whereArgs = arrayOf<String?>(actionType.value)
+        if (actionType == ScheduledAction.ActionType.TRANSACTION) {
+            val projection =
+                TransactionEntry.TABLE_NAME + " t LEFT OUTER JOIN " + tableName + " sa ON " +
+                        "t." + TransactionEntry.COLUMN_UID + " = " + "sa." + ScheduledActionEntry.COLUMN_ACTION_UID
+            return DatabaseUtils.queryNumEntries(db, projection, where, whereArgs)
+        }
         return getRecordsCount(where, whereArgs)
     }
 
