@@ -38,6 +38,7 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.unit.BookHelperTest
+import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.TimestampHelper
 import org.gnucash.android.util.toMillis
 import org.joda.time.DateTimeZone
@@ -327,7 +328,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(commoditiesDbAdapter).isNotNull()
         val commodities = commoditiesDbAdapter.allRecords
         assertThat(commodities).isNotNull()
-        assertThat(commodities.size).isGreaterThanOrEqualTo(3)
+        assertThat(commodities).hasSizeGreaterThanOrEqualTo(3)
 
         val commodity1 = commodities.first { it.currencyCode == "APPS" }
         assertThat(commodity1).isNotNull()
@@ -371,7 +372,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(transaction.commodity.smallestFraction).isEqualTo(100)
 
         // Check splits
-        assertThat(transaction.splits.size).isEqualTo(2)
+        assertThat(transaction.splits).hasSize(2)
 
         var splitDebit = transaction.splits[0]
         assertThat(splitDebit.uid).isEqualTo("88bbbbac7689a8657b04427f8117a783")
@@ -422,7 +423,7 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(transaction.commodity.smallestFraction).isEqualTo(100)
 
         // Check splits
-        assertThat(transaction.splits.size).isEqualTo(2)
+        assertThat(transaction.splits).hasSize(2)
 
         splitDebit = transaction.splits[0]
         assertThat(splitDebit.uid).isEqualTo("9fc187a80d444c0cadeda57d384e2f1f")
@@ -605,7 +606,7 @@ class GncXmlHandlerTest : BookHelperTest() {
             assertThat(scheduledAction.templateAccountUID).isEqualTo("3bdbf5e3b9364a6fb2dd463d1241a4ea")
             assertThat(scheduledAction.actionUID).isEqualTo(template.uid)
             assertThat(scheduledAction.startDate).isEqualTo(scheduledDate.toMillis())
-            assertThat(scheduledAction.endDate).isEqualTo(0L)
+            assertThat(scheduledAction.endDate).isEqualTo(NEVER)
             assertThat(scheduledAction.lastRunDate).isEqualTo(0L)
             assertThat(scheduledAction.instanceCount).isEqualTo(1)
 
@@ -628,7 +629,7 @@ class GncXmlHandlerTest : BookHelperTest() {
             assertThat(budgetAmountParent.budgetUID).isEqualTo("2f4e4e47cedb413e86ab4823757d1d84")
             assertThat(budgetAmountParent.accountUID).isEqualTo("84bbb4a4c12844fa9a4a7b4d6915288a")
             assertThat(budgetAmountParent.notes).isEqualTo("note #1")
-            assertThat(budgetAmountParent.amount.isAmountZero).isTrue()
+            assertThat(budgetAmountParent.amount.isZero).isTrue()
         }
     }
 }
