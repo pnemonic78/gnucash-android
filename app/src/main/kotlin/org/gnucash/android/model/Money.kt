@@ -48,7 +48,7 @@ class Money(
     /**
      * Amount value held by this object
      */
-    private var amount: BigDecimal = BigDecimal.ZERO,
+    private val amount: BigDecimal = BigDecimal.ZERO,
     /**
      * Currency of the account
      */
@@ -253,6 +253,10 @@ class Money(
         return amount.toByte()
     }
 
+    @Deprecated(
+        "Direct conversion to Char is deprecated. Use toInt().toChar() or Char constructor instead.\nIf you override toChar() function in your Number inheritor, it's recommended to gradually deprecate the overriding function and then remove it.\nSee https://youtrack.jetbrains.com/issue/KT-46465 for details about the migration",
+        replaceWith = ReplaceWith("this.toInt().toChar()")
+    )
     override fun toChar(): Char {
         return amount.toInt().toChar()
     }
@@ -510,8 +514,8 @@ class Money(
         return times(BigDecimal(factor))
     }
 
-    operator fun times(price: Price): Money {
-        return withCommodity(price.currency) * price.toBigDecimal()
+    operator fun times(price: Price?): Money {
+        return if (price != null) withCommodity(price.currency) * price.toBigDecimal() else this
     }
 
     /**

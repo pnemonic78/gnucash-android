@@ -157,6 +157,7 @@ class Transaction : BaseModel {
     var splits: List<Split>
         get() = _splits
         set(value) {
+            if (_splits === value) return
             _splits.clear()
             for (split in value) {
                 addSplit(split)

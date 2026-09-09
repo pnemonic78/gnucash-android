@@ -439,7 +439,7 @@ class AccountsDbAdapter(
      * @return String unique ID of the account
      */
     fun getOrCreateImbalanceAccountUID(context: Context, commodity: Commodity): String {
-        return getOrCreateImbalanceAccount(context, commodity)!!.uid
+        return getOrCreateImbalanceAccount(context, commodity).uid
     }
 
     /**
@@ -449,7 +449,7 @@ class AccountsDbAdapter(
      * @param commodity Commodity for the imbalance account
      * @return The account
      */
-    fun getOrCreateImbalanceAccount(context: Context, commodity: Commodity): Account? {
+    fun getOrCreateImbalanceAccount(context: Context, commodity: Commodity): Account {
         val imbalanceAccountName = getImbalanceAccountName(context, commodity)
         val uid = findAccountUidByFullName(imbalanceAccountName)
         if (uid.isNullOrEmpty()) {
@@ -1152,33 +1152,33 @@ class AccountsDbAdapter(
     /**
      * Returns the default transfer account record ID for the account with UID `accountUID`
      *
-     * @param accountID Database ID of the account record
-     * @return Record ID of default transfer account
+     * @param account The main account
+     * @return Record of default transfer account
      */
-    fun getDefaultTransferAccountID(accountID: Long): Long {
+    fun getDefaultTransferAccount(account: Account): Account? {
+        val accountUID = account.uid
+        val defaultTransferUid = account.defaultTransferAccountUID
+
+        if (defaultTransferUid.isNullOrEmpty()) {
+            val where = (AccountEntry.COLUMN_UID + " != ?"
+                    + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
+                    + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
+                    + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
+                    + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0")
+            val whereArgs = arrayOf<String?>(accountUID, account.type.name, AccountType.ROOT.name)
+            return getAllRecords(where, whereArgs, null).firstOrNull()
+        }
+
         if (isCached) {
-            for (account in cache.values) {
-                if (account.id == accountID) {
-                    val uid = account.defaultTransferAccountUID
-                    return if (uid.isNullOrEmpty()) 0 else getID(uid)
+            for (a in cache.values) {
+                if (defaultTransferUid == a.uid) {
+                    return a
                 }
             }
         }
-        val cursor = db.query(
-            tableName,
-            arrayOf<String?>(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID),
-            AccountEntry.COLUMN_ID + " = " + accountID,
-            null, null, null, null
-        )
-        try {
-            if (cursor.moveToFirst()) {
-                val uid = cursor.getString(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID)
-                return if (uid.isNullOrEmpty()) 0 else getID(uid)
-            }
-        } finally {
-            cursor.close()
-        }
-        return 0
+        val where = AccountEntry.COLUMN_ID + " = " + accountUID
+        val whereArgs = arrayOf<String?>(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID)
+        return getAllRecords(where, whereArgs, null).firstOrNull()
     }
 
     /**

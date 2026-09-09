@@ -155,7 +155,7 @@ class SplitEditorFragment : MenuFragment() {
             val accountType = account.type
             val transactionType = getTypeForBalance(accountType, baseAmount.signum() < 0)
             split.type = transactionType
-            val splitViewHolder = addSplitView(split)
+            val splitViewHolder = addSplitView(binding, split)
             val splitViewBinding = splitViewHolder.binding
             splitViewBinding.inputAccountsSpinner.isEnabled = false
             splitViewBinding.btnRemoveSplit.isVisible = false
@@ -165,7 +165,7 @@ class SplitEditorFragment : MenuFragment() {
             )
         } else {
             //aha! there are some splits. Let's load those instead
-            loadSplitViews(splitList)
+            loadSplitViews(binding, splitList)
             imbalanceWatcher?.notifyChanged()
         }
     }
@@ -180,9 +180,9 @@ class SplitEditorFragment : MenuFragment() {
         }
     }
 
-    private fun loadSplitViews(splits: List<Split>) {
+    private fun loadSplitViews(binding: FragmentSplitEditorBinding, splits: List<Split>) {
         for (split in splits) {
-            addSplitView(split)
+            addSplitView(binding, split)
         }
     }
 
@@ -212,7 +212,8 @@ class SplitEditorFragment : MenuFragment() {
             }
 
             R.id.menu_add -> {
-                addSplitView(null)
+                val binding = binding ?: return false
+                addSplitView(binding, null)
                 true
             }
 
@@ -226,9 +227,8 @@ class SplitEditorFragment : MenuFragment() {
      * @param split Split to initialize the contents to
      * @return Returns the split view which was added
      */
-    private fun addSplitView(split: Split?): SplitViewHolder {
-        val binding =
-            ItemSplitEntryBinding.inflate(layoutInflater, binding!!.splitListLayout, true)
+    private fun addSplitView(parent: FragmentSplitEditorBinding, split: Split?): SplitViewHolder {
+        val binding = ItemSplitEntryBinding.inflate(layoutInflater, parent.splitListLayout, true)
         val splitView = binding.root
         val viewHolder = SplitViewHolder(binding)
         viewHolder.bind(split)
@@ -424,6 +424,11 @@ class SplitEditorFragment : MenuFragment() {
             split.setUID(viewHolder.splitUidTextView.getText().toString())
             splits.add(split)
         }
+
+        // TODO: squash "Imbalance" splits of same accounts, e.g.
+        // CREDIT of $499.00 + DEBIT of $99.00 ==> CREDIT of $400.00
+        // then update test `testSplitEditor`
+
         return splits
     }
 

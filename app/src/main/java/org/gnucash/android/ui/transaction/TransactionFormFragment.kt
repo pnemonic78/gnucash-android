@@ -16,8 +16,6 @@
 package org.gnucash.android.ui.transaction
 
 import android.app.Activity
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -34,11 +32,10 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemClickListener
-import android.widget.DatePicker
 import android.widget.TextView
-import android.widget.TimePicker
 import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter
@@ -90,8 +87,6 @@ import java.util.Calendar
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 class TransactionFormFragment : MenuFragment(),
-    DatePickerDialog.OnDateSetListener,
-    TimePickerDialog.OnTimeSetListener,
     OnRecurrenceSetListener,
     OnTransferFundsListener {
     /**
@@ -114,17 +109,12 @@ class TransactionFormFragment : MenuFragment(),
     /**
      * Transaction to be created/updated
      */
-    private var transaction: Transaction? = null
+    private var transaction: Transaction = Transaction("")
 
     /**
      * Flag to note if double entry accounting is in use or not
      */
     private var useDoubleEntry = false
-
-    /**
-     * [Calendar] for holding the set date
-     */
-    private var date: Calendar = Calendar.getInstance()
 
     /**
      * The Account of the account to which this transaction belongs.
@@ -137,10 +127,6 @@ class TransactionFormFragment : MenuFragment(),
     private val eventRecurrence = EventRecurrence()
 
     private var rootAccountUID: String? = null
-
-    private val splitsList = mutableListOf<Split>()
-
-    private var editMode = false
 
     /**
      * Flag which is set if another action is triggered during a transaction save (which interrrupts the save process).
@@ -176,28 +162,27 @@ class TransactionFormFragment : MenuFragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val account = requireAccount()
 
         val actionBar: ActionBar? = this.actionBar
-        if (editMode) {
+        if (transaction.id != 0L) {
             actionBar?.setTitle(R.string.title_edit_transaction)
         } else {
             actionBar?.setTitle(R.string.title_add_transaction)
         }
 
         val binding = this.binding!!
-        setListeners(binding)
+        setListeners(binding, account)
 
-        val account = requireAccount()
         //updateTransferAccountsList must only be called after initializing accountsDbAdapter
         updateTransferAccountsList(binding, account)
         bind(binding, account)
 
         val transaction = transaction
-        if (transaction == null || transaction.id == 0L) {
+        if (transaction.isNew) {
             bindTransactionNameAutocomplete(binding)
-        } else {
-            bind(binding, transaction)
         }
+        bind(binding, transaction, true)
     }
 
     /**
@@ -256,28 +241,40 @@ class TransactionFormFragment : MenuFragment(),
         useDoubleEntry = isDoubleEntryEnabled(context)
 
         accountsDbAdapter = AccountsDbAdapter.instance
-        pricesDbAdapter = PricesDbAdapter.instance
+        transactionsDbAdapter = accountsDbAdapter.transactionsDbAdapter
+        pricesDbAdapter = accountsDbAdapter.pricesDbAdapter
         scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
 
         rootAccountUID = accountsDbAdapter.rootAccountUID
-        this.account = requireAccount()
-
-        editMode = false
+        val account = requireAccount()
+        this.account = account
 
         val transactionUID = args.getString(UxArgument.SELECTED_TRANSACTION_UID)
-        transactionsDbAdapter = TransactionsDbAdapter.instance
-        var transaction: Transaction? = null
         if (!transactionUID.isNullOrEmpty()) {
-            transaction = transactionsDbAdapter.getRecordOrNull(transactionUID)
+            val transaction = transactionsDbAdapter.getRecordOrNull(transactionUID)
             if (transaction != null) {
+                this.transaction = transaction
+
                 val scheduledActionUID = args.getString(UxArgument.SCHEDULED_ACTION_UID)
                 if (!scheduledActionUID.isNullOrEmpty()) {
                     transaction.scheduledActionUID = scheduledActionUID
                 }
             }
         }
-        editMode = transaction != null
-        this.transaction = transaction
+
+        if (transaction.isNew) {
+            transaction.commodity = account.commodity
+
+            val transferAccount = accountsDbAdapter.getDefaultTransferAccount(account)
+                ?: accountsDbAdapter.getOrCreateImbalanceAccount(context, account.commodity)
+            val amount = Money(BigDecimal.ZERO, account.commodity)
+            val split1 = Split(amount, account)
+            val split2 = Split(amount, amount, transferAccount)
+            split1.type = getDefaultTransactionType(context)
+            split2.type = split1.type.invert()
+            transaction.splits = listOf(split1, split2)
+            transaction.isTemplate = account.isTemplate
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -317,8 +314,7 @@ class TransactionFormFragment : MenuFragment(),
 
             val secondaryTextView = view.findViewById<TextView>(R.id.secondary_text)
             //TODO: Extract string
-            secondaryTextView.text =
-                "${balance.formattedString()} on $dateString"
+            secondaryTextView.text = "${balance.formattedString()} on $dateString"
         }
     }
 
@@ -349,14 +345,16 @@ class TransactionFormFragment : MenuFragment(),
             OnItemClickListener { adapterView, view, position, id ->
                 val transactionDb = transactionsDbAdapter.getRecord(id)
                 val transaction = transactionDb.copy(datePosted = System.currentTimeMillis())
+                //we are creating a new transaction after all
+                transaction.id = 0L
                 //we check here because next method will modify it and we want to catch user-modification
                 val amountEntered = binding.inputTransactionAmount.value
                 val amountModified = binding.inputTransactionAmount.isInputModified
-                bind(binding, transaction)
-                val splits: List<Split> = transaction.splits
+                bind(binding, transaction, false)
+                val splits = transaction.splits
                 val isSplitPair = splits.size == 2 && splits[0].isPairOf(splits[1])
                 if (isSplitPair) {
-                    splitsList.clear()
+                    // FIXME transaction.splits = emptyList()
                     if (amountModified) { //if user already entered an amount
                         binding.inputTransactionAmount.value = amountEntered
                     } else {
@@ -365,7 +363,7 @@ class TransactionFormFragment : MenuFragment(),
                 } else {
                     // if user entered own amount, clear loaded splits and use the user value
                     if (amountModified) {
-                        splitsList.clear()
+                        transaction.splits = emptyList()
                         setDoubleEntryViewsVisibility(binding, true)
                     } else {
                         // don't hide the view in single entry mode
@@ -375,8 +373,6 @@ class TransactionFormFragment : MenuFragment(),
                         }
                     }
                 }
-                //we are creating a new transaction after all
-                this@TransactionFormFragment.transaction = null
             }
 
         binding.inputTransactionName.setAdapter(adapter)
@@ -387,23 +383,22 @@ class TransactionFormFragment : MenuFragment(),
      * Initialize views in the fragment with information from a transaction.
      * This method is called if the fragment is used for editing a transaction
      */
-    private fun bind(binding: FragmentTransactionFormBinding, transaction: Transaction) {
+    private fun bind(
+        binding: FragmentTransactionFormBinding,
+        transaction: Transaction,
+        isFirst: Boolean
+    ) {
         val account = requireAccount()
         binding.inputTransactionName.setTextToEnd(transaction.description)
 
         //when autocompleting, only change the amount if the user has not manually changed it already
-        binding.inputTransactionAmount.setValue(
-            transaction.getBalance(account, true).toBigDecimal(),
-            !binding.inputTransactionAmount.isInputModified
-        )
         binding.currencySymbol.text = transaction.commodity.symbol
         binding.notes.setText(transaction.notes)
         binding.number.setText(transaction.number)
         binding.inputDate.text = DATE_FORMATTER.print(transaction.datePosted)
         binding.inputTime.text = TIME_FORMATTER.print(transaction.datePosted)
-        date = Calendar.getInstance().apply { timeInMillis = transaction.datePosted }
 
-        bindSplits(binding, account, transaction.splits)
+        bindSplits(binding, account, transaction.splits, isFirst)
 
         val accountCommodity = account.commodity
         binding.currencySymbol.text = accountCommodity.symbol
@@ -418,7 +413,7 @@ class TransactionFormFragment : MenuFragment(),
             val scheduledAction = scheduledActionDbAdapter.getRecord(scheduledActionUID)
             onRecurrenceSet(scheduledAction.ruleString)
             // Instances should not change their schedules - only the owner template.
-            if (transaction.id == 0L || transaction.isTemplate) {
+            if (transaction.isNew || transaction.isTemplate) {
                 binding.inputRecurrence.isEnabled = true
             }
         }
@@ -427,23 +422,22 @@ class TransactionFormFragment : MenuFragment(),
     private fun bindSplits(
         binding: FragmentTransactionFormBinding,
         account: Account,
-        splits: List<Split>
+        splits: List<Split>,
+        isFirst: Boolean
     ) {
         val context = binding.root.context
         val accountUID = account.uid
         val accountCommodity = account.commodity
         var transactionType = getDefaultTransactionType(context)
 
-        splitsList.clear()
-        splitsList.addAll(splits)
         val splitsSize = splits.size
         toggleAmountInputEntryMode(binding, splitsSize <= 2)
-        binding.inputTransactionType.isVisible = splitsSize <= 2
+        binding.inputTransactionType.isVisible = (splitsSize <= 2) && !isSplitEditorUsed(binding)
 
         splitValue = null
         splitQuantity = null
         if (splitsSize == 2) {
-            for (split in splitsList) {
+            for (split in splits) {
                 if (split.accountUID == accountUID) {
                     splitValue = split.value
                     transactionType = split.type
@@ -454,7 +448,7 @@ class TransactionFormFragment : MenuFragment(),
         }
         //if there are more than two splits (which is the default for one entry), then
         //disable editing of the transfer account. User should open editor
-        if (splitsSize == 2 && splitsList[0].isPairOf(splitsList[1])) {
+        if (splitsSize == 2 && splits[0].isPairOf(splits[1])) {
             for (split in splits) {
                 //two splits, one belongs to this account and the other to another account
                 if (useDoubleEntry && split.accountUID != accountUID) {
@@ -473,7 +467,12 @@ class TransactionFormFragment : MenuFragment(),
         }
 
         val balance = Transaction.computeBalance(account, splits, true)
-        binding.inputTransactionAmount.value = balance.toBigDecimal()
+        val amount: BigDecimal? = if (isFirst) {
+            if (balance.isAmountZero) null else balance.toBigDecimal()
+        } else {
+            balance.toBigDecimal()
+        }
+        binding.inputTransactionAmount.setValue(amount, isFirst)
         binding.inputTransactionType.accountType = account.type
         binding.inputTransactionType.setChecked(transactionType)
     }
@@ -508,7 +507,6 @@ class TransactionFormFragment : MenuFragment(),
         val now = Calendar.getInstance()
         binding.inputDate.text = DATE_FORMATTER.print(now.timeInMillis)
         binding.inputTime.text = TIME_FORMATTER.print(now.timeInMillis)
-        date = now
 
         val transactionType = getDefaultTransactionType(context)
         binding.inputTransactionType.accountType = account.type
@@ -548,11 +546,9 @@ class TransactionFormFragment : MenuFragment(),
             viewLifecycleOwner
         ).load { _ ->
             var transferUID = account.defaultTransferAccountUID
-            if (transaction != null) {
-                val split = transaction!!.getTransferSplit(accountUID)
-                if (split != null) {
-                    transferUID = split.accountUID
-                }
+            val split = transaction.getTransferSplit(accountUID)
+            if (split != null) {
+                transferUID = split.accountUID
             }
             setSelectedTransferAccount(binding, transferUID)
         }
@@ -575,7 +571,7 @@ class TransactionFormFragment : MenuFragment(),
         val baseAmountString: String?
 
         val transaction = this.transaction
-        if (transaction == null) { //if we are creating a new transaction (not editing an existing one)
+        if (transaction.isNew) { //if we are creating a new transaction (not editing an existing one)
             baseAmountString = enteredAmount.toPlainString()
         } else {
             var biggestAmount = BigDecimal.ZERO
@@ -604,24 +600,54 @@ class TransactionFormFragment : MenuFragment(),
     /**
      * Sets click listeners for the dialog buttons
      */
-    private fun setListeners(binding: FragmentTransactionFormBinding) {
+    private fun setListeners(binding: FragmentTransactionFormBinding, account: Account) {
+        binding.inputTransactionName.addTextChangedListener {
+            transaction.description = it.toString()
+        }
+        binding.notes.addTextChangedListener {
+            transaction.notes = it.toString()
+        }
+        binding.number.addTextChangedListener {
+            transaction.number = it.toString()
+        }
+
         binding.btnSplitEditor.setOnClickListener { openSplitEditor(binding) }
 
+        binding.inputTransactionAmount.addValueChangedListener { _ ->
+            transaction.splits = extractSplitsFromView(binding, account)
+        }
         binding.inputTransactionType.setAmountFormattingListener(
             binding.inputTransactionAmount,
             binding.currencySymbol
         )
 
         binding.inputDate.setOnClickListener {
-            val dateMillis = date.timeInMillis
-            DatePickerDialogFragment.newInstance(this@TransactionFormFragment, dateMillis)
-                .show(parentFragmentManager, "date_picker_fragment")
+            val timeMillis = transaction.datePosted
+            DatePickerDialogFragment.newInstance(timeMillis) { _, year, month, dayOfMonth ->
+                val date = Calendar.getInstance().apply {
+                    timeInMillis = timeMillis
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                }
+                transaction.datePosted = date.timeInMillis
+                binding.inputDate.text = DATE_FORMATTER.print(date.timeInMillis)
+            }
+                .show(parentFragmentManager, "date_picker_dialog")
         }
 
         binding.inputTime.setOnClickListener {
-            val timeMillis = date.timeInMillis
-            TimePickerDialogFragment.newInstance(this@TransactionFormFragment, timeMillis)
-                .show(parentFragmentManager, "time_picker_dialog_fragment")
+            val timeMillis = transaction.datePosted
+            TimePickerDialogFragment.newInstance(timeMillis) { _, hourOfDay, minute ->
+                val date = Calendar.getInstance().apply {
+                    timeInMillis = timeMillis
+                    set(Calendar.HOUR_OF_DAY, hourOfDay)
+                    set(Calendar.MINUTE, minute)
+                }
+                transaction.datePosted = date.timeInMillis
+                binding.inputTime.text = TIME_FORMATTER.print(date.timeInMillis)
+            }
+                .show(parentFragmentManager, "time_picker_dialog")
         }
 
         recurrenceViewClickListener =
@@ -646,10 +672,11 @@ class TransactionFormFragment : MenuFragment(),
                 removeFavoriteIconFromSelectedView(view as TextView)
                 val transferAccountUID = accountTransferNameAdapter!!.getUID(position)
 
-                if (splitsList.size == 2) { //when handling simple transfer to one account
+                val splits = transaction.splits
+                if (splits.size == 2) { //when handling simple transfer to one account
                     val account = requireAccount()
                     val accountUID = account.uid
-                    for (split in splitsList) {
+                    for (split in splits) {
                         if (split.accountUID != accountUID) {
                             split.accountUID = transferAccountUID
                         }
@@ -696,43 +723,41 @@ class TransactionFormFragment : MenuFragment(),
         binding: FragmentTransactionFormBinding,
         account: Account
     ): List<Split> {
-        if (splitEditorUsed(binding)) {
-            return splitsList
+        val splits = transaction.splits
+        if (isSplitEditorUsed(binding)) {
+            return splits
         }
 
-        var enteredAmount = binding.inputTransactionAmount.value
-        if (enteredAmount == null) enteredAmount = BigDecimal.ZERO
+        val enteredAmount = binding.inputTransactionAmount.value ?: BigDecimal.ZERO
         val accountUID = account.uid
         val accountCommodity = account.commodity
         val value = Money(enteredAmount, accountCommodity)
         var quantity = Money(value)
 
-        val transferAccount = getTransferAccount(binding) ?: return splitsList
+        val transferAccount = getTransferAccount(binding) ?: return splits
         val transferAccountUID = transferAccount.uid
 
-        if (isMultiCurrencyTransaction(binding)) { //if multi-currency transaction
+        if (isMultiCurrencyTransaction(binding, account)) { //if multi-currency transaction
             val targetCommodity = transferAccount.commodity
 
             if (splitQuantity != null && (value == splitValue)) {
                 quantity = splitQuantity!!
             } else {
                 val price = pricesDbAdapter.getPrice(accountCommodity, targetCommodity)
-                if (price != null) {
-                    quantity *= price
-                }
+                quantity *= price
             }
         }
 
         val split1: Split
         val split2: Split
         // Try to preserve the other split attributes.
-        if (splitsList.size >= 2) {
-            split1 = splitsList[0]
+        if (splits.size >= 2) {
+            split1 = splits[0]
             split1.value = value
             split1.quantity = value
             split1.accountUID = accountUID
 
-            split2 = splitsList[1]
+            split2 = splits[1]
             split2.value = value
             split2.quantity = quantity
             split2.accountUID = transferAccountUID
@@ -741,7 +766,7 @@ class TransactionFormFragment : MenuFragment(),
             split2 = Split(value, quantity, transferAccount)
         }
         split1.type = binding.inputTransactionType.transactionType
-        split2.type = binding.inputTransactionType.transactionType.invert()
+        split2.type = split1.type.invert()
 
         return listOf(split1, split2)
     }
@@ -764,37 +789,11 @@ class TransactionFormFragment : MenuFragment(),
     }
 
     /**
-     * Extracts a transaction from the input in the form fragment
-     *
-     * @return New transaction object containing all info in the form
-     */
-    private fun extractTransactionFromView(binding: FragmentTransactionFormBinding): Transaction {
-        val description = binding.inputTransactionName.getText().toString()
-        val notes = binding.notes.getText().toString()
-        val number = binding.number.getText().toString()
-        val account = requireAccount()
-        val accountCommodity = account.commodity
-
-        val splits = extractSplitsFromView(binding, account)
-
-        val transaction = Transaction(description).apply {
-            datePosted = date.timeInMillis
-            commodity = accountCommodity
-            this.notes = notes
-            this.number = number
-            this.splits = splits
-            isExported = false
-            isTemplate = account.isTemplate || !recurrenceRule.isNullOrEmpty()
-        }
-        return transaction
-    }
-
-    /**
      * Checks whether the split editor has been used for editing this transaction.
      *
      * @return `true` if split editor was used, `false` otherwise
      */
-    private fun splitEditorUsed(binding: FragmentTransactionFormBinding): Boolean {
+    private fun isSplitEditorUsed(binding: FragmentTransactionFormBinding): Boolean {
         return !binding.inputTransactionType.isVisible
     }
 
@@ -806,13 +805,15 @@ class TransactionFormFragment : MenuFragment(),
      *
      * @return `true` if multi-currency transaction, `false` otherwise
      */
-    private fun isMultiCurrencyTransaction(binding: FragmentTransactionFormBinding): Boolean {
+    private fun isMultiCurrencyTransaction(
+        binding: FragmentTransactionFormBinding,
+        account: Account
+    ): Boolean {
         if (!useDoubleEntry) return false
 
-        val account = requireAccount()
         val accountCommodity = account.commodity
 
-        val splits = splitsList
+        val splits = transaction.splits
         for (split in splits) {
             val splitCommodity = split.quantity.commodity
             if (accountCommodity != splitCommodity) {
@@ -832,42 +833,37 @@ class TransactionFormFragment : MenuFragment(),
      * and save a transaction
      */
     private fun saveTransaction(binding: FragmentTransactionFormBinding) {
-        val context = binding.root.context
         binding.inputTransactionAmount.error = null
 
         //determine whether we need to do currency conversion
-        if (isMultiCurrencyTransaction(binding) && !splitEditorUsed(binding) && !onSaveAttempt) {
+        val account = requireAccount()
+        if (isMultiCurrencyTransaction(binding, account) &&
+            !isSplitEditorUsed(binding) &&
+            !onSaveAttempt
+        ) {
             onSaveAttempt = true
             startTransferFunds(binding)
             return
         }
 
-        val transactionOld = transaction
-        val transaction = extractTransactionFromView(binding)
+        val transaction = this.transaction
+        val isTemplate = transaction.isTemplate || !recurrenceRule.isNullOrEmpty()
 
         try {
-            if (transactionOld == null || transactionOld.id == 0L) {
-                if (transaction.isTemplate) {
+            if (transaction.isNew) {
+                if (isTemplate) {
                     saveNewRecur(transaction)
-                    scheduleRecurringTransaction(context)
                 } else {
                     saveNewRegular(transaction)
                 }
-            } else if (transaction.isTemplate) {
-                if (transactionOld.scheduledActionUID.isNullOrEmpty()) {
-                    if (transaction.scheduledActionUID.isNullOrEmpty()) {
-                        saveNewRecur(transaction)
-                        scheduleRecurringTransaction(context)
-                    } else {
-                        saveOldRecur(transaction, transactionOld)
-                        scheduleRecurringTransaction(context)
-                    }
+            } else if (isTemplate) {
+                if (transaction.scheduledActionUID.isNullOrEmpty()) {
+                    saveNewRecur(transaction)
                 } else {
-                    saveOldRecur(transaction, transactionOld)
-                    scheduleRecurringTransaction(context)
+                    saveOldRecur(transaction)
                 }
             } else {
-                saveOldRegular(transaction, transactionOld)
+                saveOldRegular(transaction)
             }
 
             finish(Activity.RESULT_OK)
@@ -962,8 +958,9 @@ class TransactionFormFragment : MenuFragment(),
      */
     private fun setSplits(binding: FragmentTransactionFormBinding, splits: List<Split>) {
         val account = requireAccount()
-        bindSplits(binding, account, splits)
+        transaction.splits = splits
         binding.inputTransactionType.isVisible = false
+        bindSplits(binding, account, splits, false)
     }
 
     /**
@@ -989,28 +986,16 @@ class TransactionFormFragment : MenuFragment(),
         }
     }
 
-    override fun onDateSet(view: DatePicker, year: Int, month: Int, dayOfMonth: Int) {
-        date.set(Calendar.YEAR, year)
-        date.set(Calendar.MONTH, month)
-        date.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-        val binding = this.binding ?: return
-        binding.inputDate.text = DATE_FORMATTER.print(date.timeInMillis)
-    }
-
-    override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
-        date.set(Calendar.HOUR_OF_DAY, hourOfDay)
-        date.set(Calendar.MINUTE, minute)
-        val binding = this.binding ?: return
-        binding.inputTime.text = TIME_FORMATTER.print(date.timeInMillis)
-    }
-
     override fun transferComplete(value: Money, amount: Money) {
         splitValue = value
         splitQuantity = amount
 
+        val binding = this.binding ?: return
+        // The converted quantity is only known now, so rebuild the splits with it.
+        transaction.splits = extractSplitsFromView(binding, requireAccount())
+
         //The transfer dialog was called while attempting to save. So try saving again
         if (onSaveAttempt) {
-            val binding = this.binding ?: return
             saveTransaction(binding)
         }
         onSaveAttempt = false
@@ -1044,6 +1029,7 @@ class TransactionFormFragment : MenuFragment(),
         recurrenceViewClickListener?.setRecurrence(rrule)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             val binding = this.binding ?: return
@@ -1055,7 +1041,6 @@ class TransactionFormFragment : MenuFragment(),
             //once split editor has been used and saved, only allow editing through it
             toggleAmountInputEntryMode(binding, false)
             setDoubleEntryViewsVisibility(binding, false)
-            binding.inputTransactionType.isVisible = false
             binding.btnSplitEditor.isVisible = true
         }
     }
@@ -1091,9 +1076,7 @@ class TransactionFormFragment : MenuFragment(),
         saveToDb(transaction)
     }
 
-    private fun saveOldRegular(transaction: Transaction, transactionOld: Transaction) {
-        transaction.id = transactionOld.id
-        transaction.setUID(transactionOld.uid)
+    private fun saveOldRegular(transaction: Transaction) {
         transaction.isTemplate = false
         transaction.scheduledActionUID = null
         transaction.splits.forEach { split ->
@@ -1113,18 +1096,21 @@ class TransactionFormFragment : MenuFragment(),
         scheduledAction.isAutoCreate = true
         scheduledActionDbAdapter.insert(scheduledAction)
 
+        transaction.isTemplate = true
         transaction.scheduledActionUID = scheduledAction.uid
         for (split in transaction.splits) {
             split.scheduledActionAccountUID = split.accountUID
         }
         saveToDb(transaction)
+
+        ScheduledActionService.processScheduledAction(
+            scheduledActionDbAdapter.holder,
+            scheduledAction
+        )
+        snackLong(R.string.toast_scheduled_recurring_transaction)
     }
 
-    private fun saveOldRecur(transaction: Transaction, transactionOld: Transaction) {
-        transaction.id = transactionOld.id
-        transaction.setUID(transactionOld.uid)
-        transaction.isTemplate = transactionOld.isTemplate
-        transaction.scheduledActionUID = transactionOld.scheduledActionUID
+    private fun saveOldRecur(transaction: Transaction) {
         // Did schedule change? Write new schedule anyway.
         saveNewRecur(transaction)
     }
@@ -1148,5 +1134,7 @@ class TransactionFormFragment : MenuFragment(),
          * Formats milliseconds to time string of format "HH:mm" e.g. 15:25
          */
         val TIME_FORMATTER: DateTimeFormatter = DateTimeFormat.mediumTime()
+
+        val Transaction.isNew: Boolean get() = id == 0L
     }
 }

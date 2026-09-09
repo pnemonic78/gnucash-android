@@ -14,7 +14,6 @@ import org.gnucash.android.db.adapter.PricesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
 import org.gnucash.android.model.PriceSource
-import org.gnucash.android.quote.QuoteCallback
 import org.gnucash.android.quote.QuoteProvider
 import org.gnucash.android.quote.YahooJson
 import java.math.BigDecimal
@@ -155,15 +154,13 @@ class PriceFormViewModel : ViewModel() {
         _command.emit(Command.Error(""))
 
         val provider: QuoteProvider = YahooJson()
-        provider.get(security, currency, viewModelScope, object : QuoteCallback {
-            override suspend fun onQuote(quote: Price?) {
-                if (quote != null) {
-                    _price.update { quote }
-                } else {
-                    _command.emit(Command.Error(context.getString(R.string.error_invalid_exchange_rate)))
-                }
+        provider.get(security, currency, viewModelScope) { quote ->
+            if (quote != null) {
+                _price.update { quote }
+            } else {
+                _command.emit(Command.Error(context.getString(R.string.error_invalid_exchange_rate)))
             }
-        })
+        }
     }
 
     companion object {
