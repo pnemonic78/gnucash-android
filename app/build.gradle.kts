@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.plugin.extraProperties
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
 
     // Add the Firebase Crashlytics plugins.
     alias(libs.plugins.google.services)
@@ -131,6 +132,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
 
     bundle {
@@ -145,13 +147,13 @@ android {
         // For older Java 1.8 devices (SDK 25-).
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlin {
         compilerOptions {
             // 'Didn't find class "java.nio.file.DirectoryStream" on path'
-            jvmTarget = JvmTarget.JVM_1_8
+            jvmTarget = JvmTarget.JVM_11
         }
     }
 
@@ -174,6 +176,14 @@ dependencies {
     implementation(libs.androidx.preference)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.work.runtime)
+
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
+    implementation(libs.bundles.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.evalex)
     implementation(libs.exp4j)
