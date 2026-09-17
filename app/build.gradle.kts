@@ -155,19 +155,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlin {
-        compilerOptions {
-            // 'Didn't find class "java.nio.file.DirectoryStream" on path'
-            jvmTarget = JvmTarget.JVM_11
-        }
-    }
-
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
         }
 
         animationsDisabled = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        // For older Java 1.8 devices (SDK 25-).
+        // 'Didn't find class "java.nio.file.DirectoryStream" on path'
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
