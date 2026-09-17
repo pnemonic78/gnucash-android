@@ -12,8 +12,8 @@ plugins {
     alias(libs.plugins.crashlytics)
 }
 
-val versionMajor = 2
-val versionMinor = 13
+val versionMajor = 3
+val versionMinor = 3
 val versionPatch = 0
 val versionBuild = 0
 
