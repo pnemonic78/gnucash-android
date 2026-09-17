@@ -21,6 +21,7 @@ import org.gnucash.android.model.PeriodType
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.test.unit.GnuCashTest
 import org.gnucash.android.util.dayOfWeek
+import org.gnucash.android.util.toMillis
 import org.gnucash.android.util.weekOfMonth
 import org.joda.time.DateTime
 import org.joda.time.DateTimeConstants
@@ -352,6 +353,7 @@ class RecurrenceTest : GnuCashTest() {
         val date = DateTime(now)
         assertThat(date.toDate().time).isEqualTo(now)
         assertThat(date.toDateTime().millis).isEqualTo(now)
+        assertThat(date.toMillis()).isEqualTo(now)
     }
 
     @Test

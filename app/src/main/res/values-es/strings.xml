@@ -432,4 +432,5 @@
     <string name="title_progress_processing_schedules">Procesamiento de los cronogramas</string>
     <string name="title_progress_processing_transactions">Procesamiento de las transacciones</string>
     <string name="title_tab_labels">Mostrar pestañas con etiquetas</string>
+    <string name="execute">Ejecutar</string>
 </resources>

@@ -21,9 +21,11 @@ import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter
 import org.gnucash.android.R
 import org.gnucash.android.ui.util.RecurrenceParser
+import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.dayOfWeek
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfWeek
+import org.gnucash.android.util.toMillis
 import org.gnucash.android.util.weekOfMonth
 import org.joda.time.DateTime
 import org.joda.time.Days
@@ -47,6 +49,7 @@ import kotlin.math.max
 class Recurrence(periodType: PeriodType) : BaseModel() {
 
     private val event = EventRecurrence()
+    val eventRaw get() = event
 
     /**
      * Return the [PeriodType] for this recurrence
@@ -61,7 +64,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * Timestamp of start of recurrence
      */
     var periodStart: Long
-        get() = event.startDate.toMillis(true)
+        get() = event.startDate?.toMillis(true) ?: NEVER
         set(value) {
             event.startDate = Time().apply { set(value) }
         }
@@ -81,10 +84,14 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             event.interval = value
         }
 
+    constructor(periodType: PeriodType, multiplier: Int) : this(periodType) {
+        this.multiplier = multiplier
+    }
+
     init {
+        // Force calling the setter.
         this.periodType = periodType
-        this.periodStart = System.currentTimeMillis()
-        this.multiplier = 1
+        this.multiplier = multiplier.coerceAtLeast(1)
     }
 
     /**
@@ -125,6 +132,21 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
                 .append(context.getString(R.string.repeat_until_date, endDateString))
         }
         return repeatBuilder.toString()
+    }
+
+    /**
+     * Returns the event schedule (start, end and recurrence)
+     *
+     * @return String description of repeat schedule
+     */
+    fun getRepeatStringBuilder(context: Context): StringBuilder {
+        val repeatBuilder = StringBuilder(frequencyRepeatString(context))
+        periodEnd?.let { periodEnd ->
+            val endDateString = DateFormat.getDateInstance().format(Date(periodEnd))
+            repeatBuilder.append(", ")
+                .append(context.getString(R.string.repeat_until_date, endDateString))
+        }
+        return repeatBuilder
     }
 
     /**
@@ -262,14 +284,14 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      *
      */
     var byDays: List<Int>
-        get() = event.byday?.map { dayToUtilDay[it] ?: -1 } ?: emptyList()
+        get() = event.byday?.map { toCalendarDayOfWeek[it] ?: -1 } ?: emptyList()
         set(value) {
             if (value.isEmpty()) {
                 event.byday = null
                 event.bydayNum = null
                 event.bydayCount = 0
             } else {
-                event.byday = value.map { weekdays[it] ?: 0 }.toIntArray()
+                event.byday = value.map { toEventDayOfWeek[it] ?: 0 }.toIntArray()
                 if (event.freq == EventRecurrence.MONTHLY) {
                     val weekOfMonth = DateTime(periodStart).weekOfMonth()
                     event.bydayNum = IntArray(value.size) { weekOfMonth }
@@ -281,11 +303,11 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
         }
 
     /**
-     * Computes the number of occurrences of this recurrences between start and end date
+     * Computes the number of occurrences between start and end date.
      *
-     * If there is no end date or the PeriodType is unknown, it returns -1
+     * If there is no end date or the PeriodType is unknown, it returns `-1`
      *
-     * @return Number of occurrences, or` -1` if there is no end date
+     * @return Number of occurrences, or `-1` if there is no end date.
      */
     val occurrences: Int
         get() {
@@ -304,7 +326,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             }
             var count = 0
             var startTime = LocalDateTime(periodStart)
-            while (startTime.toDateTime().millis < periodEnd) {
+            while (startTime.toMillis() < periodEnd) {
                 ++count
                 startTime += jodaPeriod
             }
@@ -343,7 +365,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             PeriodType.NTH_WEEKDAY -> localDate.plusMonths(occurrenceDuration).dayOfWeek(localDate)
             PeriodType.END_OF_MONTH -> localDate.plusMonths(occurrenceDuration).lastDayOfMonth()
         }
-        periodEnd = endDate.toDateTime().millis
+        periodEnd = endDate.toMillis()
     }
 
     /**
@@ -352,16 +374,19 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * @return String describing the period type
      */
     fun frequencyRepeatString(context: Context): String {
-        val res = context.resources
         return try {
-            EventRecurrenceFormatter.getRepeatString(context, res, event, true)
-        } catch (e: Exception) {
+            EventRecurrenceFormatter.getRepeatString(context, context.resources, event, true)
+        } catch (_: Exception) {
             "?"
         }
     }
 
+    fun isEmpty(): Boolean {
+        return (periodType == PeriodType.ONCE) && (count <= 0) && (occurrences <= 0)
+    }
+
     companion object {
-        private val weekdays = mapOf(
+        private val toEventDayOfWeek = mapOf(
             Calendar.SUNDAY to EventRecurrence.SU,
             Calendar.MONDAY to EventRecurrence.MO,
             Calendar.TUESDAY to EventRecurrence.TU,
@@ -371,7 +396,7 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             Calendar.SATURDAY to EventRecurrence.SA
         )
 
-        private val dayToUtilDay = mapOf(
+        private val toCalendarDayOfWeek = mapOf(
             EventRecurrence.SU to Calendar.SUNDAY,
             EventRecurrence.MO to Calendar.MONDAY,
             EventRecurrence.TU to Calendar.TUESDAY,

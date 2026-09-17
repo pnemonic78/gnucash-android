@@ -500,4 +500,5 @@
     <string name="export_only_modified">Export only modified transactions</string>
     <string name="price_list_empty">No prices to display</string>
     <string name="title_tab_labels">Show tabs with labels</string>
+    <string name="execute">Execute</string>
 </resources>

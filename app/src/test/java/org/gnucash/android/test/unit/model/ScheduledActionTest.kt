@@ -20,6 +20,8 @@ import org.gnucash.android.model.PeriodType
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.test.unit.GnuCashTest
+import org.gnucash.android.util.NEVER
+import org.gnucash.android.util.toMillis
 import org.joda.time.DateTime
 import org.joda.time.LocalDateTime
 import org.junit.Test
@@ -32,9 +34,10 @@ import java.util.Calendar
 class ScheduledActionTest : GnuCashTest() {
     @Test
     fun settingStartTime_shouldSetRecurrenceStart() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
         val startTime = getTimeInMillis(2014, 8, 26)
-        scheduledAction.startDate = startTime
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION) {
+            this.startDate = startTime
+        }
         assertThat(scheduledAction.recurrence.periodType).isEqualTo(PeriodType.ONCE)
 
         val recurrence = Recurrence(PeriodType.MONTH)
@@ -49,9 +52,10 @@ class ScheduledActionTest : GnuCashTest() {
 
     @Test
     fun settingEndTime_shouldSetRecurrenceEnd() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
         val endTime = getTimeInMillis(2014, 8, 26)
-        scheduledAction.endDate = endTime
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION) {
+            endDate = endTime
+        }
         assertThat(scheduledAction.recurrence.periodType).isEqualTo(PeriodType.ONCE)
 
         val recurrence = Recurrence(PeriodType.MONTH)
@@ -67,25 +71,25 @@ class ScheduledActionTest : GnuCashTest() {
     @Test
     fun settingRecurrence_shouldSetScheduledActionStartTime() {
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        assertThat(scheduledAction.startDate).isZero()
+        assertThat(scheduledAction.startDate).isEqualTo(NEVER)
 
         val startTime = getTimeInMillis(2014, 8, 26)
-        val recurrence = Recurrence(PeriodType.WEEK)
-        recurrence.periodStart = startTime
+        val recurrence = Recurrence(PeriodType.WEEK).apply {
+            periodStart = startTime
+        }
         scheduledAction.setRecurrence(recurrence)
         assertThat(scheduledAction.startDate).isEqualTo(startTime)
     }
 
     @Test
     fun settingRecurrence_shouldSetEndTime() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        assertThat(scheduledAction.startDate).isZero()
-
         val endTime = getTimeInMillis(2017, 8, 26)
         val recurrence = Recurrence(PeriodType.WEEK)
-        recurrence.periodEnd = endTime
-        scheduledAction.setRecurrence(recurrence)
-
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT) {
+            endDate = endTime
+            setRecurrence(recurrence)
+        }
+        assertThat(scheduledAction.startDate).isEqualTo(NEVER)
         assertThat(scheduledAction.endDate).isEqualTo(endTime)
     }
 
@@ -96,18 +100,17 @@ class ScheduledActionTest : GnuCashTest() {
     @Test
     fun testComputingNextScheduledExecution() {
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
-        val periodType = PeriodType.MONTH
 
-        val recurrence = Recurrence(periodType)
-        recurrence.multiplier = 2
         val startDate = DateTime(2015, 8, 15, 12, 0)
-        recurrence.periodStart = startDate.millis
+        val recurrence = Recurrence(PeriodType.MONTH, 2).apply {
+            periodStart = startDate.millis
+        }
         scheduledAction.setRecurrence(recurrence)
 
         assertThat(scheduledAction.computeNextCountBasedScheduledExecutionTime())
             .isEqualTo(startDate.millis)
 
-        scheduledAction.instanceCount = 3
+        scheduledAction.instanceCount = 4
         val expectedTime = DateTime(2016, 2, 15, 12, 0)
         assertThat(scheduledAction.computeNextCountBasedScheduledExecutionTime())
             .isEqualTo(expectedTime.millis)
@@ -116,9 +119,7 @@ class ScheduledActionTest : GnuCashTest() {
     @Test
     fun testComputingTimeOfLastSchedule() {
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
-        val periodType = PeriodType.WEEK
-        val recurrence = Recurrence(periodType)
-        recurrence.multiplier = 2
+        val recurrence = Recurrence(PeriodType.WEEK, 2)
         scheduledAction.setRecurrence(recurrence)
         val startDate = DateTime(2016, 6, 6, 9, 0)
         scheduledAction.startDate = startDate.millis
@@ -141,12 +142,15 @@ class ScheduledActionTest : GnuCashTest() {
      */
     @Test
     fun multiDayOfWeekWeeklyActions_shouldBeDueOnEachDayOfWeekSet() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        val recurrence = Recurrence(PeriodType.WEEK)
-        recurrence.byDays = Arrays.asList(Calendar.MONDAY, Calendar.THURSDAY)
-        scheduledAction.setRecurrence(recurrence)
-        scheduledAction.startDate = DateTime(2016, 6, 6, 9, 0).millis
-        scheduledAction.lastRunTime = DateTime(2017, 4, 17, 9, 0).millis // Monday
+        val recurrence = Recurrence(PeriodType.WEEK).apply {
+            byDays = listOf(Calendar.MONDAY, Calendar.THURSDAY)
+        }
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT) {
+            setRecurrence(recurrence)
+            instanceCount = 1
+            startDate = DateTime(2016, 6, 6, 9, 0).millis
+            lastRunDate = DateTime(2017, 4, 17, 9, 0).millis // Monday
+        }
 
         val expectedNextDueDate = DateTime(2017, 4, 20, 9, 0).millis // Thursday
         assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())
@@ -159,13 +163,15 @@ class ScheduledActionTest : GnuCashTest() {
      */
     @Test
     fun weeklyActionsWithMultiplier_shouldBeDueOnTheDayOfWeekSet() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        val recurrence = Recurrence(PeriodType.WEEK)
-        recurrence.multiplier = 2
-        recurrence.byDays = listOf(Calendar.WEDNESDAY)
-        scheduledAction.setRecurrence(recurrence)
-        scheduledAction.startDate = DateTime(2016, 6, 6, 9, 0).millis
-        scheduledAction.lastRunTime = DateTime(2017, 4, 12, 9, 0).millis // Wednesday
+        val recurrence = Recurrence(PeriodType.WEEK, 2).apply {
+            byDays = listOf(Calendar.WEDNESDAY)
+        }
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT) {
+            setRecurrence(recurrence)
+            startDate = DateTime(2016, 6, 6, 9, 0).millis
+            lastRunDate = DateTime(2017, 4, 12, 9, 0).millis // Wednesday
+            instanceCount = 2 // 2016-06-05 + 2017-04-12
+        }
 
         // Wednesday, 2 weeks after the last run
         val expectedNextDueDate = DateTime(2017, 4, 26, 9, 0).millis
@@ -182,14 +188,17 @@ class ScheduledActionTest : GnuCashTest() {
      */
     @Test
     fun weeklyActionsWithoutDayOfWeekSet_shouldReturnDateInTheFuture() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT)
-        val recurrence = Recurrence(PeriodType.WEEK)
-        recurrence.byDays = emptyList()
-        scheduledAction.setRecurrence(recurrence)
-        scheduledAction.startDate = DateTime(2016, 6, 6, 9, 0).millis
-        scheduledAction.lastRunTime = DateTime(2017, 4, 12, 9, 0).millis
+        val recurrence = Recurrence(PeriodType.WEEK).apply {
+            byDays = emptyList()
+        }
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.EXPORT).apply {
+            setRecurrence(recurrence)
+            instanceCount = 1
+            startDate = DateTime(2016, 6, 6, 9, 0).millis
+            lastRunDate = DateTime(2017, 4, 12, 9, 0).millis
+        }
 
-        val now = LocalDateTime.now().toDateTime().millis
+        val now = LocalDateTime.now().toMillis()
         assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())
             .isGreaterThan(now)
     }

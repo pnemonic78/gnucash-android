@@ -143,7 +143,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         for (split in transaction.splits) {
             val imbalanceUID =
                 accountsDbAdapter.getImbalanceAccountUID(context, split.value.commodity)
-            if (split.accountUID == imbalanceUID) {
+            if (!useDoubleEntry && split.accountUID == imbalanceUID) {
                 //do now show imbalance accounts for single entry use case
                 continue
             }
@@ -266,15 +266,17 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         val activity: Activity = this
         if (shouldBackupTransactions(activity)) {
             backupActiveBookAsync(activity) { result ->
-                transactionsDbAdapter.deleteRecord(transaction)
-                updateAllWidgets(activity)
-                finish()
+                deleteTransactionImpl(activity, transaction)
             }
         } else {
-            transactionsDbAdapter.deleteRecord(transaction)
-            updateAllWidgets(activity)
-            finish()
+            deleteTransactionImpl(activity, transaction)
         }
+    }
+
+    private fun deleteTransactionImpl(activity: Activity, transaction: Transaction) {
+        transactionsDbAdapter.deleteRecord(transaction)
+        updateAllWidgets(activity)
+        activity.finish()
     }
 
     private fun duplicateTransaction(transaction: Transaction) {

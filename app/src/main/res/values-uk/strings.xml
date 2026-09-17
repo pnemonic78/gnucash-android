@@ -438,4 +438,5 @@
     <string name="title_progress_processing_schedules">Обробка графіків</string>
     <string name="title_progress_processing_transactions">Обробка транзакцій</string>
     <string name="title_tab_labels">Показувати вкладки з підписами</string>
+    <string name="execute">Виконати</string>
 </resources>

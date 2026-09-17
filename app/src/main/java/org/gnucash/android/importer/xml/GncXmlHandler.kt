@@ -295,6 +295,8 @@ class GncXmlHandler(
             db.enableWriteAheadLogging()
         } catch (e: SQLException) {
             Timber.e(e)
+        } catch (e: IllegalStateException) {
+            Timber.e(e)
         }
         // disable foreign key. The database structure should be ensured by the data inserted.
         // it will make insertion much faster.
@@ -1054,25 +1056,43 @@ class GncXmlHandler(
             KEY_EXPORTED -> transaction?.isExported = slot.asString.toBoolean()
 
             KEY_SCHED_XACTION -> {
+                val transaction = this.transaction ?: return
                 val split = this.split ?: return
                 for (s in slot.asFrame) {
                     when (s.key) {
                         KEY_SPLIT_ACCOUNT_SLOT -> split.scheduledActionAccountUID = s.asGUID
 
-                        KEY_CREDIT_FORMULA -> handleEndSlotTemplateFormula(
-                            split,
-                            s.asString,
-                            TransactionType.CREDIT
-                        )
+                        KEY_CREDIT_FORMULA ->
+                            handleEndSlotTemplateFormula(
+                                transaction,
+                                split,
+                                s.asString,
+                                TransactionType.CREDIT
+                            )
 
                         KEY_CREDIT_NUMERIC ->
-                            handleEndSlotTemplateNumeric(split, s.asNumeric, TransactionType.CREDIT)
+                            handleEndSlotTemplateNumeric(
+                                transaction,
+                                split,
+                                s.asNumeric,
+                                TransactionType.CREDIT
+                            )
 
                         KEY_DEBIT_FORMULA ->
-                            handleEndSlotTemplateFormula(split, s.asString, TransactionType.DEBIT)
+                            handleEndSlotTemplateFormula(
+                                transaction,
+                                split,
+                                s.asString,
+                                TransactionType.DEBIT
+                            )
 
                         KEY_DEBIT_NUMERIC ->
-                            handleEndSlotTemplateNumeric(split, s.asNumeric, TransactionType.DEBIT)
+                            handleEndSlotTemplateNumeric(
+                                transaction,
+                                split,
+                                s.asNumeric,
+                                TransactionType.DEBIT
+                            )
                     }
                 }
             }
@@ -1096,6 +1116,7 @@ class GncXmlHandler(
      * @param value Parsed characters containing split amount
      */
     private fun handleEndSlotTemplateFormula(
+        transaction: Transaction,
         split: Split,
         value: String,
         splitType: TransactionType
@@ -1103,7 +1124,7 @@ class GncXmlHandler(
         if (value.isEmpty()) return
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
-            if (split.value.isAmountZero) {
+            if (split.value.isZero) {
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
                     accountUID = split.accountUID!!
@@ -1111,9 +1132,12 @@ class GncXmlHandler(
                 val commodity = getCommodityForAccount(accountUID)
 
                 split.value = Money(value, commodity)
+                split.quantity = Money(0.0, transaction.commodity)
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {
+            Timber.e(e, "Error parsing template split formula [%s]", value)
+        } catch (e: ParseException) {
             Timber.e(e, "Error parsing template split formula [%s]", value)
         }
     }
@@ -1124,13 +1148,14 @@ class GncXmlHandler(
      * @param value Parsed characters containing split amount
      */
     private fun handleEndSlotTemplateNumeric(
+        transaction: Transaction,
         split: Split,
         value: Numeric,
         splitType: TransactionType
     ) {
         try {
             // HACK: Check for bug #562. If a value has already been set, ignore the one just read
-            if (split.value.isAmountZero) {
+            if (split.value.isZero) {
                 var accountUID = split.scheduledActionAccountUID
                 if (accountUID.isNullOrEmpty()) {
                     accountUID = split.accountUID!!
@@ -1138,6 +1163,7 @@ class GncXmlHandler(
                 val commodity = getCommodityForAccount(accountUID)
 
                 split.value = Money(value, commodity)
+                split.quantity = Money(0.0, transaction.commodity)
                 split.type = splitType
             }
         } catch (e: NumberFormatException) {
