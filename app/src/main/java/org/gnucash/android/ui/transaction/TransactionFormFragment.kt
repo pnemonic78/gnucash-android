@@ -37,8 +37,6 @@ import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.cursoradapter.widget.SimpleCursorAdapter
-import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
-import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter
 import com.codetroopers.betterpickers.recurrencepicker.RecurrencePickerDialogFragment.OnRecurrenceSetListener
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.getDefaultTransactionType
@@ -71,6 +69,7 @@ import org.gnucash.android.ui.homescreen.WidgetConfigurationActivity.Companion.u
 import org.gnucash.android.ui.snackLong
 import org.gnucash.android.ui.snackShort
 import org.gnucash.android.ui.transaction.dialog.TransferFundsDialogFragment
+import org.gnucash.android.ui.util.RecurrenceParser
 import org.gnucash.android.ui.util.RecurrenceParser.parse
 import org.gnucash.android.ui.util.RecurrenceViewClickListener
 import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment
@@ -124,7 +123,6 @@ class TransactionFormFragment : MenuFragment(),
      */
     private var account: Account? = null
 
-    private val eventRecurrence = EventRecurrence()
     private var scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
 
     private var rootAccountUID: String? = null
@@ -1011,8 +1009,7 @@ class TransactionFormFragment : MenuFragment(),
             scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
         } else {
             try {
-                eventRecurrence.parse(rrule)
-                val recurrence = parse(eventRecurrence)
+                val recurrence = parse(rrule)
                 scheduledAction.setRecurrence(recurrence)
 
                 // Instances should not change their schedules - only the owner template.
@@ -1025,7 +1022,6 @@ class TransactionFormFragment : MenuFragment(),
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Bad recurrence for [%s]", rrule)
-                return
             }
         }
 
@@ -1041,28 +1037,12 @@ class TransactionFormFragment : MenuFragment(),
         scheduledAction: ScheduledAction
     ) {
         val context = binding.inputRecurrence.context
-        val hasSchedule = !scheduledAction.isEmpty()
-        var repeatString: String? = null
-        if (hasSchedule) {
-            try {
-                repeatString = EventRecurrenceFormatter.getRepeatString(
-                    context,
-                    context.resources,
-                    eventRecurrence,
-                    true
-                )
-            } catch (e: Exception) {
-                Timber.e(e, "Bad recurrence for [%s]", scheduledAction.ruleString)
-                return
-            }
-        }
-        if (repeatString.isNullOrEmpty()) {
-            repeatString = context.getString(R.string.label_tap_to_create_schedule)
-        }
+        val repeatString = RecurrenceParser.format(context, scheduledAction.recurrence)
+            ?: context.getString(R.string.label_tap_to_create_schedule)
         binding.inputRecurrence.text = repeatString
 
         binding.recurrenceAutoRow.isVisible =
-            hasSchedule && (transaction.isNew || transaction.isTemplate)
+            !scheduledAction.isEmpty() && (transaction.isNew || transaction.isTemplate)
         binding.recurrenceAuto.isChecked = scheduledAction.isAutoCreate
     }
 

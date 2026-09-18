@@ -84,6 +84,12 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             event.interval = value
         }
 
+    var weekStart: Int
+        get() = toCalendarDayOfWeek[event.wkst] ?: Calendar.SUNDAY
+        set(value) {
+            event.wkst = toEventDayOfWeek[value] ?: EventRecurrence.SU
+        }
+
     constructor(periodType: PeriodType, multiplier: Int) : this(periodType) {
         this.multiplier = multiplier
     }
