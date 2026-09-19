@@ -38,6 +38,7 @@ import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.unit.BookHelperTest
+import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.TimestampHelper
 import org.gnucash.android.util.toMillis
 import org.joda.time.DateTimeZone
@@ -583,7 +584,7 @@ class GncXmlHandlerTest : BookHelperTest() {
             assertThat(scheduledAction.templateAccountUID).isEqualTo("3bdbf5e3b9364a6fb2dd463d1241a4ea")
             assertThat(scheduledAction.actionUID).isEqualTo(template.uid)
             assertThat(scheduledAction.startDate).isEqualTo(scheduledDate.toMillis())
-            assertThat(scheduledAction.endDate).isEqualTo(0L)
+            assertThat(scheduledAction.endDate).isEqualTo(NEVER)
             assertThat(scheduledAction.lastRunDate).isEqualTo(0L)
             assertThat(scheduledAction.instanceCount).isEqualTo(1)
 

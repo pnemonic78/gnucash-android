@@ -1040,6 +1040,7 @@ class TransactionFormFragment : MenuFragment(),
         val repeatString = RecurrenceParser.format(context, scheduledAction.recurrence)
             ?: context.getString(R.string.label_tap_to_create_schedule)
         binding.inputRecurrence.text = repeatString
+        binding.inputRecurrence.isEnabled = (transaction.isNew || transaction.isTemplate)
 
         binding.recurrenceAutoRow.isVisible =
             !scheduledAction.isEmpty() && (transaction.isNew || transaction.isTemplate)

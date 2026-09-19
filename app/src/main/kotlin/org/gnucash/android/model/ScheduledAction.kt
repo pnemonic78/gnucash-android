@@ -20,6 +20,7 @@ import androidx.annotation.StringRes
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.export.ExportParams
+import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.dayOfWeek
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfWeek
@@ -78,7 +79,7 @@ class ScheduledAction(
     /**
      * Next scheduled run of Event
      */
-    var lastRunDate: Long = 0
+    var lastRunDate: Long = 0L
 
     @Deprecated("renamed", ReplaceWith("lastRunDate"))
     var lastRunTime: Long
@@ -102,7 +103,11 @@ class ScheduledAction(
     /**
      * "Total number of occurrences for this scheduled transaction."
      */
-    var totalPlannedExecutionCount = 0
+    var totalPlannedExecutionCount
+        get() = recurrence.count
+        set(value) {
+            recurrence.count = value
+        }
 
     /**
      * "Number of instances of this scheduled transaction."
@@ -282,9 +287,9 @@ class ScheduledAction(
      * "Date for the scheduled transaction to end."
      */
     var endDate: Long
-        get() = recurrence.periodEnd ?: 0L
+        get() = recurrence.periodEnd ?: NEVER
         set(value) {
-            recurrence.periodEnd = value
+            recurrence.periodEnd = if (value <= 0L) null else value
         }
 
     private var _templateAccountUID: String? = null
@@ -395,6 +400,8 @@ class ScheduledAction(
     fun isEmpty(): Boolean {
         return recurrence.isEmpty()
     }
+
+    val periodType get() = recurrence.periodType
 
     companion object {
         /**

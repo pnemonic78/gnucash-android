@@ -178,6 +178,8 @@ class ScheduledActionDbAdapter(
 
         val scheduledAction = ScheduledAction(actionType)
         populateBaseModelAttributes(cursor, scheduledAction)
+        //TODO: optimize by doing overriding fetchRecord(String) and join the two tables
+        scheduledAction.setRecurrence(recurrenceDbAdapter.getRecord(recurrenceUID))
         scheduledAction.startDate = startTime
         scheduledAction.endDate = endTime
         scheduledAction.actionUID = actionUID
@@ -190,8 +192,6 @@ class ScheduledActionDbAdapter(
         scheduledAction.isAutoCreateNotify = autoNotify
         scheduledAction.advanceCreateDays = advanceCreate
         scheduledAction.advanceRemindDays = advanceNotify
-        //TODO: optimize by doing overriding fetchRecord(String) and join the two tables
-        scheduledAction.setRecurrence(recurrenceDbAdapter.getRecord(recurrenceUID))
         scheduledAction.setTemplateAccountUID(templateAccountUID)
         scheduledAction.name = name
 

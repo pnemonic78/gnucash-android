@@ -40,6 +40,7 @@ import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.unit.BookHelperTest
 import org.gnucash.android.test.unit.importer.GncXmlHandlerTest.Companion.testCommon1
+import org.gnucash.android.ui.util.RecurrenceParser
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import org.gnucash.android.util.set
 import org.gnucash.android.util.toMillis
@@ -669,5 +670,23 @@ class ScheduledActionServiceTest : BookHelperTest() {
         ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
         assertThat(scheduledAction.instanceCount).isEqualTo(4L)
         assertThat(transactionsDbAdapter.allRecords).hasSize(4) // 1 template + 3 regular
+    }
+
+    @Test
+    fun `monthly action for fixed count should not be executed more than the count`() {
+        val templateUID = actionUID
+        val rrule = "FREQ=MONTHLY;COUNT=5;WKST=SU"
+        val recurrence = RecurrenceParser.parse(rrule)
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION) {
+            setRecurrence(recurrence)
+            instanceCount = 1
+            startDate = LocalDateTime(2026, 1, 1, 12, 30, 0).toMillis()
+            actionUID = templateUID
+        }
+        assertThat(scheduledAction.totalPlannedExecutionCount).isEqualTo(5)
+        ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
+        assertThat(scheduledAction.instanceCount).isEqualTo(6L)
+        ScheduledActionService.processScheduledAction(dbHolder, scheduledAction)
+        assertThat(scheduledAction.instanceCount).isEqualTo(6L)
     }
 }

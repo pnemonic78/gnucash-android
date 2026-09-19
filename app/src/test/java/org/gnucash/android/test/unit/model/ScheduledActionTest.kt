@@ -20,9 +20,11 @@ import org.gnucash.android.model.PeriodType
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.test.unit.GnuCashTest
+import org.gnucash.android.ui.util.RecurrenceParser
 import org.gnucash.android.util.NEVER
 import org.gnucash.android.util.toMillis
 import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import org.joda.time.LocalDateTime
 import org.junit.Test
 import java.util.Arrays
@@ -201,6 +203,42 @@ class ScheduledActionTest : GnuCashTest() {
         val now = LocalDateTime.now().toMillis()
         assertThat(scheduledAction.computeNextTimeBasedScheduledExecutionTime())
             .isGreaterThan(now)
+    }
+
+    @Test
+    fun `recurrence with fixed count`() {
+        val rrule = "FREQ=WEEKLY;COUNT=5;WKST=SU;BYDAY=SA"
+        val recurrence = RecurrenceParser.parse(rrule)
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
+        scheduledAction.setRecurrence(recurrence)
+
+        assertThat(scheduledAction.recurrence).isNotNull
+        assertThat(scheduledAction.periodType).isEqualTo(PeriodType.WEEK)
+        assertThat(scheduledAction.recurrence.count).isEqualTo(5)
+        assertThat(scheduledAction.recurrence.weekStart).isEqualTo(Calendar.SUNDAY)
+        assertThat(scheduledAction.recurrence.byDays).hasSize(1)
+        assertThat(scheduledAction.recurrence.byDays[0]).isEqualTo(Calendar.SATURDAY)
+        assertThat(scheduledAction.totalPlannedExecutionCount).isEqualTo(5)
+        assertThat(scheduledAction.recurrence.eventRaw.until).isNullOrEmpty()
+        assertThat(scheduledAction.endDate).isEqualTo(NEVER)
+    }
+
+    @Test
+    fun `recurrence with fixed end date`() {
+        val rrule = "FREQ=WEEKLY;UNTIL=20261031T184014Z;WKST=SU;BYDAY=SA"
+        val recurrence = RecurrenceParser.parse(rrule)
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
+        scheduledAction.setRecurrence(recurrence)
+
+        assertThat(scheduledAction.recurrence).isNotNull
+        assertThat(scheduledAction.periodType).isEqualTo(PeriodType.WEEK)
+        assertThat(scheduledAction.recurrence.count).isZero
+        assertThat(scheduledAction.recurrence.weekStart).isEqualTo(Calendar.SUNDAY)
+        assertThat(scheduledAction.recurrence.byDays).hasSize(1)
+        assertThat(scheduledAction.recurrence.byDays[0]).isEqualTo(Calendar.SATURDAY)
+        assertThat(scheduledAction.totalPlannedExecutionCount).isZero
+        assertThat(scheduledAction.recurrence.eventRaw.until).isEqualTo("20261031T184014Z")
+        assertThat(scheduledAction.endDate).isEqualTo(LocalDateTime(2026, 10, 31, 18, 40, 14).toMillis(DateTimeZone.UTC))
     }
 
     private fun getTimeInMillis(year: Int, month: Int, day: Int): Long {

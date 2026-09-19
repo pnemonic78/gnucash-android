@@ -17,6 +17,8 @@ package org.gnucash.android.ui.util
 
 import android.content.Context
 import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.TimeFormatException
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrence
 import com.codetroopers.betterpickers.recurrencepicker.EventRecurrenceFormatter
 import org.gnucash.android.model.PeriodType
@@ -38,6 +40,14 @@ object RecurrenceParser {
     const val MONTH_MILLIS: Long = 30 * DAY_MILLIS
     const val YEAR_MILLIS: Long = DateUtils.YEAR_IN_MILLIS
 
+    private val toPeriodType = mapOf(
+        EventRecurrence.HOURLY to PeriodType.HOUR,
+        EventRecurrence.DAILY to PeriodType.DAY,
+        EventRecurrence.WEEKLY to PeriodType.WEEK,
+        EventRecurrence.YEARLY to PeriodType.YEAR,
+        EventRecurrence.MONTHLY to PeriodType.MONTH,
+    )
+
     /**
      * Parse an [EventRecurrence] into a [Recurrence] object
      *
@@ -54,13 +64,16 @@ object RecurrenceParser {
         val recurrence = Recurrence(PeriodType.ONCE)
         val eventRecurrence = recurrence.eventRaw
         eventRecurrence.parse(rule)
-        recurrence.periodType = when (eventRecurrence.freq) {
-            EventRecurrence.HOURLY -> PeriodType.HOUR
-            EventRecurrence.DAILY -> PeriodType.DAY
-            EventRecurrence.WEEKLY -> PeriodType.WEEK
-            EventRecurrence.YEARLY -> PeriodType.YEAR
-            EventRecurrence.MONTHLY -> PeriodType.MONTH
-            else -> PeriodType.MONTH
+        recurrence.periodType = toPeriodType[eventRecurrence.freq] ?: PeriodType.ONCE
+        val until = eventRecurrence.until
+        if (!until.isNullOrEmpty()) {
+            try {
+                val untilTime = Time()
+                untilTime.parse(until)
+                recurrence.periodEnd = untilTime.toMillis(true)
+            } catch (e: TimeFormatException) {
+                Timber.e(e, "Bad until date: %s", until)
+            }
         }
         return recurrence
     }

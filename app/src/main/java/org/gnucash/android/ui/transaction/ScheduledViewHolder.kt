@@ -65,7 +65,7 @@ abstract class ScheduledViewHolder(
         val lastTime = scheduledAction.lastRunDate
         if (lastTime > 0) {
             val endTime = scheduledAction.endDate
-            val period = if (endTime > 0 && endTime < System.currentTimeMillis()) {
+            val period = if (endTime > 0 && endTime <= System.currentTimeMillis()) {
                 context.getString(R.string.label_scheduled_action_ended)
             } else {
                 scheduledAction.getRepeatString(context)
