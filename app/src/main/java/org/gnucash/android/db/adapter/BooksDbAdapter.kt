@@ -25,6 +25,7 @@ import androidx.core.net.toUri
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
+import org.gnucash.android.db.BookDbHelper
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.BookEntry
@@ -272,12 +273,22 @@ class BooksDbAdapter(holder: DatabaseHolder) : DatabaseAdapter<Book>(
         private const val INDEX_COLUMN_SOURCE_URI = INDEX_COLUMN_TEMPLATE_GUID + 1
         private const val INDEX_COLUMN_LAST_SYNC = INDEX_COLUMN_SOURCE_URI + 1
 
-        /**
-         * Return the application instance of the books database adapter
-         *
-         * @return Books database adapter
-         */
-        val instance: BooksDbAdapter get() = GnuCashApplication.booksDbAdapter!!
+        lateinit var instance: BooksDbAdapter
+
+        fun init(context: Context): BooksDbAdapter {
+            val bookDbHelper = BookDbHelper(context)
+            val bookHolder = bookDbHelper.getHolder()
+            val booksDbAdapter = BooksDbAdapter(bookHolder)
+            instance = booksDbAdapter
+            return booksDbAdapter
+        }
+
+        fun close() {
+            try {
+                instance.close()
+            } catch (_: Exception) {
+            }
+        }
 
         @VisibleForTesting
         fun isBookDatabase(databaseName: String): Boolean {

@@ -1,10 +1,8 @@
 package org.gnucash.android.test.unit.db
 
-import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.BudgetAmountsDbAdapter
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
@@ -70,9 +68,5 @@ abstract class DatabaseTest : GnuCashTest() {
         scheduledActionDbAdapter = dbHolder.scheduledActionDbAdapter
         splitsDbAdapter = dbHolder.splitsDbAdapter
         transactionsDbAdapter = dbHolder.transactionsDbAdapter
-
-        val b1 = GnuCashApplication.booksDbAdapter
-        val b2 = BooksDbAdapter.instance
-        assertThat(b1).isEqualTo(b2)
     }
 }

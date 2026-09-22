@@ -24,11 +24,10 @@ import androidx.preference.PreferenceManager
 import com.google.firebase.FirebaseApp
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.R
-import org.gnucash.android.db.BookDbHelper
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
-import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.NoActiveBookException
+import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Commodity.Companion.getLocaleCurrencyCode
@@ -86,9 +85,6 @@ class GnuCashApplication : Application() {
         var commoditiesDbAdapter: CommoditiesDbAdapter? = null
             private set
 
-        var booksDbAdapter: BooksDbAdapter? = null
-            private set
-
         @SuppressLint("StaticFieldLeak")
         private var dbHelper: DatabaseHelper? = null
 
@@ -99,10 +95,7 @@ class GnuCashApplication : Application() {
          * @param context the context.
          */
         fun initializeDatabaseAdapters(context: Context, bookUID: String? = null) {
-            val bookDbHelper = BookDbHelper(context)
-            val bookHolder = bookDbHelper.getHolder()
-            val booksDbAdapter = BooksDbAdapter(bookHolder)
-            Companion.booksDbAdapter = booksDbAdapter
+            val booksDbAdapter = BooksDbAdapter.init(context)
 
             dbHelper?.close()
 
@@ -132,15 +125,12 @@ class GnuCashApplication : Application() {
                 } catch (_: IOException) {
                 }
             }
-            if (booksDbAdapter != null) {
-                try {
-                    booksDbAdapter!!.close()
-                    booksDbAdapter = null
-                } catch (_: IOException) {
-                }
+            try {
+                dbHelper?.close()
+                dbHelper = null
+            } catch (_: Throwable) {
             }
-            dbHelper?.close()
-            dbHelper = null
+            BooksDbAdapter.close()
         }
 
         @get:Throws(NoActiveBookException::class)
@@ -150,8 +140,9 @@ class GnuCashApplication : Application() {
                     val preferences = PreferenceManager.getDefaultSharedPreferences(appContext)
                     var bookUID = preferences.getString(KEY_ACTIVE_BOOK, null)
                     if (bookUID.isNullOrEmpty()) {
+                        val booksDbAdapter = BooksDbAdapter.instance
                         @Suppress("DEPRECATION")
-                        bookUID = booksDbAdapter?.activeBookUID!!
+                        bookUID = booksDbAdapter.activeBookUID
                     }
                     field = bookUID
                 }
