@@ -16,13 +16,11 @@
 package org.gnucash.android.db.adapter
 
 import android.content.ContentValues
-import android.content.SharedPreferences
 import android.database.Cursor
 import android.database.DatabaseUtils
 import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteStatement
-import org.gnucash.android.db.BookDbHelper.Companion.getBookPreferences
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.CommonColumns
 import org.gnucash.android.db.forEach
@@ -69,11 +67,6 @@ abstract class DatabaseAdapter<Model : BaseModel>(
         Replace
     }
 
-    /**
-     * Opens the database adapter with an existing database
-     *
-     * @param holder Database holder
-     */
     init {
         val db = holder.db
         this.db = db
@@ -902,14 +895,6 @@ abstract class DatabaseAdapter<Model : BaseModel>(
     fun getUID(model: Model): String {
         return model.uid
     }
-
-    /**
-     * Return the [SharedPreferences] for a specific book
-     *
-     * @return Shared preferences
-     */
-    val bookPreferences: SharedPreferences
-        get() = getBookPreferences(holder)
 
     internal fun allColumnsPrefix(prefix: String): Array<String> {
         return allColumns.map { prefix + it }.toTypedArray()

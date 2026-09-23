@@ -2,8 +2,6 @@ package org.gnucash.android.db.adapter
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteStatement
-import androidx.core.content.edit
-import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.CommodityEntry
@@ -11,7 +9,6 @@ import org.gnucash.android.db.bindBoolean
 import org.gnucash.android.db.bindInt
 import org.gnucash.android.db.bindStringOrNull
 import org.gnucash.android.model.Commodity
-import org.gnucash.android.model.Commodity.Companion.getLocaleCurrencyCode
 import timber.log.Timber
 
 /**
@@ -168,24 +165,13 @@ class CommoditiesDbAdapter(
                 return commodity
             }
 
-            val context = holder.context
-            val prefKey = context.getString(R.string.key_default_currency)
-            val preferences = bookPreferences
-            var currencyCode = preferences.getString(prefKey, null)
-            if (currencyCode == null) {
-                currencyCode = getLocaleCurrencyCode()
-            }
+            val currencyCode = GnuCashApplication.defaultCurrencyCode
             commodity = getCurrency(currencyCode) ?: Commodity.DEFAULT_COMMODITY
             _defaultCommodity = commodity
             return commodity
         }
 
-    fun setDefaultCurrencyCode(currencyCode: String?): Commodity? {
-        val context = holder.context
-        val preferences = bookPreferences
-        val prefKey = context.getString(R.string.key_default_currency)
-        preferences.edit { putString(prefKey, currencyCode) }
-
+    private fun setDefaultCurrencyCode(currencyCode: String?): Commodity? {
         val commodity = getCurrency(currencyCode)
         if (commodity != null) {
             _defaultCommodity = commodity
@@ -243,6 +229,26 @@ class CommoditiesDbAdapter(
         private const val INDEX_COLUMN_QUOTE_SOURCE = INDEX_COLUMN_QUOTE_FLAG + 1
         private const val INDEX_COLUMN_QUOTE_TZ = INDEX_COLUMN_QUOTE_SOURCE + 1
 
+        lateinit var instance: CommoditiesDbAdapter
+
+        fun init(holder: DatabaseHolder): CommoditiesDbAdapter {
+            val commoditiesDbAdapter = holder.commoditiesDbAdapter
+            instance = commoditiesDbAdapter
+            Commodity.DEFAULT_COMMODITY = commoditiesDbAdapter.defaultCommodity
+            return commoditiesDbAdapter
+        }
+
+        fun close() {
+            try {
+                instance.close()
+            } catch (_: Exception) {
+            }
+        }
+
+        fun setDefaultCurrencyCode(currencyCode: String?): Commodity? {
+            return instance.setDefaultCurrencyCode(currencyCode)
+        }
+
         /**
          * Returns an instance of commodity for the specified currencyCode
          *
@@ -263,7 +269,7 @@ class CommoditiesDbAdapter(
                 "USD" -> return Commodity.USD
             }
 
-            val adapter: CommoditiesDbAdapter = GnuCashApplication.commoditiesDbAdapter!!
+            val adapter: CommoditiesDbAdapter = instance
             return adapter.getCurrency(currencyCode) ?: Commodity.DEFAULT_COMMODITY
         }
     }

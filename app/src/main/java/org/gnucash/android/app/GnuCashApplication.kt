@@ -47,12 +47,12 @@ import java.util.Locale
 class GnuCashApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        val context = applicationContext
+        val context: Context = this
         Companion.context = context
         ThemeHelper.apply(this)
 
         if (BuildConfig.GOOGLE_GCM) {
-            FirebaseApp.initializeApp(this)
+            FirebaseApp.initializeApp(context)
         }
 
         // Logging
@@ -64,7 +64,7 @@ class GnuCashApplication : Application() {
         Timber.plant(tree)
 
         initializeDatabaseAdapters(context)
-        defaultCurrencyCode = defaultCurrencyCode
+        setDefaultCurrencyCode(context, getDefaultCurrencyCode(context))
     }
 
     override fun onTerminate() {
@@ -81,9 +81,6 @@ class GnuCashApplication : Application() {
 
         @SuppressLint("StaticFieldLeak")
         private var context: Context? = null
-
-        var commoditiesDbAdapter: CommoditiesDbAdapter? = null
-            private set
 
         @SuppressLint("StaticFieldLeak")
         private var dbHelper: DatabaseHelper? = null
@@ -112,19 +109,10 @@ class GnuCashApplication : Application() {
             Companion.dbHelper = dbHelper
             val dbHolder: DatabaseHolder = dbHelper.holder
 
-            val commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
-            this.commoditiesDbAdapter = commoditiesDbAdapter
-            Commodity.DEFAULT_COMMODITY = commoditiesDbAdapter.defaultCommodity
+            CommoditiesDbAdapter.init(dbHolder)
         }
 
         private fun destroyDatabaseAdapters() {
-            if (commoditiesDbAdapter != null) {
-                try {
-                    commoditiesDbAdapter!!.close()
-                    commoditiesDbAdapter = null
-                } catch (_: IOException) {
-                }
-            }
             try {
                 dbHelper?.close()
                 dbHelper = null
@@ -213,9 +201,9 @@ class GnuCashApplication : Application() {
          * @return Default currency code string for the application
          */
         var defaultCurrencyCode: String
-            get() = getDefaultCurrencyCode(context!!)
+            get() = getDefaultCurrencyCode(appContext)
             set(currencyCode) {
-                commoditiesDbAdapter!!.setDefaultCurrencyCode(currencyCode)
+                setDefaultCurrencyCode(appContext, currencyCode)
             }
 
         /**
@@ -228,7 +216,7 @@ class GnuCashApplication : Application() {
          *
          * @return Default currency code string for the application
          */
-        fun getDefaultCurrencyCode(context: Context): String {
+        private fun getDefaultCurrencyCode(context: Context): String {
             val prefKey = context.getString(R.string.key_default_currency)
             var preferences: SharedPreferences = getBookPreferences(context)
             var currencyCode = preferences.getString(prefKey, null)
@@ -250,6 +238,14 @@ class GnuCashApplication : Application() {
             commodity = Commodity.USD
             currencyCode = commodity.currencyCode
             return currencyCode
+        }
+
+        private fun setDefaultCurrencyCode(context: Context, currencyCode: String?): Commodity? {
+            val prefKey = context.getString(R.string.key_default_currency)
+            val preferences: SharedPreferences = getBookPreferences(context)
+            preferences.edit { putString(prefKey, currencyCode) }
+
+            return CommoditiesDbAdapter.setDefaultCurrencyCode(currencyCode)
         }
 
         /**
