@@ -127,12 +127,4 @@ abstract class BookHelperTest : GnuCashTest() {
         val db = dbHolder.db
         db.execSQL(sql)
     }
-
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun before() {
-            Timber.plant(ConsoleTree(BuildConfig.DEBUG))
-        }
-    }
 }

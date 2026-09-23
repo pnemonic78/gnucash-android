@@ -45,6 +45,7 @@ class BookDbHelper(context: Context) : SQLiteOpenHelper(
     fun getHolder(): DatabaseHolder {
         var holder: DatabaseHolder? = this.holder
         if (holder == null) {
+            val writableDatabase = writableDatabase
             holder = DatabaseHolder(context, writableDatabase)
             this.holder = holder
         }

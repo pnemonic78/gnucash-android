@@ -3,6 +3,7 @@ package org.gnucash.android.util
 import android.content.Context
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
+import org.gnucash.android.app.GnuCashApplication.Companion.initializeDatabaseAdapters
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.model.Book
 import org.gnucash.android.ui.account.AccountsActivity
@@ -26,8 +27,8 @@ object BookUtils {
      * @param bookUID GUID of the book to be activated
      */
     fun activateBook(context: Context, bookUID: String) {
-        GnuCashApplication.activeBookUID = bookUID
-        GnuCashApplication.initializeDatabaseAdapters(context, bookUID)
+        activeBookUID = bookUID
+        initializeDatabaseAdapters(context, bookUID)
     }
 
     /**
