@@ -105,7 +105,7 @@ abstract class BaseReportFragment<D : ChartData<*>> : DatabaseFragment(),
     /**
      * Commodity for which to display reports
      */
-    protected var commodity: Commodity = Commodity.DEFAULT_COMMODITY
+    protected lateinit var commodity: Commodity
 
     /**
      * Intervals in which to group reports

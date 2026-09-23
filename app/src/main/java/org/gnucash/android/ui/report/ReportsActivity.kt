@@ -35,9 +35,9 @@ import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.getSerializableCompat
 import org.gnucash.android.databinding.ActivityReportsBinding
 import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.AccountType
-import org.gnucash.android.model.Commodity
 import org.gnucash.android.ui.adapter.AccountTypesAdapter.Companion.expenseAndIncome
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.common.BaseDrawerActivity
@@ -66,6 +66,7 @@ class ReportsActivity : BaseDrawerActivity(),
     OnDateRangeSetListener,
     Refreshable {
     private var dbHelper: DatabaseHelper? = null
+    private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
     private lateinit var transactionsDbAdapter: TransactionsDbAdapter
     var accountType: AccountType = AccountType.EXPENSE
         private set
@@ -127,6 +128,7 @@ class ReportsActivity : BaseDrawerActivity(),
         val dbHelper = DatabaseHelper(context, bookUID)
         this.dbHelper = dbHelper
         val holder = dbHelper.readableHolder
+        commoditiesDbAdapter = holder.commoditiesDbAdapter
         transactionsDbAdapter = holder.transactionsDbAdapter
 
         val binding = this.binding!!
@@ -164,10 +166,10 @@ class ReportsActivity : BaseDrawerActivity(),
                     }
 
                     5 -> {
-                        val commodityUID = Commodity.DEFAULT_COMMODITY.uid
+                        val commodity = commoditiesDbAdapter.defaultCommodity
                         val earliest = transactionsDbAdapter.getTimestampOfEarliestTransaction(
                             accountType,
-                            commodityUID
+                            commodity.uid
                         )
                         DateRangePickerDialogFragment.newInstance(
                             LocalDate(earliest),

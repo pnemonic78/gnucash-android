@@ -114,7 +114,7 @@ class AccountFormFragment : DatabaseFragment(), FragmentResultListener {
     private var selectedDefaultTransferAccount: Account? = null
     private var selectedName = ""
     private var selectedAccountType: AccountType = AccountType.ROOT
-    private var selectedCommodity: Commodity = Commodity.DEFAULT_COMMODITY
+    private lateinit var selectedCommodity: Commodity
 
     private var binding: FragmentAccountFormBinding? = null
 

@@ -35,8 +35,8 @@ class FirstRunWizardModel(context: Context) : AbstractWizardModel(context) {
     var titleCurrency: String? = null
     var titleOtherCurrency: String? = null
     var optionCurrencyOther: String? = null
-    private var currencies: MutableMap<String, String>? = null
-    private var accounts: MutableMap<String, String>? = null
+    private val currencies: MutableMap<String, String> = mutableMapOf()
+    private val accounts: MutableMap<String, String> = mutableMapOf()
 
     var titleAccount: String? = null
 
@@ -73,8 +73,8 @@ class FirstRunWizardModel(context: Context) : AbstractWizardModel(context) {
         val otherAccountsPage = AccountsSelectPage(this, optionAccountDefault!!)
             .setChoices(context)
         // Called before field initialized.
-        accounts = mutableMapOf<String, String>()
-        accounts!!.putAll(otherAccountsPage.accountsByLabel)
+        accounts.clear()
+        accounts.putAll(otherAccountsPage.accountsByLabel)
 
         val accountsPage = BranchPage(this, titleAccount)
             .addBranch(optionAccountDefault, otherAccountsPage, feedbackPage)
@@ -94,10 +94,10 @@ class FirstRunWizardModel(context: Context) : AbstractWizardModel(context) {
         val otherCurrencyPage = CurrencySelectPage(this, titleOtherCurrency!!)
             .setChoices()
         // Called before field initialized.
-        currencies = mutableMapOf<String, String>()
-        currencies!!.putAll(otherCurrencyPage.currenciesByLabel)
+        currencies.clear()
+        currencies.putAll(otherCurrencyPage.currenciesByLabel)
 
-        val currenciesLabels: SortedSet<String> = TreeSet<String>()
+        val currenciesLabels: SortedSet<String> = TreeSet()
         val currencyDefault = addCurrency(Commodity.DEFAULT_COMMODITY)
         currenciesLabels.add(currencyDefault)
         currenciesLabels.add(addCurrency(Commodity.AUD))

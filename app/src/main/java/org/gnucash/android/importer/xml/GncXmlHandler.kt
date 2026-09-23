@@ -489,7 +489,7 @@ class GncXmlHandler(
             }
         }
         if (mostCurrencyAppearance > 0) {
-            commoditiesDbAdapter.setDefaultCurrencyCode(mostAppearedCurrency)
+            CommoditiesDbAdapter.setDefaultCurrencyCode(mostAppearedCurrency)
         }
 
         saveToDatabase()
@@ -1306,7 +1306,8 @@ class GncXmlHandler(
                 split.type =
                     if (value[0] == '-') TransactionType.CREDIT else TransactionType.DEBIT
                 val amount = parseSplitAmount(value)
-                split.value = Money(amount, Commodity.DEFAULT_COMMODITY)
+                val commodity = commoditiesDbAdapter.defaultCommodity
+                split.value = Money(amount, commodity)
             } catch (e: ParseException) {
                 val msg = "Invalid split quantity $value"
                 throw SAXException(msg, e)
