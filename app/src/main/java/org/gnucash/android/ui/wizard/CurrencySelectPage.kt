@@ -17,7 +17,7 @@ package org.gnucash.android.ui.wizard
 
 import com.tech.freak.wizardpager.model.ModelCallbacks
 import com.tech.freak.wizardpager.model.SingleFixedChoicePage
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Commodity
 import java.util.SortedSet
 import java.util.TreeSet
@@ -31,8 +31,7 @@ class CurrencySelectPage(callbacks: ModelCallbacks, title: String) :
 
     fun setChoices(): CurrencySelectPage {
         currenciesByLabel.clear()
-        val adapter = GnuCashApplication.commoditiesDbAdapter
-        val commodities = adapter!!.allRecords
+        val commodities = CommoditiesDbAdapter.instance.allRecords
         val choices: SortedSet<String> = TreeSet()
         for (commodity in commodities) {
             choices.add(addCurrency(commodity))

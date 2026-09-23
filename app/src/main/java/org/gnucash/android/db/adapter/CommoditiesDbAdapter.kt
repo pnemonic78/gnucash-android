@@ -171,7 +171,7 @@ class CommoditiesDbAdapter(
             return commodity
         }
 
-    private fun setDefaultCurrencyCode(currencyCode: String?): Commodity? {
+    fun setDefaultCurrencyCode(currencyCode: String?): Commodity? {
         val commodity = getCurrency(currencyCode)
         if (commodity != null) {
             _defaultCommodity = commodity

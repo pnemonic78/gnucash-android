@@ -41,6 +41,7 @@ import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupForImpor
 import org.gnucash.android.databinding.ActivityAccountsBinding
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.importer.ImportAsyncTask
 import org.gnucash.android.importer.ImportBookCallback
 import org.gnucash.android.service.ScheduledActionService.Companion.schedulePeriodic
@@ -444,6 +445,7 @@ class AccountsActivity : BaseDrawerActivity(),
                         DatabaseSchema.AccountEntry.COLUMN_COMMODITY_UID,
                         currencyUID
                     )
+                    CommoditiesDbAdapter.setDefaultCurrencyCode(currencyCode)
                     commoditiesDbAdapter.setDefaultCurrencyCode(currencyCode)
                     dbHelper.close()
                 }
