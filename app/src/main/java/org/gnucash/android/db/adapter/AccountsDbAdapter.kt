@@ -1188,8 +1188,8 @@ class AccountsDbAdapter(
                 }
             }
         }
-        val where = AccountEntry.COLUMN_UID + " = " + accountUID
-        val whereArgs = arrayOf<String?>(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID)
+        val where = AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID + " = ?"
+        val whereArgs = arrayOf<String?>(defaultTransferUid)
         return getAllRecords(where, whereArgs, null).firstOrNull()
     }
 
