@@ -36,9 +36,11 @@ import org.joda.time.ReadablePeriod
 import org.joda.time.Seconds
 import org.joda.time.Weeks
 import org.joda.time.Years
+import org.joda.time.format.DateTimeFormat
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
 /**
@@ -73,6 +75,17 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * End date of the recurrence period
      */
     var periodEnd: Long? = null
+        set(value) {
+            field = value
+            event.until = if (value == null || value == NEVER) {
+                null
+            } else {
+                val df = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss'Z'")
+                    .withLocale(Locale.ROOT)
+                    .withZoneUTC()
+                df.print(value)
+            }
+        }
 
     /**
      * The multiplier for the period type. The default multiplier is 1.
@@ -97,7 +110,6 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
     init {
         // Force calling the setter.
         this.periodType = periodType
-        this.multiplier = multiplier.coerceAtLeast(1)
     }
 
     /**

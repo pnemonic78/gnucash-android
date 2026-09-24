@@ -335,17 +335,7 @@ class ScheduledAction(
      * @return String describing event
      */
     val ruleString: String
-        get() {
-            if (isEmpty()) return ""
-            val ruleBuilder = StringBuilder(recurrence.ruleString)
-            if (endDate > 0) {
-                val df = DateTimeFormat.forPattern("yyyyMMdd'T'HHmmss'Z'").withZoneUTC()
-                ruleBuilder.append(";UNTIL=").append(df.print(endDate))
-            } else if (totalPlannedExecutionCount > 0) {
-                ruleBuilder.append(";COUNT=").append(totalPlannedExecutionCount)
-            }
-            return ruleBuilder.toString()
-        }
+        get() = recurrence.ruleString
 
     /**
      * Overloaded method for setting the recurrence of the scheduled action.
@@ -401,7 +391,11 @@ class ScheduledAction(
         return recurrence.isEmpty()
     }
 
-    val periodType get() = recurrence.periodType
+    var periodType: PeriodType
+        get() = recurrence.periodType
+        set(value) {
+            recurrence.periodType = value
+        }
 
     companion object {
         /**
