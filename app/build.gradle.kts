@@ -128,6 +128,7 @@ android {
             dimension = "stability"
             versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
             println("$name, version: $versionName")
+            resValue("string", "app_version_name", versionName.toString())
 
             buildConfigField("Boolean", "GOOGLE_GCM", "true")
             extraProperties["useGoogleGcm"] = true
