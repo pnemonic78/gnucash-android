@@ -117,21 +117,6 @@ class ScheduledActionTest : GnuCashTest() {
             .isEqualTo(expectedTime.millis)
     }
 
-    @Test
-    fun testComputingTimeOfLastSchedule() {
-        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION)
-        val recurrence = Recurrence(PeriodType.WEEK, 2)
-        scheduledAction.setRecurrence(recurrence)
-        val startDate = DateTime(2016, 6, 6, 9, 0)
-        scheduledAction.startDate = startDate.millis
-
-        assertThat(scheduledAction.timeOfLastSchedule).isEqualTo(-1L)
-
-        scheduledAction.instanceCount = 3
-        val expectedDate = DateTime(2016, 7, 4, 9, 0)
-        assertThat(scheduledAction.timeOfLastSchedule).isEqualTo(expectedDate.millis)
-    }
-
     /**
      * Weekly actions scheduled to run on multiple days of the week should be due
      * in each of them in the same week.

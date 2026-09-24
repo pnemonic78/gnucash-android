@@ -27,7 +27,6 @@ import org.gnucash.android.util.lastDayOfWeek
 import org.gnucash.android.util.toLocalDayOfWeek
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDateTime
-import org.joda.time.format.DateTimeFormat
 import timber.log.Timber
 import java.util.Locale
 
@@ -143,35 +142,6 @@ class ScheduledAction(
     constructor(type: ActionType, builder: ScheduledAction.() -> Unit) : this(type) {
         apply(builder)
     }
-
-    /**
-     * Returns the time when the last schedule in the sequence of planned executions was executed.
-     * This relies on the number of executions of the scheduled action
-     *
-     * This is different from [.getLastRunTime] which returns the date when the system last
-     * ran the scheduled action.
-     *
-     * @return Time of last schedule, or `-1` if the scheduled action has never been run
-     */
-    val timeOfLastSchedule: Long
-        get() {
-            val count = instanceCount
-            if (count <= 0) return -1
-            var startDate = LocalDateTime(startDate)
-            val factor = (count - 1) * recurrence.multiplier
-            startDate = when (recurrence.periodType) {
-                PeriodType.ONCE -> startDate
-                PeriodType.HOUR -> startDate.plusHours(factor)
-                PeriodType.DAY -> startDate.plusDays(factor)
-                PeriodType.WEEK -> startDate.plusWeeks(factor)
-                PeriodType.MONTH -> startDate.plusMonths(factor)
-                PeriodType.YEAR -> startDate.plusYears(factor)
-                PeriodType.LAST_WEEKDAY -> startDate.plusMonths(factor).lastDayOfWeek(startDate)
-                PeriodType.NTH_WEEKDAY -> startDate.plusMonths(factor).dayOfWeek(startDate)
-                PeriodType.END_OF_MONTH -> startDate.plusMonths(factor).lastDayOfMonth()
-            }
-            return startDate.toMillis()
-        }
 
     /**
      * Computes the next time that this scheduled action is supposed to be
