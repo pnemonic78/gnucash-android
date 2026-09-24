@@ -28,7 +28,7 @@ android {
 
     defaultConfig {
         applicationId = "org.gnucash.pocket.pnemonic"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 37
         versionCode = (((((versionMajor * 100) + versionMinor) * 1000) + versionPatch) * 1000) + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}.${versionBuild}"
@@ -149,9 +149,7 @@ android {
     }
 
     compileOptions {
-        // For older Java 1.8 devices (SDK 25-).
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
 
@@ -166,8 +164,6 @@ android {
 
 kotlin {
     compilerOptions {
-        // For older Java 1.8 devices (SDK 25-).
-        // 'Didn't find class "java.nio.file.DirectoryStream" on path'
         jvmTarget = JvmTarget.JVM_11
     }
 }
@@ -227,9 +223,6 @@ dependencies {
     androidTestImplementation(libs.bundles.android.test)
     androidTestImplementation(libs.bundles.espresso)
     androidTestImplementation(libs.assertj.core)
-
-    // For older Java 1.8 devices (SDK 25-).
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
 
 afterEvaluate {

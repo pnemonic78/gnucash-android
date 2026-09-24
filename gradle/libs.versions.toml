@@ -1,38 +1,37 @@
 [versions]
 activity = "1.13.0"
-agp = "9.2.1"
+agp = "9.4.1"
 android-test-core = "1.7.0"
 android-test-espresso = "3.7.0"
 android-test-ext-junit = "1.3.0"
 android-test-rules = "1.7.0"
 android-test-runner = "1.7.0"
-android-test-uiautomator = "2.3.0"
+android-test-uiautomator = "2.4.0"
 apache-http = "3.1"
-appcompat = "1.7.1"
+appcompat = "1.8.0"
 assertj = "3.27.7"
 betterpickers = "3.1.0"
 cardview = "1.0.0"
 chart = "v3.1.0"
-compose-bom = "2026.08.00"
-core = "1.18.0"
-crashlytics = "20.0.6"
-crashlytics-plugin = "3.0.7"
-desugar_jdk_libs = "2.1.5"
+compose-bom = "2026.09.00"
+core = "1.19.1"
+crashlytics = "20.1.1"
+crashlytics-plugin = "3.0.8"
 drawerlayout = "1.2.0"
 dropbox = "7.0.0"
-evalex = "3.6.1"
+evalex = "3.7.0"
 exp4j = "0.4.8"
 flexbox = "3.0.0"
-google-services = "4.4.4"
-hilt = "2.59.2"
-joda-time = "2.14.3"
+google-services = "4.5.0"
+hilt = "2.60.1"
+joda-time = "2.14.4"
 junit = "4.13.2"
-kotlin = "2.3.21"
+kotlin = "2.4.20"
 ksp = "2.3.8"
 lifecycle = "2.11.0"
 material = "1.14.0"
 nextcloud = "2.22.1"
-okhttp = "5.3.2"
+okhttp = "5.5.0"
 opencsv = "5.12.0"
 preference = "1.2.1"
 recyclerview = "1.4.0"
@@ -40,7 +39,7 @@ robolectric = "4.16.1"
 timber = "5.0.1"
 times-square = "1.7.11"
 wizardpager = "1.0.3"
-work-runtime = "2.11.2"
+work-runtime = "2.12.0"
 
 [libraries]
 android-test-core = { module = "androidx.test:core-ktx", version.ref = "android-test-core" }
@@ -71,7 +70,6 @@ assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 betterpickers = { module = "com.code-troopers.betterpickers:library", version.ref = "betterpickers" }
 chart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "chart" }
 crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "crashlytics" }
-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs_nio", version.ref = "desugar_jdk_libs" }
 dropbox = { module = "com.dropbox.core:dropbox-android-sdk", version.ref = "dropbox" }
 espresso-contrib = { module = "androidx.test.espresso:espresso-contrib", version.ref = "android-test-espresso" }
 espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "android-test-espresso" }

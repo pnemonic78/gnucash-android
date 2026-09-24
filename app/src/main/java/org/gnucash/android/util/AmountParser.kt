@@ -1,8 +1,5 @@
 package org.gnucash.android.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
-import net.objecthunter.exp4j.ExpressionBuilder
 import timber.log.Timber
 import java.math.BigDecimal
 import java.text.DecimalFormat
@@ -43,27 +40,9 @@ object AmountParser {
         if (expressionString.isNullOrEmpty()) {
             return null
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return evaluate26(expressionString)
-        }
-        return evaluate16(expressionString)
+        return evaluate26(expressionString)
     }
 
-    private fun evaluate16(expressionString: String): BigDecimal? {
-        val builder = ExpressionBuilder(expressionString)
-
-        try {
-            val expression = builder.build()
-            if (expression != null && expression.validate().isValid) {
-                return BigDecimal.valueOf(expression.evaluate())
-            }
-        } catch (e: Exception) {
-            Timber.w(e, "Invalid expression: %s", expressionString)
-        }
-        return null
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun evaluate26(expressionString: String): BigDecimal? {
         val expression = com.ezylang.evalex.Expression(expressionString)
         try {
