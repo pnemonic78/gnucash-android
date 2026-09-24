@@ -1167,7 +1167,7 @@ class AccountsDbAdapter(
         val cursor = db.query(
             tableName,
             arrayOf<String?>(AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID),
-            AccountEntry.COLUMN_ID + " = " + accountID,
+            AccountEntry.COLUMN_UID + " = " + accountID,
             null, null, null, null
         )
         try {
