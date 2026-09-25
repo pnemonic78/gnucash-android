@@ -387,6 +387,10 @@ class SplitEditorFragment : MenuFragment() {
         }
 
         val splits = extractSplitsFromView()
+        if (splits.isEmpty()) {
+            Timber.w("Splits required")
+            return
+        }
         if (isMultiCurrencyTransaction(splits) && !currencyConversionDone) {
             onSaveAttempt = true
             if (startTransferFunds()) {
@@ -413,17 +417,26 @@ class SplitEditorFragment : MenuFragment() {
     private fun extractSplitsFromView(): List<Split> {
         val context = requireContext()
         val account = this.account!!
+        val commodity = account.commodity
         val accountNameAdapter = accountNameAdapter!!
         val splits = mutableListOf<Split>()
+        val pricesDbAdapter = PricesDbAdapter.instance
 
         for (viewHolder in splitViewHolders) {
             val enteredAmount = viewHolder.splitAmountEditText.value ?: continue
-            val valueAmount = Money(enteredAmount.abs(), account.commodity)
+            val value = Money(enteredAmount.abs(), commodity)
 
-            val position = viewHolder.accountsSpinner.selectedItemPosition
-            val splitAccount = accountNameAdapter.getAccount(position) ?: continue
+            val accountPosition = viewHolder.accountsSpinner.selectedItemPosition
+            val splitAccount = accountNameAdapter.getAccount(accountPosition) ?: continue
 
-            val split = Split(valueAmount, splitAccount)
+            val price = pricesDbAdapter.getPrice(commodity, splitAccount.commodity)
+            if (price == null) {
+                startTransferFunds(commodity, splitAccount.commodity, viewHolder)
+                return emptyList()
+            }
+
+            val split = Split(value, splitAccount)
+            split.quantity = value * price
             split.memo = viewHolder.splitMemoEditText.getText().toString()
             split.type = viewHolder.splitTypeSwitch.transactionType
             split.setUID(viewHolder.splitUidTextView.getText().toString())
@@ -468,20 +481,14 @@ class SplitEditorFragment : MenuFragment() {
     private fun calculateBalance(account: Account): Money {
         val commodity = account.commodity
         var balance = Money.createZeroInstance(commodity)
-        val accountNameAdapter = accountNameAdapter!!
-        val pricesDbAdapter = PricesDbAdapter.instance
 
         for (viewHolder in splitViewHolders) {
-            val amount = viewHolder.amountValue.abs()
+            val amountValue = viewHolder.amountValue.abs()
             val splitType = viewHolder.splitTypeSwitch.transactionType
-            val position = viewHolder.accountsSpinner.selectedItemPosition
-            val splitAccount = accountNameAdapter.getAccount(position) ?: continue
+            val splitAmount = if (splitType == TransactionType.DEBIT) amountValue else -amountValue
+            val value = Money(splitAmount, commodity)
 
-            val price = pricesDbAdapter.getPrice(splitAccount.commodity, commodity)
-            val splitAmount = if (splitType == TransactionType.DEBIT) amount else -amount
-            val value = Money(splitAmount, splitAccount.commodity)
-
-            balance += value * price
+            balance += value
         }
 
         return balance

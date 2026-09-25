@@ -177,12 +177,12 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      * @return String describing event
      */
     var ruleString: String
-        get() = event.toString()
+        get() = if (isEmpty()) "" else event.toString()
         set(value) {
             event.parse(value)
-            val freq = event.freq
-            periodType = frequencyToPeriodType[freq] ?: PeriodType.ONCE
-            event.freq = freq
+            val frequency = event.freq
+            periodType = frequencyToPeriodType[frequency] ?: PeriodType.ONCE
+            event.freq = frequency
         }
 
     /**
