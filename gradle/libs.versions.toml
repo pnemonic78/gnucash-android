@@ -64,7 +64,7 @@ androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-preference = { module = "androidx.preference:preference-ktx", version.ref = "preference" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
-androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime" }
+androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "work-runtime" }
 apache-http = { module = "commons-httpclient:commons-httpclient", version.ref = "apache-http" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 betterpickers = { module = "com.code-troopers.betterpickers:library", version.ref = "betterpickers" }
