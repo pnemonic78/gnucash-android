@@ -140,7 +140,7 @@ class BudgetFormFragment : MenuFragment(), OnRecurrenceSetListener,
         val recurrenceRuleString = budget.recurrence.ruleString
         recurrenceRule = recurrenceRuleString
         eventRecurrence.parse(recurrenceRuleString)
-        binding.inputRecurrence.text = budget.recurrence.getRepeatString(context)
+        binding.inputRecurrence.text = budget.recurrence.formatRepeatString(context)
 
         budgetAmounts = budget.compactedBudgetAmounts
         toggleAmountInputVisibility(binding)

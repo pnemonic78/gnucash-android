@@ -289,12 +289,7 @@ class ScheduledAction(
      * @return String description of repeat schedule
      */
     fun getRepeatString(context: Context): String {
-        val ruleBuilder = recurrence.getRepeatStringBuilder(context)
-        if (endDate <= 0 && totalPlannedExecutionCount > 0) {
-            ruleBuilder.append(", ")
-                .append(context.getString(R.string.repeat_x_times, totalPlannedExecutionCount))
-        }
-        return ruleBuilder.toString()
+        return recurrence.formatRepeatString(context)
     }
 
     /**

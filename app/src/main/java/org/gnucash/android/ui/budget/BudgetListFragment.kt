@@ -257,7 +257,7 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
             accountName.text = accountString
 
             val recurrence = budget.recurrence
-            budgetRecurrence.text = recurrence.getRepeatString(context) + " — " + context.getString(
+            budgetRecurrence.text = recurrence.formatRepeatString(context) + " — " + context.getString(
                 R.string.repeat_remaining,
                 recurrence.daysLeftInCurrentPeriod
             )

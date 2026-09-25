@@ -37,9 +37,7 @@ import org.joda.time.Seconds
 import org.joda.time.Weeks
 import org.joda.time.Years
 import org.joda.time.format.DateTimeFormat
-import java.text.DateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 
@@ -142,29 +140,12 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
      *
      * @return String description of repeat schedule
      */
-    fun getRepeatString(context: Context): String {
-        val repeatBuilder = StringBuilder(frequencyRepeatString(context))
-        periodEnd?.let { periodEnd ->
-            val endDateString = DateFormat.getDateInstance().format(Date(periodEnd))
-            repeatBuilder.append(", ")
-                .append(context.getString(R.string.repeat_until_date, endDateString))
+    fun formatRepeatString(context: Context): String {
+        return try {
+            EventRecurrenceFormatter.getRepeatString(context, context.resources, event, true)
+        } catch (_: Exception) {
+            "?"
         }
-        return repeatBuilder.toString()
-    }
-
-    /**
-     * Returns the event schedule (start, end and recurrence)
-     *
-     * @return String description of repeat schedule
-     */
-    fun getRepeatStringBuilder(context: Context): StringBuilder {
-        val repeatBuilder = StringBuilder(frequencyRepeatString(context))
-        periodEnd?.let { periodEnd ->
-            val endDateString = DateFormat.getDateInstance().format(Date(periodEnd))
-            repeatBuilder.append(", ")
-                .append(context.getString(R.string.repeat_until_date, endDateString))
-        }
-        return repeatBuilder
     }
 
     /**
@@ -384,19 +365,6 @@ class Recurrence(periodType: PeriodType) : BaseModel() {
             PeriodType.END_OF_MONTH -> localDate.plusMonths(occurrenceDuration).lastDayOfMonth()
         }
         periodEnd = endDate.toMillis()
-    }
-
-    /**
-     * Returns a localized string describing the period type's frequency.
-     *
-     * @return String describing the period type
-     */
-    fun frequencyRepeatString(context: Context): String {
-        return try {
-            EventRecurrenceFormatter.getRepeatString(context, context.resources, event, true)
-        } catch (_: Exception) {
-            "?"
-        }
     }
 
     fun isEmpty(): Boolean {

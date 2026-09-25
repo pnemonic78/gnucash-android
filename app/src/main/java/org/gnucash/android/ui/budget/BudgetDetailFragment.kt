@@ -113,7 +113,7 @@ class BudgetDetailFragment : MenuFragment(), Refreshable {
         } else {
             binding.listItem2Lines.secondaryText.isVisible = false
         }
-        binding.budgetRecurrence.text = budget.recurrence.getRepeatString(context)
+        binding.budgetRecurrence.text = budget.recurrence.formatRepeatString(context)
 
         binding.list.adapter = BudgetAmountAdapter(budgetUID!!)
     }

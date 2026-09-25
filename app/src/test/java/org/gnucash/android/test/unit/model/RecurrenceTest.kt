@@ -103,6 +103,7 @@ class RecurrenceTest : GnuCashTest() {
         days.add(Calendar.MONDAY)
         recurrence.periodStart = start.millis
         recurrence.byDays = days
+        recurrence.multiplier = 1
 
         assertThat(recurrence.periodType).isEqualTo(PeriodType.WEEK)
         assertThat(recurrence.multiplier).isOne
@@ -204,42 +205,42 @@ class RecurrenceTest : GnuCashTest() {
         val recurrence = Recurrence(PeriodType.HOUR)
         recurrence.periodStart = start.millis
         recurrence.multiplier = 1
-        var formatted1 = recurrence.frequencyRepeatString(context)
+        var formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Hourly")
         recurrence.multiplier = 2
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Every 2 hours")
 
         recurrence.periodType = PeriodType.DAY
         recurrence.multiplier = 1
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Daily")
         recurrence.multiplier = 2
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Every 2 days")
 
         recurrence.periodType = PeriodType.WEEK
         recurrence.multiplier = 1
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Weekly on Monday")
         recurrence.multiplier = 2
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Every 2 weeks on Monday")
 
         recurrence.periodType = PeriodType.MONTH
         recurrence.multiplier = 1
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Monthly ")
         recurrence.multiplier = 2
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Every 2 months ")
 
         recurrence.periodType = PeriodType.YEAR
         recurrence.multiplier = 1
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Yearly ")
         recurrence.multiplier = 2
-        formatted1 = recurrence.frequencyRepeatString(context)
+        formatted1 = recurrence.formatRepeatString(context)
         assertThat(formatted1).isEqualTo("Every 2 years ")
     }
 
@@ -452,7 +453,7 @@ class RecurrenceTest : GnuCashTest() {
     @Test
     fun reoccurs_every_4th_wednesday() {
         val recurrence = Recurrence(PeriodType.ONCE)
-        assertThat(recurrence.ruleString).isEqualTo("FREQ=;INTERVAL=1")
+        assertThat(recurrence.ruleString).isEmpty()
         assertThat(recurrence.periodType).isEqualTo(PeriodType.ONCE)
         assertThat(recurrence.multiplier).isOne
         assertThat(recurrence.byDays).isEmpty()

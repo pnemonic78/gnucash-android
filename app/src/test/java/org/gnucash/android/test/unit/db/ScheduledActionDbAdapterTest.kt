@@ -1,5 +1,6 @@
 package org.gnucash.android.test.unit.db
 
+import android.text.format.DateUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
@@ -54,17 +55,34 @@ class ScheduledActionDbAdapterTest : GnuCashTest() {
     }
 
     @Test
-    fun testGenerateRepeatString() {
+    fun generate_repeat_string_count() {
+        val recurrence = Recurrence(PeriodType.MONTH, 2)
         val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION) {
+            setRecurrence(recurrence)
             totalPlannedExecutionCount = 4
         }
-        val recurrence = Recurrence(PeriodType.MONTH, 2)
-        scheduledAction.setRecurrence(recurrence)
-        val res = context.resources
-        val repeatString = recurrence.frequencyRepeatString(context) + ", " +
-                res.getString(R.string.repeat_x_times, 4)
+        val repeatString = recurrence.formatRepeatString(context)
 
-        assertThat(scheduledAction.getRepeatString(context).trim())
+        assertThat(repeatString)
+            .isEqualTo("Every 2 months ; for 4 times")
+        assertThat(scheduledAction.getRepeatString(context))
+            .isEqualTo(repeatString)
+    }
+
+    @Test
+    fun generate_repeat_string_until() {
+        val until = System.currentTimeMillis() + DateUtils.DAY_IN_MILLIS
+        val untilFormat = DateUtils.formatDateTime(context, until, DateUtils.FORMAT_NUMERIC_DATE)
+        val recurrence = Recurrence(PeriodType.MONTH, 2)
+        val scheduledAction = ScheduledAction(ScheduledAction.ActionType.TRANSACTION) {
+            setRecurrence(recurrence)
+            endDate = until
+        }
+        val repeatString = recurrence.formatRepeatString(context)
+
+        assertThat(repeatString)
+            .isEqualTo("Every 2 months ; until $untilFormat")
+        assertThat(scheduledAction.getRepeatString(context))
             .isEqualTo(repeatString)
     }
 
