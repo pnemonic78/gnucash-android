@@ -1,5 +1,7 @@
 package org.gnucash.android.ui.transaction
 
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,6 +50,7 @@ fun SplitAmountInfoRow(
             modifier = Modifier.weight(2f),
             text = accountName.orEmpty(),
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.StartEllipsis
         )
@@ -76,7 +79,7 @@ private fun AmountText(
     amount: Money?,
 ) {
     val color: Color = if (amount.isNullOrZero()) {
-        Color.Unspecified
+        MaterialTheme.colorScheme.onSurface
     } else if (amount.isNegative) {
         colorResource(id = R.color.debit_red)
     } else {
@@ -95,13 +98,35 @@ private fun AmountText(
 }
 
 @Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun Preview() {
     GnucashTheme {
-        SplitAmountInfoRow(
-            accountName = "Assets:Current Assets:Cash In Wallet",
-            debitAmount = Money(2000.0, Commodity.USD),
-            creditAmount = Money(3000.0, Commodity.USD),
-        )
+        Column {
+            SplitAmountInfoRow(
+                accountName = "Assets:Current Assets:Cash In Wallet",
+                debitAmount = Money(0.0, Commodity.USD),
+            )
+            SplitAmountInfoRow(
+                accountName = "Assets:Current Assets:Cash In Wallet",
+                debitAmount = Money(1000.0, Commodity.USD),
+            )
+            SplitAmountInfoRow(
+                accountName = "Assets:Current Assets:Cash In Wallet",
+                debitAmount = Money(-2000.0, Commodity.USD),
+            )
+            SplitAmountInfoRow(
+                accountName = "Expense:Books",
+                creditAmount = Money(0.0, Commodity.USD),
+            )
+            SplitAmountInfoRow(
+                accountName = "Expense:Books",
+                creditAmount = Money(3000.0, Commodity.USD),
+            )
+            SplitAmountInfoRow(
+                accountName = "Expense:Books",
+                creditAmount = Money(-4000.0, Commodity.USD),
+            )
+        }
     }
 }

@@ -1,6 +1,6 @@
 package org.gnucash.android.ui.transaction
 
-import androidx.compose.foundation.background
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,7 +41,7 @@ fun AccountBalanceRow(
 ) {
     var displayBalance = balance
     val balanceColor: Color = if (displayBalance.isNullOrZero()) {
-        MaterialTheme.colorScheme.primary
+        MaterialTheme.colorScheme.onSurface
     } else {
         if (account != null) {
             val accountType = account.type
@@ -64,8 +64,9 @@ fun AccountBalanceRow(
     ) {
         Text(
             modifier = Modifier.weight(2f),
-            text =  stringResource(id = R.string.account_balance),
+            text = stringResource(id = R.string.account_balance),
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.End
         )
@@ -84,20 +85,21 @@ fun AccountBalanceRow(
 }
 
 @Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun Preview() {
     GnucashTheme {
         Column {
             SplitAmountInfoRow(
                 accountName = "Assets:Current Assets:Cash In Wallet",
-                debitAmount = Money(2000.0, Commodity.USD),
+                debitAmount = Money(200_000.0, Commodity.USD),
             )
             SplitAmountInfoRow(
                 accountName = "Expense:Books",
-                creditAmount = Money(2000.0, Commodity.USD),
+                creditAmount = Money(200_000.0, Commodity.USD),
             )
             AccountBalanceRow(
-                balance = Money(99.99, Commodity.USD)
+                balance = Money(7899.99, Commodity.USD)
             )
         }
     }
