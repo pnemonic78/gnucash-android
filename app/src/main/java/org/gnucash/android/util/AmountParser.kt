@@ -6,6 +6,7 @@ import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.text.ParseException
 import java.text.ParsePosition
+import java.util.Locale
 
 /**
  * Parses amounts as String into BigDecimal.
@@ -19,11 +20,11 @@ object AmountParser {
      * @throws ParseException if the full string couldn't be parsed as an amount.
      */
     @Throws(ParseException::class)
-    fun parse(amount: String?): BigDecimal {
-        if (amount == null || amount.isEmpty()) {
+    fun parse(amount: String?, locale: Locale = Locale.getDefault()): BigDecimal {
+        if (amount.isNullOrEmpty()) {
             throw ParseException("Parse error", 0)
         }
-        val formatter = NumberFormat.getNumberInstance() as DecimalFormat
+        val formatter = NumberFormat.getNumberInstance(locale) as DecimalFormat
         formatter.isParseBigDecimal = true
         val parsePosition = ParsePosition(0)
         val parsedAmount = formatter.parse(amount, parsePosition) as BigDecimal?
