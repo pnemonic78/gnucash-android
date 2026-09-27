@@ -271,14 +271,14 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         binding.notes.setText(account.notes)
 
         if (useDoubleEntry) {
-            var defaultTransferAccountUID = account.defaultTransferAccountUID
-            if (!defaultTransferAccountUID.isNullOrEmpty()) {
-                setDefaultTransferAccountSelection(binding, defaultTransferAccountUID, true)
+            val defaultTransferAccount = accountsDbAdapter.getDefaultTransferAccount(account)
+            if (defaultTransferAccount != null) {
+                setDefaultTransferAccountSelection(binding, defaultTransferAccount.uid, true)
             } else {
                 var parentUID = account.parentUID
                 while (!parentUID.isNullOrEmpty()) {
                     val parentAccount = defaultAccountNameAdapter!!.getAccount(parentUID) ?: break
-                    defaultTransferAccountUID = parentAccount.defaultTransferAccountUID
+                    val defaultTransferAccountUID = parentAccount.defaultTransferAccountUID
                     if (!defaultTransferAccountUID.isNullOrEmpty()) {
                         setDefaultTransferAccountSelection(binding, parentUID, false)
                         break //we found a parent with default transfer setting
