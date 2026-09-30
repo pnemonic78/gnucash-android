@@ -6,6 +6,7 @@ import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.Money.CurrencyMismatchException
 import org.gnucash.android.model.Split.Companion.CREATOR
 import org.gnucash.android.model.Split.Companion.getFormattedAmount
+import org.gnucash.android.util.NEVER
 
 /**
  * A split amount in a transaction.
@@ -59,14 +60,14 @@ class Split : BaseModel, Parcelable {
      *  * **n**: means this split is not reconciled
      *  * **c**: means split has been cleared, but not reconciled
      *
-     * One of the following flags [.FLAG_RECONCILED], [.FLAG_NOT_RECONCILED], [.FLAG_CLEARED]
+     * One of the following flags: `RECONCILED_YES`, `RECONCILED_NO`, `RECONCILED_CLEARED`
      */
-    var reconcileState = FLAG_NOT_RECONCILED
+    var reconciledState = RECONCILED_NO
 
     /**
      * Date of the reconciliation. Database required non-null field
      */
-    var reconcileDate: Long = 0L
+    var reconciledDate: Long = NEVER
 
     /**
      * Account UID for a scheduled action.
@@ -258,7 +259,7 @@ class Split : BaseModel, Parcelable {
      * @return `true` if the split is reconciled, `false` otherwise
      */
     val isReconciled: Boolean
-        get() = reconcileState == FLAG_RECONCILED
+        get() = reconciledState == RECONCILED_YES
 
     override fun toString(): String {
         return type.name + " of " + value + " in account " + accountUID
@@ -284,7 +285,7 @@ class Split : BaseModel, Parcelable {
     fun isEquivalentTo(split: Split): Boolean {
         if (this === split) return true
         if (super.equals(split)) return true
-        if (reconcileState != split.reconcileState) return false
+        if (reconciledState != split.reconciledState) return false
         if (value != split.value) return false
         if (quantity != split.quantity) return false
         if (transactionUID != split.transactionUID) return false
@@ -305,7 +306,7 @@ class Split : BaseModel, Parcelable {
         if (other == null || javaClass != other.javaClass) return false
         if (!super.equals(other)) return false
         val split = other as Split
-        if (reconcileState != split.reconcileState) return false
+        if (reconciledState != split.reconciledState) return false
         if (value != split.value) return false
         if (quantity != split.quantity) return false
         if (transactionUID != split.transactionUID) return false
@@ -322,7 +323,7 @@ class Split : BaseModel, Parcelable {
         result = 31 * result + accountUID.hashCode()
         result = 31 * result + type.hashCode()
         result = 31 * result + if (memo != null) memo.hashCode() else 0
-        result = 31 * result + reconcileState.code
+        result = 31 * result + reconciledState.code
         return result
     }
 
@@ -340,8 +341,8 @@ class Split : BaseModel, Parcelable {
         dest.writeMoney(quantity, flags)
 
         dest.writeString(memo.orEmpty())
-        dest.writeString(reconcileState.toString())
-        dest.writeLong(reconcileDate)
+        dest.writeString(reconciledState.toString())
+        dest.writeLong(reconciledDate)
     }
 
     /**
@@ -360,8 +361,8 @@ class Split : BaseModel, Parcelable {
         quantity = source.readMoney()!!
 
         memo = source.readString().orEmpty()
-        reconcileState = source.readString()!![0]
-        reconcileDate = source.readLong()
+        reconciledState = source.readString()!![0]
+        reconciledDate = source.readLong()
     }
 
     companion object {
@@ -378,17 +379,17 @@ class Split : BaseModel, Parcelable {
         /**
          * Flag indicating that the split has been reconciled
          */
-        const val FLAG_RECONCILED = 'y'
+        const val RECONCILED_YES = 'y'
 
         /**
          * Flag indicating that the split has not been reconciled
          */
-        const val FLAG_NOT_RECONCILED = 'n'
+        const val RECONCILED_NO = 'n'
 
         /**
          * Flag indicating that the split has been cleared, but not reconciled
          */
-        const val FLAG_CLEARED = 'c'
+        const val RECONCILED_CLEARED = 'c'
 
         /**
          * Splits are saved as absolute values to the database, with no negative numbers.
