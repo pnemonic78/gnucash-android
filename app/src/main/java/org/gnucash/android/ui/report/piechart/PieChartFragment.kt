@@ -126,6 +126,7 @@ class PieChartFragment : BaseReportFragment<PieData>() {
                 isWordWrapEnabled = true
                 textColor = textColorPrimary
             }
+            description.isEnabled = false
             this.data = data
 
             if (isEmpty(data)) {

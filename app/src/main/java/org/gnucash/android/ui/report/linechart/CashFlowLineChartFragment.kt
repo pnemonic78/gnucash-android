@@ -39,6 +39,7 @@ import org.gnucash.android.model.Money.Companion.createZeroInstance
 import org.gnucash.android.ui.report.IntervalReportFragment
 import org.gnucash.android.ui.report.ReportType
 import org.gnucash.android.ui.report.ReportsActivity.GroupInterval
+import org.gnucash.android.util.firstDayOfMonth
 import org.gnucash.android.util.getFirstQuarterMonth
 import org.gnucash.android.util.parseColor
 import org.gnucash.android.util.toMillis
@@ -164,8 +165,7 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
             GroupInterval.MONTH -> endPeriod = startPeriod.plusMonths(1)
             GroupInterval.QUARTER -> {
                 startPeriod = startPeriod.withMonthOfYear(startPeriod.getFirstQuarterMonth())
-                    .dayOfMonth()
-                    .withMinimumValue()
+                    .firstDayOfMonth()
                 endPeriod = startPeriod.plusMonths(3)
             }
 
