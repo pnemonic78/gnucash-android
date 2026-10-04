@@ -18,7 +18,7 @@ class StackedBarLegendRenderer(viewPortHandler: ViewPortHandler, legend: Legend)
         computedEntries.clear()
         val entriesByLabel = sortedSetOf(LegendEntryComparator())
 
-        for (i in 0 until data.getDataSetCount()) {
+        for (i in 0 until data.dataSetCount) {
             val dataSet = data.getDataSetByIndex(i)
             val clrs = dataSet.colors
             val colorsSize = clrs.size

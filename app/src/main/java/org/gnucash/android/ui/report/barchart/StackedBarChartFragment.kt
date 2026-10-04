@@ -17,6 +17,7 @@
 package org.gnucash.android.ui.report.barchart
 
 import android.content.Context
+import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.Menu
@@ -30,6 +31,7 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.LargeValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import org.gnucash.android.R
@@ -44,12 +46,14 @@ import org.gnucash.android.util.endOfDay
 import org.gnucash.android.util.firstDayOfMonth
 import org.gnucash.android.util.firstDayOfYear
 import org.gnucash.android.util.getFirstQuarterMonth
+import org.gnucash.android.util.getQuarter
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfYear
 import org.gnucash.android.util.startOfDay
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDateTime
 import timber.log.Timber
+import java.util.Locale
 
 /**
  * Activity used for drawing a bar chart
@@ -85,46 +89,13 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
         val accountType = this.accountType
         val commodity = this.commodity
 
-        calculateEarliestAndLatestTimestamps(accountTypes)
-        var startDate = reportPeriodStart
-        if (startDate == null) {
-            val startTime = earliestTimestamps[accountType]
-            if (startTime != null) {
-                startDate = LocalDateTime(startTime)
-            } else {
-                isChartDataPresent = false
-                return getEmptyData(context)
-            }
+        val dates = calculateDateRange(listOf(accountType), groupInterval)
+        if (dates == null) {
+            isChartDataPresent = false
+            return getEmptyData(context)
         }
-        var endDate = reportPeriodEnd
-        if (endDate == null) {
-            val endTime = latestTimestamps[accountType]
-            endDate = if (endTime != null) {
-                LocalDateTime(endTime)
-            } else {
-                LocalDateTime.now()
-            }
-        }
-        when (groupInterval) {
-            GroupInterval.MONTH -> {
-                startDate = startDate.firstDayOfMonth().startOfDay()
-                endDate = endDate.lastDayOfMonth().endOfDay()
-            }
-
-            GroupInterval.QUARTER -> {
-                startDate = startDate.withMonthOfYear(startDate.getFirstQuarterMonth())
-                    .firstDayOfMonth()
-                    .startOfDay()
-                endDate = endDate.lastDayOfMonth().endOfDay()
-            }
-
-            GroupInterval.YEAR -> {
-                startDate = startDate.firstDayOfYear().startOfDay()
-                endDate = endDate.lastDayOfYear().endOfDay()
-            }
-
-            else -> return getEmptyData(context)
-        }
+        val startDate = dates.start
+        val endDate = dates.endInclusive
 
         var startPeriod: LocalDateTime = startDate
         var endPeriod: LocalDateTime = endDate
@@ -138,6 +109,8 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
 
             else -> Unit
         }
+
+        val pattern = getXAxisPattern(groupInterval)
 
         val where = (AccountEntry.COLUMN_TYPE + "=?"
                 + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
@@ -178,31 +151,36 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
                 labels.add(AccountColor(accountUID, account.name, color))
             }
 
-            if (stack.isEmpty()) {
-                stack.add(0f)
-                labels.add(AccountColor.EMPTY)
-            }
-            entries.add(BarEntry(x, stack.toFloatArray(), labels))
-            stackLabels.addAll(labels)
-
+            var datePretty = ""
             when (groupInterval) {
                 GroupInterval.MONTH -> {
+                    datePretty = startPeriod.toString(pattern)
                     startPeriod = startPeriod.plusMonths(1)
                     endPeriod = endPeriod.plusMonths(1)
                 }
 
                 GroupInterval.QUARTER -> {
+                    val quarter = startPeriod.getQuarter()
+                    datePretty = "Q" + quarter + " " + startPeriod.toString(pattern)
                     startPeriod = startPeriod.plusMonths(3)
                     endPeriod = endPeriod.plusMonths(3)
                 }
 
                 GroupInterval.YEAR -> {
+                    datePretty = startPeriod.toString(pattern)
                     startPeriod = startPeriod.plusYears(1)
                     endPeriod = endPeriod.plusYears(1)
                 }
 
                 else -> Unit
             }
+            if (stack.isEmpty()) {
+                stack.add(0f)
+                labels.add(AccountColor.EMPTY)
+            }
+            entries.add(BarEntry(x, stack.toFloatArray(), BarEntryData(datePretty, labels)))
+            stackLabels.addAll(labels)
+
             x++
         }
 
@@ -274,6 +252,7 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
             xAxis.setDrawLabels(isChartDataPresent)
             xAxis.setDrawGridLines(false)
             xAxis.textColor = textColorPrimary
+            xAxis.valueFormatter = IndexAxisValueFormatter(getXAxisLabels(data))
             legend.textColor = textColorPrimary
             description.isEnabled = false
             setTouchEnabled(isChartDataPresent)
@@ -355,7 +334,8 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
             index = 0
         }
         val value = entry.yVals[index]
-        val labels = entry.data as? List<AccountColor> ?: return
+        val entryData = entry.data as? BarEntryData ?: return
+        val labels = entryData.labels
         if (labels.size <= index) return
         val label = labels[index].name
         if (label.isEmpty()) return
@@ -371,6 +351,21 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
         }
         val percentage = if (total != 0f) ((value * 100) / total) else 0f
         selectedValueTextView?.text = formatSelectedValue(label, value, percentage)
+    }
+
+    private fun getXAxisLabels(data: BarData): List<String> {
+        val labels = sortedMapOf<Int, String>()
+
+        for (i in 0 until data.dataSetCount) {
+            val dataSet = data.getDataSetByIndex(i)
+            for (e in 0 until dataSet.entryCount) {
+                val entry = dataSet.getEntryForIndex(e)
+                val entryData = entry.data as? BarEntryData ?: continue
+                labels[e] = entryData.date
+            }
+        }
+
+        return labels.values.toList()
     }
 
     companion object {
