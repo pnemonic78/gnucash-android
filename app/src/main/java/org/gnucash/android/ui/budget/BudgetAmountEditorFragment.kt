@@ -58,8 +58,9 @@ class BudgetAmountEditorFragment : DatabaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        accountsDbAdapter = dbHelper.holder.accountsDbAdapter
         val context = requireContext()
+
+        accountsDbAdapter = databaseHolder.accountsDbAdapter
         accountNameAdapter =
             QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
     }
@@ -79,7 +80,7 @@ class BudgetAmountEditorFragment : DatabaseFragment() {
         val actionBar: ActionBar? = this.actionBar
         actionBar?.title = getString(R.string.title_edit_budget_amounts)
 
-        val budgetAmounts = arguments?.getParcelableArrayListCompat(
+        val budgetAmounts = requireArguments().getParcelableArrayListCompat(
             UxArgument.BUDGET_AMOUNT_LIST,
             BudgetAmount::class.java
         )

@@ -1,13 +1,11 @@
 package org.gnucash.android.ui.search
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.ActionBar
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
@@ -27,7 +25,6 @@ import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
-import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.homescreen.WidgetConfigurationActivity.Companion.updateAllWidgets
 import org.gnucash.android.ui.transaction.TransactionDetailActivity
 import org.gnucash.android.ui.transaction.dialog.BulkMoveDialogFragment
@@ -39,7 +36,7 @@ class SearchResultsFragment : DatabaseFragment(), SearchResultCallback, Fragment
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+                val transactionsDbAdapter = readableDatabaseHolder.transactionsDbAdapter
                 return SearchResultsViewModel(transactionsDbAdapter) as T
             }
         }
@@ -55,7 +52,7 @@ class SearchResultsFragment : DatabaseFragment(), SearchResultCallback, Fragment
         viewModel.where = requireArguments().getString(EXTRA_FORM)
         isDoubleEntry = isDoubleEntryEnabled(context)
 
-        val accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
+        val accountsDbAdapter = readableDatabaseHolder.accountsDbAdapter
         transactionsAdapter = SearchResultsAdapter(null, accountsDbAdapter, isDoubleEntry, this)
         lifecycleScope.launch {
             viewModel.results.collect { cursor ->
@@ -97,9 +94,9 @@ class SearchResultsFragment : DatabaseFragment(), SearchResultCallback, Fragment
         when (action) {
             SearchResultAction.Delete -> delete(transaction)
             SearchResultAction.Duplicate -> duplicate(transaction)
-            SearchResultAction.Edit -> edit(requireContext(), transaction)
+            SearchResultAction.Edit -> edit(transaction)
             SearchResultAction.Move -> move(transaction)
-            SearchResultAction.View -> view(requireContext(), transaction)
+            SearchResultAction.View -> view(transaction)
         }
     }
 
@@ -123,44 +120,38 @@ class SearchResultsFragment : DatabaseFragment(), SearchResultCallback, Fragment
         viewModel.duplicate(transaction)
     }
 
-    private fun edit(context: Context, transaction: Transaction) {
-        val accountUID = transaction.getDefaultAccountUID(TransactionType.CREDIT)
-        if (accountUID.isNullOrEmpty()) {
-            Timber.w("Account UID required")
-            return
-        }
+    private fun edit(transaction: Transaction) {
         val transactionUID = transaction.uid
-        if (transactionUID.isEmpty()) {
-            Timber.w("Transaction UID required")
+        val accountUID = transaction.getDefaultAccountUID(TransactionType.DEBIT)
+        if (transactionUID.isEmpty() || accountUID.isNullOrEmpty()) {
+            Timber.w("You must specify both the transaction and account UID")
             return
         }
-        val intent = Intent(context, FormActivity::class.java)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
-            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-        startActivity(intent)
+        FormActivity.showEditTransaction(this, bookUID, accountUID, transactionUID, 0)
     }
 
     private fun move(transaction: Transaction) {
-        val accountUID = transaction.getDefaultAccountUID(TransactionType.CREDIT) ?: return
-        val uids = arrayOf(transaction.uid)
+        val transactionUID = transaction.uid
+        val accountUID = transaction.getDefaultAccountUID(TransactionType.DEBIT)
+        if (transactionUID.isEmpty() || accountUID.isNullOrEmpty()) {
+            Timber.w("You must specify both the transaction and account UID")
+            return
+        }
+        val uids = arrayOf(transactionUID)
         val fm = parentFragmentManager
         fm.setFragmentResultListener(BulkMoveDialogFragment.TAG, viewLifecycleOwner, this)
         val fragment = BulkMoveDialogFragment.newInstance(uids, accountUID)
         fragment.show(fm, BulkMoveDialogFragment.TAG)
     }
 
-    private fun view(context: Context, transaction: Transaction) {
-        val accountUID = transaction.getDefaultAccountUID(TransactionType.CREDIT) ?: return
+    private fun view(transaction: Transaction) {
         val transactionUID = transaction.uid
-        if (transactionUID.isEmpty()) {
-            Timber.w("Transaction UID required")
+        val accountUID = transaction.getDefaultAccountUID(TransactionType.DEBIT)
+        if (transactionUID.isEmpty() || accountUID.isNullOrEmpty()) {
+            Timber.w("You must specify both the transaction and account UID")
             return
         }
-        val intent = Intent(context, TransactionDetailActivity::class.java)
-            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-        startActivity(intent)
+        TransactionDetailActivity.show(this, bookUID, accountUID, transactionUID, 0)
     }
 
     override fun onFragmentResult(requestKey: String, result: Bundle) {

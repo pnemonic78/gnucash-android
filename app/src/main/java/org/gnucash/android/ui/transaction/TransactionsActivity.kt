@@ -17,6 +17,7 @@
 package org.gnucash.android.ui.transaction
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -32,9 +33,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentResultListener
 import com.google.android.material.tabs.TabLayoutMediator
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.ActivityTransactionsBinding
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
@@ -66,7 +66,6 @@ class TransactionsActivity : BaseDrawerActivity(),
      */
     private var account: Account? = null
 
-    private var dbHelper: DatabaseHelper? = null
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var transactionsDbAdapter: TransactionsDbAdapter
     private var accountNameAdapter: QualifiedAccountNameAdapter? = null
@@ -114,12 +113,10 @@ class TransactionsActivity : BaseDrawerActivity(),
          * @return [AccountsListFragment] initialized with the sub-accounts
          */
         fun prepareSubAccountsListFragment(accountUID: String): AccountsListFragment {
-            val args = Bundle()
-            args.putString(UxArgument.PARENT_ACCOUNT_UID, accountUID)
-            args.putBoolean(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
-            val fragment = AccountsListFragment()
-            fragment.arguments = args
-            return fragment
+            return AccountsListFragment().withArguments {
+                putString(UxArgument.PARENT_ACCOUNT_UID, accountUID)
+                putBoolean(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
+            }
         }
 
         /**
@@ -129,15 +126,13 @@ class TransactionsActivity : BaseDrawerActivity(),
          */
         fun prepareTransactionsListFragment(accountUID: String): TransactionsListFragment {
             Timber.i("Opening transactions for account: %s", accountUID)
-            val args = Bundle()
-            args.putString(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            args.putString(
-                UxArgument.SELECTED_TRANSACTION_UID,
-                intent.getStringExtra(UxArgument.SELECTED_TRANSACTION_UID)
-            )
-            val fragment = TransactionsListFragment()
-            fragment.arguments = args
-            return fragment
+            return TransactionsListFragment().withArguments {
+                putString(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
+                putString(
+                    UxArgument.SELECTED_TRANSACTION_UID,
+                    intent.getStringExtra(UxArgument.SELECTED_TRANSACTION_UID)
+                )
+            }
         }
     }
 
@@ -211,16 +206,12 @@ class TransactionsActivity : BaseDrawerActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = this
 
         val actionBar: ActionBar? = supportActionBar
         actionBar?.setDisplayShowTitleEnabled(false)
         actionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        val holder = dbHelper.holder
+        val holder = databaseHolder
         accountsDbAdapter = holder.accountsDbAdapter
         transactionsDbAdapter = holder.transactionsDbAdapter
 
@@ -238,11 +229,6 @@ class TransactionsActivity : BaseDrawerActivity(),
         if (savedInstanceState == null) {
             refresh()
         }
-    }
-
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
     }
 
     override fun onResume() {
@@ -384,11 +370,7 @@ class TransactionsActivity : BaseDrawerActivity(),
             Timber.w("Account UID required")
             return
         }
-        val intent = Intent(this, TransactionsActivity::class.java)
-            .setAction(Intent.ACTION_VIEW)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
-        startActivityForResult(intent, REQUEST_REFRESH)
+        show(this, bookUID, accountUID, isShowHiddenAccounts, REQUEST_REFRESH)
     }
 
     override fun accountChanged(accountUID: String) {
@@ -405,11 +387,7 @@ class TransactionsActivity : BaseDrawerActivity(),
     }
 
     private fun editAccount(accountUID: String?) {
-        val editAccountIntent = Intent(this, FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.ACCOUNT.name)
-        startActivityForResult(editAccountIntent, REQUEST_REFRESH)
+        FormActivity.showEditAccount(this, bookUID, accountUID, REQUEST_REFRESH)
     }
 
     /**
@@ -555,10 +533,38 @@ class TransactionsActivity : BaseDrawerActivity(),
         /**
          * Displays the form for searching transactions
          */
-        fun openSearchFragment(context: Context) {
-            val intent = Intent(context, FormActivity::class.java)
-                .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.SEARCH.name)
-            context.startActivity(intent)
+        fun openSearchFragment(context: Context, bookUID: String) {
+            FormActivity.showSearch(context, bookUID)
+        }
+
+        fun show(
+            caller: Fragment,
+            bookUID: String,
+            accountUID: String,
+            isShowHiddenAccounts: Boolean = false,
+            requestCode: Int
+        ) {
+            val context: Context = caller.requireContext()
+            val intent = Intent(context, TransactionsActivity::class.java)
+                .putExtra(UxArgument.BOOK_UID, bookUID)
+                .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
+                .putExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
+            caller.startActivityForResult(intent, requestCode)
+        }
+
+        fun show(
+            caller: Activity,
+            bookUID: String,
+            accountUID: String,
+            isShowHiddenAccounts: Boolean = false,
+            requestCode: Int
+        ) {
+            val context: Context = caller
+            val intent = Intent(context, TransactionsActivity::class.java)
+                .putExtra(UxArgument.BOOK_UID, bookUID)
+                .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
+                .putExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
+            caller.startActivityForResult(intent, requestCode)
         }
     }
 }

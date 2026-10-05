@@ -40,22 +40,12 @@ import timber.log.Timber
  * @author Yongxin Wang <fefe.wyx@gmail.com>
  */
 class DeleteAllTransactionsConfirmationDialog : DoubleConfirmationDialog() {
-    private var dbHelper: DatabaseHelper? = null
     private lateinit var accountsDbAdapter: AccountsDbAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = requireContext()
-        val bookUID = activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        val holder = dbHelper.holder
-        accountsDbAdapter = holder.accountsDbAdapter
-    }
-
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
+        val dbHolder = databaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

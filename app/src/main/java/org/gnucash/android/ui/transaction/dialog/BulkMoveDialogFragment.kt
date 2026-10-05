@@ -19,11 +19,11 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.DialogFragment
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.app.DatabaseDialogFragment
+import org.gnucash.android.app.resultBundle
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.DialogBulkMoveBinding
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
@@ -39,25 +39,16 @@ import org.gnucash.android.ui.snackLong
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class BulkMoveDialogFragment : DialogFragment() {
-    private var dbHelper: DatabaseHelper? = null
+class BulkMoveDialogFragment : DatabaseDialogFragment() {
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var transactionsDbAdapter: TransactionsDbAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = requireContext()
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        val holder = dbHelper.holder
-        accountsDbAdapter = holder.accountsDbAdapter
-        transactionsDbAdapter = holder.transactionsDbAdapter
-    }
 
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
+        val dbHolder = databaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        transactionsDbAdapter = dbHolder.transactionsDbAdapter
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -124,9 +115,10 @@ class BulkMoveDialogFragment : DialogFragment() {
         }
 
         WidgetConfigurationActivity.updateAllWidgets(context)
-        val result = Bundle()
-        result.putBoolean(Refreshable.EXTRA_REFRESH, true)
-        result.putString(UxArgument.SELECTED_ACCOUNT_UID, dstAccountUID)
+        val result = resultBundle {
+            putBoolean(Refreshable.EXTRA_REFRESH, true)
+            putString(UxArgument.SELECTED_ACCOUNT_UID, dstAccountUID)
+        }
         parentFragmentManager.setFragmentResult(TAG, result)
     }
 
@@ -144,12 +136,10 @@ class BulkMoveDialogFragment : DialogFragment() {
             transactionUIDs: Array<String>,
             originAccountUID: String
         ): BulkMoveDialogFragment {
-            val args = Bundle()
-            args.putStringArray(UxArgument.SELECTED_TRANSACTION_UIDS, transactionUIDs)
-            args.putString(UxArgument.ORIGIN_ACCOUNT_UID, originAccountUID)
-            val fragment = BulkMoveDialogFragment()
-            fragment.arguments = args
-            return fragment
+            return BulkMoveDialogFragment().withArguments {
+                putStringArray(UxArgument.SELECTED_TRANSACTION_UIDS, transactionUIDs)
+                putString(UxArgument.ORIGIN_ACCOUNT_UID, originAccountUID)
+            }
         }
     }
 }

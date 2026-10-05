@@ -77,8 +77,9 @@ class BudgetFormFragment : DatabaseFragment(), OnRecurrenceSetListener,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        accountsDbAdapter = dbHelper.holder.accountsDbAdapter
-        budgetsDbAdapter = dbHelper.holder.budgetDbAdapter
+        val dbHolder = databaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        budgetsDbAdapter = dbHolder.budgetDbAdapter
         budgetAmounts = emptyList()
     }
 
@@ -267,13 +268,12 @@ class BudgetFormFragment : DatabaseFragment(), OnRecurrenceSetListener,
 
     private fun onOpenBudgetAmountEditor(v: View) {
         budgetAmounts = extractBudgetAmounts(binding!!)
-        val intent = Intent(v.context, FormActivity::class.java)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.BUDGET_AMOUNT_EDITOR.name)
-            .putParcelableArrayListExtra(
-                UxArgument.BUDGET_AMOUNT_LIST,
-                ArrayList<BudgetAmount>(budgetAmounts)
-            )
-        startActivityForResult(intent, REQUEST_EDIT_BUDGET_AMOUNTS)
+        FormActivity.showEditBudgetAmount(
+            this,
+            bookUID,
+            budgetAmounts,
+            REQUEST_EDIT_BUDGET_AMOUNTS
+        )
     }
 
     override fun onRecurrenceSet(rrule: String?) {

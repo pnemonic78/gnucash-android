@@ -41,9 +41,7 @@ import com.github.mikephil.charting.interfaces.datasets.IDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import org.gnucash.android.R
 import org.gnucash.android.app.DatabaseFragment
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.actionBar
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.PricesDbAdapter
@@ -197,12 +195,10 @@ abstract class BaseReportFragment<D : ChartData<*>> : DatabaseFragment(),
         useAccountColor = PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean(getString(R.string.key_use_account_color), false)
 
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        val holder = dbHelper.readableHolder
-        accountsDbAdapter = holder.accountsDbAdapter
-        commoditiesDbAdapter = holder.commoditiesDbAdapter
-        pricesDbAdapter = holder.pricesDbAdapter
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
+        pricesDbAdapter = dbHolder.pricesDbAdapter
         commodity = commoditiesDbAdapter.defaultCommodity
     }
 
@@ -239,7 +235,6 @@ abstract class BaseReportFragment<D : ChartData<*>> : DatabaseFragment(),
             generatorTask!!.cancel(true)
             generatorTask = null
         }
-        dbHelper?.close()
         super.onDestroy()
     }
 

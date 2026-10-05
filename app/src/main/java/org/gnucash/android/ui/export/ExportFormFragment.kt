@@ -197,9 +197,9 @@ class ExportFormFragment : DatabaseFragment(),
         }
         exportParams.exportFormat = exportFormat
 
-        var timestamp = getLastExportTime(context, activeBookUID)
+        var timestamp = getLastExportTime(context, bookUID)
         if (timestamp.time <= 0L) {
-            val transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+            val transactionsDbAdapter = readableDatabaseHolder.transactionsDbAdapter
             timestamp = transactionsDbAdapter.timestampOfFirstModification
         }
         exportStartCalendar.timeInMillis = timestamp.time
@@ -248,7 +248,7 @@ class ExportFormFragment : DatabaseFragment(),
             bindForm(binding, exportParams)
             return
         }
-        val scheduledActionDbAdapter = dbHelper.readableHolder.scheduledActionDbAdapter
+        val scheduledActionDbAdapter = readableDatabaseHolder.scheduledActionDbAdapter
         val scheduledAction = scheduledActionDbAdapter.getRecordOrNull(scheduledUID)
         if (scheduledAction != null) {
             this.scheduledAction = scheduledAction
@@ -350,7 +350,7 @@ class ExportFormFragment : DatabaseFragment(),
         val binding = binding ?: return
 
         Timber.i("Commencing async export of transactions")
-        val bookUID = activeBookUID ?: return
+        val bookUID = this.bookUID
 
         val activity: Context = binding.root.getActivity() ?: return
         ExportAsyncTask(activity, bookUID) { bookUri ->
@@ -370,7 +370,7 @@ class ExportFormFragment : DatabaseFragment(),
                 updateMethod = DatabaseAdapter.UpdateMethod.Insert
             }
             scheduledAction.setExportParams(exportParameters)
-            val scheduledActionDbAdapter = dbHelper.readableHolder.scheduledActionDbAdapter
+            val scheduledActionDbAdapter = readableDatabaseHolder.scheduledActionDbAdapter
             scheduledActionDbAdapter.addRecord(scheduledAction, updateMethod)
         }
 
@@ -638,7 +638,7 @@ class ExportFormFragment : DatabaseFragment(),
     private fun isCompressedForFormat(exportFormat: ExportFormat, compressed: Boolean): Boolean {
         // Does QIF have multiple currencies that need to be zipped?
         if (!compressed && exportFormat == ExportFormat.QIF) {
-            val transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+            val transactionsDbAdapter = readableDatabaseHolder.transactionsDbAdapter
             val commodities =
                 transactionsDbAdapter.getAllCommoditiesInUse(false, exportParams.exportStartTime)
             return commodities.size > 1

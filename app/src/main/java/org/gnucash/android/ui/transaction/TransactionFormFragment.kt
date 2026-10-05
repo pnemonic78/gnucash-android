@@ -233,7 +233,7 @@ class TransactionFormFragment : DatabaseFragment(),
 
         useDoubleEntry = isDoubleEntryEnabled(context)
 
-        val dbHolder = dbHelper.holder
+        val dbHolder = databaseHolder
         accountsDbAdapter = dbHolder.accountsDbAdapter
         transactionsDbAdapter = dbHolder.transactionsDbAdapter
         pricesDbAdapter = dbHolder.pricesDbAdapter
@@ -572,17 +572,16 @@ class TransactionFormFragment : DatabaseFragment(),
             baseAmountString = biggestAmount.toPlainString()
         }
 
-        val context = binding.root.context
         val account = requireAccount()
-        val accountUID = account.uid
         val splits = extractSplitsFromView(binding, account)
-        val intent = Intent(context, FormActivity::class.java)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.SPLIT_EDITOR.name)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.AMOUNT_STRING, baseAmountString)
-            .putParcelableArrayListExtra(UxArgument.SPLIT_LIST, ArrayList(splits))
-
-        startActivityForResult(intent, REQUEST_SPLIT_EDITOR)
+        FormActivity.showEditSplits(
+            this,
+            bookUID,
+            account.uid,
+            baseAmountString,
+            splits,
+            REQUEST_SPLIT_EDITOR
+        )
     }
 
     /**

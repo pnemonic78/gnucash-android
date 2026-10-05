@@ -43,7 +43,6 @@ import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupForImpor
 import org.gnucash.android.databinding.ActivityAccountsBinding
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.importer.ImportAsyncTask
 import org.gnucash.android.importer.ImportBookCallback
 import org.gnucash.android.service.ScheduledActionService.Companion.schedulePeriodic
@@ -141,6 +140,12 @@ class AccountsActivity : BaseDrawerActivity(),
     override val titleRes: Int = R.string.title_accounts
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // In case the activity was started from main launcher.
+        val bookUID = intent.getStringExtra(UxArgument.BOOK_UID)
+        if (bookUID.isNullOrEmpty() && (intent.action == Intent.ACTION_MAIN)) {
+            intent.putExtra(UxArgument.BOOK_UID, activeBookUID)
+        }
+
         super.onCreate(savedInstanceState)
 
         init()
@@ -207,7 +212,7 @@ class AccountsActivity : BaseDrawerActivity(),
         val context: Context = this
         PreferenceManager.setDefaultValues(
             context,
-            activeBookUID,
+            bookUID,
             MODE_PRIVATE,
             R.xml.fragment_transaction_preferences,
             true
@@ -215,7 +220,7 @@ class AccountsActivity : BaseDrawerActivity(),
 
         val firstRun = preferences.getBoolean(getString(R.string.key_first_run), true)
         if (firstRun) {
-            startActivity(Intent(context, FirstRunWizardActivity::class.java))
+            FirstRunWizardActivity.show(context)
             finish()
             return
         }
@@ -279,11 +284,7 @@ class AccountsActivity : BaseDrawerActivity(),
             Timber.w("Account UID required")
             return
         }
-        val intent = Intent(this, TransactionsActivity::class.java)
-            .setAction(Intent.ACTION_VIEW)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
-        startActivityForResult(intent, REQUEST_REFRESH)
+        TransactionsActivity.show(this, bookUID, accountUID, isShowHiddenAccounts, REQUEST_REFRESH)
     }
 
     override fun accountChanged(accountUID: String) = Unit
@@ -421,10 +422,8 @@ class AccountsActivity : BaseDrawerActivity(),
         /**
          * Displays the dialog for exporting transactions
          */
-        fun openExportFragment(context: Context) {
-            val intent = Intent(context, FormActivity::class.java)
-                .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.EXPORT.name)
-            context.startActivity(intent)
+        fun openExportFragment(context: Context, bookUID: String) {
+            FormActivity.showExport(context, bookUID)
         }
 
         /**
@@ -547,7 +546,11 @@ class AccountsActivity : BaseDrawerActivity(),
          * @param bookUID the book UID.
          * @param tabIndex the initial tab index to select.
          */
-        fun start(context: Context, bookUID: String, tabIndex: Int = INDEX_TOP_LEVEL_ACCOUNTS_FRAGMENT) {
+        fun start(
+            context: Context,
+            bookUID: String,
+            tabIndex: Int = INDEX_TOP_LEVEL_ACCOUNTS_FRAGMENT
+        ) {
             val intent = Intent(context, AccountsActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

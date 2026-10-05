@@ -43,6 +43,7 @@ import org.gnucash.android.R
 import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.isLandscape
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.CardviewBudgetAmountBinding
 import org.gnucash.android.databinding.FragmentBudgetDetailBinding
 import org.gnucash.android.db.DatabaseSchema.BudgetEntry
@@ -72,9 +73,9 @@ class BudgetDetailFragment : DatabaseFragment(), Refreshable {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val holder = dbHelper.readableHolder
-        accountsDbAdapter = holder.accountsDbAdapter
-        budgetsDbAdapter = holder.budgetDbAdapter
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        budgetsDbAdapter = dbHolder.budgetDbAdapter
         budgetUID = requireArguments().getString(UxArgument.BUDGET_UID)
     }
 
@@ -151,12 +152,7 @@ class BudgetDetailFragment : DatabaseFragment(), Refreshable {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_edit -> {
-                val context = context ?: return false
-                val intent = Intent(context, FormActivity::class.java)
-                    .setAction(Intent.ACTION_INSERT_OR_EDIT)
-                    .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.BUDGET.name)
-                    .putExtra(UxArgument.BUDGET_UID, budgetUID)
-                startActivityForResult(intent, REQUEST_REFRESH)
+                FormActivity.showEditBudget(this, bookUID, budgetUID, REQUEST_REFRESH)
                 true
             }
 
@@ -237,9 +233,13 @@ class BudgetDetailFragment : DatabaseFragment(), Refreshable {
                     Timber.w("Account UID required")
                     return@setOnClickListener
                 }
-                val intent = Intent(v.context, TransactionsActivity::class.java)
-                    .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-                startActivityForResult(intent, REQUEST_REFRESH)
+                TransactionsActivity.show(
+                    this@BudgetDetailFragment,
+                    bookUID,
+                    accountUID,
+                    false,
+                    REQUEST_REFRESH
+                )
             }
         }
 
@@ -301,11 +301,9 @@ class BudgetDetailFragment : DatabaseFragment(), Refreshable {
         private const val REQUEST_REFRESH = 0x0000
 
         fun newInstance(budgetUID: String): BudgetDetailFragment {
-            val args = Bundle()
-            args.putString(UxArgument.BUDGET_UID, budgetUID)
-            val fragment = BudgetDetailFragment()
-            fragment.arguments = args
-            return fragment
+            return BudgetDetailFragment().withArguments {
+                putString(UxArgument.BUDGET_UID, budgetUID)
+            }
         }
     }
 }

@@ -46,6 +46,7 @@ import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.getSerializableCompat
 import org.gnucash.android.app.isLandscape
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.CardviewAccountBinding
 import org.gnucash.android.databinding.FragmentAccountsListBinding
 import org.gnucash.android.db.DatabaseCursorLoader
@@ -145,23 +146,20 @@ class AccountsListFragment : DatabaseFragment(),
         }
 
         binding.fabAdd.setOnClickListener {
-            val context = it.context
-            val parentAccountUID = arguments?.getString(UxArgument.PARENT_ACCOUNT_UID)
-            createNewAccount(context, parentAccountUID)
+            val parentAccountUID = requireArguments().getString(UxArgument.PARENT_ACCOUNT_UID)
+            createNewAccount(parentAccountUID)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        accountsDbAdapter = dbHelper.holder.accountsDbAdapter
+        accountsDbAdapter = databaseHolder.accountsDbAdapter
 
-        val args = arguments
-        if (args != null) {
-            displayMode = args.getSerializableCompat(STATE_DISPLAY_MODE, DisplayMode::class.java)
-                ?: displayMode
-            isShowHiddenAccounts = args.getBoolean(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
-        }
+        val args = requireArguments()
+        displayMode = args.getSerializableCompat(STATE_DISPLAY_MODE, DisplayMode::class.java)
+            ?: displayMode
+        isShowHiddenAccounts = args.getBoolean(UxArgument.SHOW_HIDDEN, isShowHiddenAccounts)
 
         if (savedInstanceState != null) {
             displayMode = savedInstanceState.getSerializableCompat(
@@ -207,7 +205,7 @@ class AccountsListFragment : DatabaseFragment(),
      * @param activity   The activity context.
      * @param accountUID The UID of the account
      */
-    private fun tryDeleteAccount(activity: Activity?, accountUID: String) {
+    private fun deleteAccount(activity: Activity?, accountUID: String) {
         if (accountsDbAdapter.getTransactionCount(accountUID) > 0
             || accountsDbAdapter.getSubAccountCount(accountUID) > 0
         ) {
@@ -292,23 +290,13 @@ class AccountsListFragment : DatabaseFragment(),
         accountBalanceTasks.clear()
     }
 
-    /**
-     * Opens a new activity for creating or editing an account.
-     * If the `accountUID` is empty, then create else edit the account.
-     *
-     * @param accountUID Unique ID of account to be edited. Pass `null` to create a new account.
-     */
-    fun showCreateOrEditAccount(context: Context, accountUID: String?) {
-        val intent = Intent(context, FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.ACCOUNT.name)
-        startActivityForResult(intent, REQUEST_REFRESH)
+    fun showCreateOrEditAccount(accountUID: String?) {
+        FormActivity.showEditAccount(this, bookUID, accountUID, REQUEST_REFRESH)
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
         Timber.d("Creating the accounts loader for $displayMode")
-        val parentAccountUID = arguments?.getString(UxArgument.PARENT_ACCOUNT_UID)
+        val parentAccountUID = requireArguments().getString(UxArgument.PARENT_ACCOUNT_UID)
 
         val context = requireContext()
         return AccountsCursorLoader(
@@ -412,12 +400,8 @@ class AccountsListFragment : DatabaseFragment(),
         }
     }
 
-    private fun createNewAccount(context: Context, parentAccountUID: String?) {
-        val intent = Intent(context, FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.PARENT_ACCOUNT_UID, parentAccountUID)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.ACCOUNT.name)
-        startActivityForResult(intent, REQUEST_REFRESH)
+    private fun createNewAccount(parentAccountUID: String?) {
+        FormActivity.showNewAccount(this, bookUID, parentAccountUID, REQUEST_REFRESH)
     }
 
     internal inner class AccountRecyclerAdapter(cursor: Cursor?) :
@@ -501,7 +485,7 @@ class AccountsListFragment : DatabaseFragment(),
                 createTransaction.isVisible = false
             } else {
                 createTransaction.setOnClickListener { v ->
-                    showTransactionForm(v.context, accountUID)
+                    showTransactionForm(accountUID)
                 }
             }
 
@@ -535,12 +519,14 @@ class AccountsListFragment : DatabaseFragment(),
             }
         }
 
-        private fun showTransactionForm(context: Context, accountUID: String) {
-            val intent = Intent(context, FormActivity::class.java)
-                .setAction(Intent.ACTION_INSERT_OR_EDIT)
-                .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
-                .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            startActivityForResult(intent, REQUEST_REFRESH)
+        private fun showTransactionForm(accountUID: String) {
+            FormActivity.showEditTransaction(
+                this@AccountsListFragment,
+                bookUID,
+                accountUID,
+                null,
+                REQUEST_REFRESH
+            )
         }
 
         override fun onMenuItemClick(item: MenuItem): Boolean {
@@ -549,12 +535,12 @@ class AccountsListFragment : DatabaseFragment(),
 
             return when (item.itemId) {
                 R.id.menu_edit -> {
-                    showCreateOrEditAccount(activity, accountUID)
+                    showCreateOrEditAccount(accountUID)
                     true
                 }
 
                 R.id.menu_delete -> {
-                    tryDeleteAccount(activity, accountUID)
+                    deleteAccount(activity, accountUID)
                     true
                 }
 
@@ -595,11 +581,9 @@ class AccountsListFragment : DatabaseFragment(),
         private const val REQUEST_REFRESH = 0x0000
 
         fun newInstance(displayMode: DisplayMode): AccountsListFragment {
-            val args = Bundle()
-            args.putSerializable(STATE_DISPLAY_MODE, displayMode)
-            val fragment = AccountsListFragment()
-            fragment.arguments = args
-            return fragment
+            return AccountsListFragment().withArguments {
+                putSerializable(STATE_DISPLAY_MODE, displayMode)
+            }
         }
     }
 }

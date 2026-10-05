@@ -17,11 +17,8 @@ package org.gnucash.android.ui.settings.dialog
 
 import android.app.Activity
 import android.app.Dialog
-import android.content.Context
 import android.os.Bundle
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.ui.homescreen.WidgetConfigurationActivity
 import org.gnucash.android.ui.snackLong
@@ -34,22 +31,12 @@ import org.gnucash.android.util.BackupManager.backupActiveBookAsync
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 class DeleteAllAccountsConfirmationDialog : DoubleConfirmationDialog() {
-    private var dbHelper: DatabaseHelper? = null
     private lateinit var accountsDbAdapter: AccountsDbAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = requireContext()
-        val bookUID = activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        val holder = dbHelper.holder
-        accountsDbAdapter = holder.accountsDbAdapter
-    }
-
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
+        val dbHolder = databaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

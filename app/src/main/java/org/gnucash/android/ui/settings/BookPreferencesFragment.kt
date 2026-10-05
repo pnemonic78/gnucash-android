@@ -1,28 +1,23 @@
 package org.gnucash.android.ui.settings
 
-import android.content.Context
 import android.os.Bundle
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
-import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.BookProvider
+import org.gnucash.android.db.DatabaseHolder
 
-abstract class BookPreferencesFragment : GnuPreferenceFragment() {
-    private var dbHelper: DatabaseHelper? = null
+abstract class BookPreferencesFragment : GnuPreferenceFragment(), BookProvider {
+    private val bookProvider: BookProvider get() = requireActivity() as BookProvider
+
+    override val bookUID: String
+        get() = bookProvider.bookUID
+    override val databaseHolder: DatabaseHolder
+        get() = bookProvider.databaseHolder
+    override val readableDatabaseHolder: DatabaseHolder
+        get() = bookProvider.readableDatabaseHolder
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        val bookUID = activeBookUID
-
         preferenceManager.setSharedPreferencesName(bookUID)
-
-        val context: Context = requireContext()
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        initDatabase(dbHelper)
+        initDatabase(databaseHolder)
     }
 
-    abstract fun initDatabase(dbHelper: DatabaseHelper)
-
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
-    }
+    abstract fun initDatabase(dbHolder: DatabaseHolder)
 }

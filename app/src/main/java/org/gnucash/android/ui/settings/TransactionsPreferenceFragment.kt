@@ -21,7 +21,7 @@ import androidx.preference.Preference
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
-import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.ui.settings.dialog.DeleteAllTransactionsConfirmationDialog
@@ -36,9 +36,8 @@ class TransactionsPreferenceFragment : BookPreferencesFragment() {
 
     override val titleId: Int = R.string.title_transaction_preferences
 
-    override fun initDatabase(dbHelper: DatabaseHelper) {
-        val holder = dbHelper.holder
-        accountsDbAdapter = holder.accountsDbAdapter
+    override fun initDatabase(dbHolder: DatabaseHolder) {
+        accountsDbAdapter = dbHolder.accountsDbAdapter
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

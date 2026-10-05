@@ -23,6 +23,8 @@ import androidx.fragment.app.FragmentActivity
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import org.gnucash.android.R
+import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.ActivityScheduledEventsBinding
 import org.gnucash.android.ui.common.BaseDrawerActivity
 import org.gnucash.android.ui.common.UxArgument.EXTRA_TAB_INDEX
@@ -56,7 +58,7 @@ class ScheduledActionsActivity : BaseDrawerActivity() {
         }
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL)
 
-        binding.pager.adapter = ScheduledActionsViewPager(this)
+        binding.pager.adapter = ScheduledActionsViewPager(this, bookUID)
         TabLayoutMediator(tabLayout, binding.pager) { tab, position ->
             when (position) {
                 TAB_TRANSACTIONS -> tab.setText(R.string.title_scheduled_transactions)
@@ -88,7 +90,7 @@ class ScheduledActionsActivity : BaseDrawerActivity() {
     /**
      * View pager adapter for managing the scheduled action views
      */
-    private class ScheduledActionsViewPager(activity: FragmentActivity) :
+    private class ScheduledActionsViewPager(activity: FragmentActivity, private val bookUID: String) :
         FragmentStateAdapter(activity) {
         override fun createFragment(position: Int): Fragment {
             return when (position) {
@@ -112,10 +114,11 @@ class ScheduledActionsActivity : BaseDrawerActivity() {
         const val TAB_EXPORTS = 1
 
         //show scheduled transactions
-        fun show(context: Context) {
+        fun show(context: Context, bookUID: String) {
             val intent = Intent(context, ScheduledActionsActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(UxArgument.BOOK_UID, bookUID)
             context.startActivity(intent)
         }
     }

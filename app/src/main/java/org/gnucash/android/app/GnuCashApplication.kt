@@ -63,8 +63,8 @@ class GnuCashApplication : Application() {
         } as Timber.Tree
         Timber.plant(tree)
 
-        initializeDatabaseAdapters(context)
-        setDefaultCurrencyCode(context, getDefaultCurrencyCode(context))
+        val bookUID = initializeDatabaseAdapters(context)
+        setDefaultCurrencyCode(context, getDefaultCurrencyCode(context, bookUID))
     }
 
     override fun onTerminate() {
@@ -91,7 +91,7 @@ class GnuCashApplication : Application() {
          *
          * @param context the context.
          */
-        fun initializeDatabaseAdapters(context: Context, bookUID: String? = null) {
+        fun initializeDatabaseAdapters(context: Context, bookUID: String? = null): String {
             val booksDbAdapter = BooksDbAdapter.init(context)
 
             dbHelper?.close()
@@ -106,6 +106,7 @@ class GnuCashApplication : Application() {
                 activeBookUID = bookUID
             }
             dbHelper = DatabaseHelper(context, bookUID)
+            return bookUID
         }
 
         private fun destroyDatabaseAdapters() {
@@ -197,7 +198,7 @@ class GnuCashApplication : Application() {
          * @return Default currency code string for the application
          */
         var defaultCurrencyCode: String
-            get() = getDefaultCurrencyCode(appContext)
+            get() = getDefaultCurrencyCode(appContext, activeBookUID)
             set(currencyCode) {
                 setDefaultCurrencyCode(appContext, currencyCode)
             }
@@ -212,8 +213,8 @@ class GnuCashApplication : Application() {
          *
          * @return Default currency code string for the application
          */
-        private fun getDefaultCurrencyCode(context: Context): String {
-            var currencyCode = getCurrencyCode(context, activeBookUID)
+        private fun getDefaultCurrencyCode(context: Context, bookUID: String): String {
+            var currencyCode = getCurrencyCode(context, bookUID)
             if (!currencyCode.isNullOrEmpty()) return currencyCode
 
             // Maybe use the cached commodity.

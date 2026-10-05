@@ -22,11 +22,9 @@ import android.database.SQLException
 import android.net.Uri
 import android.os.CancellationSignal
 import androidx.annotation.ColorInt
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.appContext
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
-import org.gnucash.android.db.NoActiveBookException
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
@@ -259,7 +257,7 @@ class GncXmlHandler(
     @Deprecated("Use the new scheduled action elements instead")
     private var recurrencePeriod: Long = 0
 
-    private var dbHelper: DatabaseHelper? = null
+    private lateinit var dbHelper: DatabaseHelper
     private val booksDbAdapter: BooksDbAdapter = BooksDbAdapter.instance
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var transactionsDbAdapter: TransactionsDbAdapter
@@ -291,9 +289,9 @@ class GncXmlHandler(
 
     private fun initDb(bookUID: String) {
         val dbHelper = DatabaseHelper(context, bookUID)
-        val holder = dbHelper.holder
+        val dbHolder = dbHelper.holder
         this.dbHelper = dbHelper
-        val db = holder.db
+        val db = dbHolder.db
         try {
             // Nice to have for performance, but not critical.
             db.enableWriteAheadLogging()
@@ -308,13 +306,13 @@ class GncXmlHandler(
 
         book = booksDbAdapter.getRecordOrNull(bookUID) ?: book
 
-        commoditiesDbAdapter = holder.commoditiesDbAdapter
-        pricesDbAdapter = holder.pricesDbAdapter
-        transactionsDbAdapter = holder.transactionsDbAdapter
-        accountsDbAdapter = holder.accountsDbAdapter
-        scheduledActionsDbAdapter = holder.scheduledActionDbAdapter
-        budgetsDbAdapter = holder.budgetDbAdapter
-        val recurrenceDbAdapter = holder.recurrenceDbAdapter
+        commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
+        pricesDbAdapter = dbHolder.pricesDbAdapter
+        transactionsDbAdapter = dbHolder.transactionsDbAdapter
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        scheduledActionsDbAdapter = dbHolder.scheduledActionDbAdapter
+        budgetsDbAdapter = dbHolder.budgetDbAdapter
+        val recurrenceDbAdapter = dbHolder.recurrenceDbAdapter
 
         Timber.d("before clean up db")
         budgetsDbAdapter.deleteAllRecords()
@@ -333,7 +331,7 @@ class GncXmlHandler(
 
     private fun maybeInitDb(bookUIDOld: String?, bookUIDNew: String) {
         if (bookUIDOld != null && bookUIDOld != bookUIDNew) {
-            dbHelper?.close()
+            dbHelper.close()
             initDb(bookUIDNew)
         }
     }
@@ -507,24 +505,12 @@ class GncXmlHandler(
      * We on purpose do not set the book active. Only import. Caller should handle activation
      */
     private fun saveToDatabase() {
-        dbHelper!!.holder.db.setForeignKeyConstraintsEnabled(true)
-        maybeClose() //close it after import
+        dbHelper.holder.db.setForeignKeyConstraintsEnabled(true)
+        close() //close it after import
     }
 
     override fun close() {
-        dbHelper?.close()
-    }
-
-    private fun maybeClose() {
-        var activeBookUID: String? = null
-        try {
-            activeBookUID = GnuCashApplication.activeBookUID
-        } catch (_: NoActiveBookException) {
-        }
-        val newBookUID = book.uid
-        if (activeBookUID == null || activeBookUID != newBookUID) {
-            close()
-        }
+        dbHelper.close()
     }
 
     fun cancel() {

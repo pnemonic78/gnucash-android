@@ -42,11 +42,9 @@ import org.junit.Test
 
 // TODO: Find out how to press the keys in the KeyboardView.
 class CalculatorEditTextTest : DatabaseTest() {
-    private lateinit var transactionsActivity: TransactionsActivity
-
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(TransactionsActivity::class.java, true, false)
+    val activityRule = ActivityTestRule(TransactionsActivity::class.java, false, false)
 
     @Before
     fun setUp() {
@@ -63,17 +61,15 @@ class CalculatorEditTextTest : DatabaseTest() {
         accountsDbAdapter.addRecord(account)
         accountsDbAdapter.addRecord(account2)
 
-        val intent = Intent(Intent.ACTION_VIEW)
+        val intent = Intent(Intent.ACTION_MAIN)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, DUMMY_ACCOUNT_UID)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
         activityRule.launchActivity(intent)
-        transactionsActivity = activityRule.activity
     }
 
     @After
     fun tearDown() {
-        if (::transactionsActivity.isInitialized) {
-            transactionsActivity.finish()
-        }
+        activityRule.finishActivity()
     }
 
     /**

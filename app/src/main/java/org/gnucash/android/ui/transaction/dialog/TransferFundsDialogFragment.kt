@@ -24,6 +24,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import org.gnucash.android.R
+import org.gnucash.android.app.DatabaseDialogFragment
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.databinding.DialogTransferFundsBinding
 import org.gnucash.android.db.DatabaseHelper
@@ -37,7 +38,6 @@ import org.gnucash.android.quote.YahooJson
 import org.gnucash.android.ui.text.DefaultTextWatcher
 import org.gnucash.android.ui.text.TextInputResetError
 import org.gnucash.android.ui.transaction.OnTransferFundsListener
-import org.gnucash.android.ui.util.dialog.VolatileDialogFragment
 import org.gnucash.android.ui.util.displayBalance
 import org.gnucash.android.util.AmountParser.parse
 import timber.log.Timber
@@ -50,7 +50,7 @@ import java.text.ParseException
  *
  * This is used whenever a multi-currency transaction is being created.
  */
-class TransferFundsDialogFragment : VolatileDialogFragment() {
+class TransferFundsDialogFragment : DatabaseDialogFragment() {
     // FIXME these fields must be persisted for when dialog is changed, e.g. rotated.
     private var originAmount: Money? = null
 
@@ -60,22 +60,13 @@ class TransferFundsDialogFragment : VolatileDialogFragment() {
     // FIXME these fields must be persisted for when dialog is changed, e.g. rotated.
     private var onTransferFundsListener: OnTransferFundsListener? = null
 
-    private var dbHelper: DatabaseHelper? = null
     private lateinit var pricesDbAdapter: PricesDbAdapter
     private var priceQuoted: Price? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = requireContext()
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        val holder = dbHelper.holder
-        pricesDbAdapter = holder.pricesDbAdapter
-    }
-
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
+        val dbHolder = databaseHolder
+        pricesDbAdapter = dbHolder.pricesDbAdapter
     }
 
     private fun onCreateBinding(inflater: LayoutInflater): DialogTransferFundsBinding {

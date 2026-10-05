@@ -1,6 +1,6 @@
 package org.gnucash.android.test.ui
 
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BudgetAmountsDbAdapter
@@ -52,7 +52,7 @@ abstract class DatabaseTest : GnuAndroidTest() {
      * @param bookUID GUID of the GnuCash book
      */
     protected open fun initAdapters(bookUID: String?) {
-        val bookUID = bookUID ?: GnuCashApplication.activeBookUID
+        val bookUID = bookUID ?: this.bookUID ?: activeBookUID
         val dbHelper = DatabaseHelper(context, bookUID)
         this.dbHelper = dbHelper
         val dbHolder = dbHelper.holder
@@ -66,4 +66,6 @@ abstract class DatabaseTest : GnuAndroidTest() {
         splitsDbAdapter = dbHolder.splitsDbAdapter
         transactionsDbAdapter = dbHolder.transactionsDbAdapter
     }
+
+    protected val bookUID: String? get() = dbHelper?.bookUID
 }

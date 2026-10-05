@@ -29,20 +29,18 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.widget.PopupMenu
-import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.CardviewBudgetBinding
 import org.gnucash.android.databinding.FragmentBudgetListBinding
 import org.gnucash.android.db.DatabaseCursorLoader
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseSchema.BudgetEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BudgetsDbAdapter
@@ -51,7 +49,6 @@ import org.gnucash.android.ui.adapter.CursorRecyclerAdapter
 import org.gnucash.android.ui.budget.BudgetsActivity.Companion.getBudgetProgressColor
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
-import org.gnucash.android.ui.common.UxArgument
 import timber.log.Timber
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -59,8 +56,7 @@ import java.math.RoundingMode
 /**
  * Budget list fragment
  */
-class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallbacks<Cursor> {
-    private var dbHelper: DatabaseHelper? = null
+class BudgetListFragment : DatabaseFragment(), Refreshable, LoaderManager.LoaderCallbacks<Cursor> {
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var budgetsDbAdapter: BudgetsDbAdapter
     private var budgetRecyclerAdapter: BudgetRecyclerAdapter? = null
@@ -68,18 +64,10 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = requireContext()
 
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        val holder = dbHelper.readableHolder
-        accountsDbAdapter = holder.accountsDbAdapter
-        budgetsDbAdapter = holder.budgetDbAdapter
-    }
-
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        budgetsDbAdapter = dbHolder.budgetDbAdapter
     }
 
     override fun onCreateView(
@@ -171,11 +159,7 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
      * @param budgetUID Db record UID of the budget
      */
     private fun editBudget(budgetUID: String?) {
-        val intent = Intent(requireContext(), FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.BUDGET.name)
-            .putExtra(UxArgument.BUDGET_UID, budgetUID)
-        startActivityForResult(intent, REQUEST_REFRESH)
+        FormActivity.showEditBudget(this, bookUID, budgetUID, REQUEST_REFRESH)
     }
 
     /**
@@ -195,16 +179,8 @@ class BudgetListFragment : Fragment(), Refreshable, LoaderManager.LoaderCallback
         }
     }
 
-    /**
-     * Callback when create budget floating action button is clicked
-     *
-     * @param view View which was clicked
-     */
     private fun createBudget(context: Context) {
-        val intent = Intent(context, FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.BUDGET.name)
-        startActivity(intent)
+        FormActivity.showEditBudget(this, bookUID, null, REQUEST_REFRESH)
     }
 
     internal inner class BudgetRecyclerAdapter(cursor: Cursor?) :

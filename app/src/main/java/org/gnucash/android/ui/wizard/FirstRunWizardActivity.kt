@@ -407,5 +407,10 @@ class FirstRunWizardActivity : GnuCashActivity(),
     companion object {
         private const val STATE_MODEL = "model"
         private const val STEP_REVIEW = 1
+
+        fun show(context: Context) {
+            val intent = Intent(context, FirstRunWizardActivity::class.java)
+            context.startActivity(intent)
+        }
     }
 }

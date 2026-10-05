@@ -16,7 +16,7 @@ import org.junit.After
 import org.junit.Before
 
 abstract class DatabaseTest : GnuCashTest() {
-    private var dbHelper: DatabaseHelper? = null
+    private lateinit var dbHelper: DatabaseHelper
     protected lateinit var accountsDbAdapter: AccountsDbAdapter
         private set
     protected lateinit var budgetAmountsDbAdapter: BudgetAmountsDbAdapter
@@ -44,7 +44,7 @@ abstract class DatabaseTest : GnuCashTest() {
     @After
     fun tearDownDb() {
         accountsDbAdapter.deleteAllRecords()
-        dbHelper?.close()
+        dbHelper.close()
         DatabaseHelper.deleteFiles(context)
     }
 

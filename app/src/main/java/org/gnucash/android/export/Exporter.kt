@@ -145,6 +145,7 @@ abstract class Exporter protected constructor(
     @WorkerThread
     @Throws(ExportException::class)
     fun export(): Uri? {
+        val bookUID = this.bookUID
         Timber.i("generate export for book %s", bookUID)
         val timeStart = SystemClock.elapsedRealtime()
         val exportParams = this.exportParams
@@ -161,12 +162,11 @@ abstract class Exporter protected constructor(
         if (result != null && exportParams.deleteTransactionsAfterExport) {
             // Avoid recursion - Don't do a backup if just did a backup already!
             val context = this.context
-            val bookUID = activeBookUID
-            val backupFolder = getBackupFolder(context, bookUID!!)
+            val backupFolder = getBackupFolder(context, bookUID)
             val backupUri = exportParams.exportLocation
             val backupFile = File(backupUri!!.path!!)
             val backupFileParent = backupFile.parentFile
-            val isBackupParams = exportParams.exportFormat == ExportFormat.XML
+            val isBackupParams = (exportParams.exportFormat == ExportFormat.XML || exportParams.exportFormat == ExportFormat.SQLITE)
                     && exportParams.exportTarget == ExportTarget.URI
                     && exportParams.isCompressed
                     && backupFolder == backupFileParent

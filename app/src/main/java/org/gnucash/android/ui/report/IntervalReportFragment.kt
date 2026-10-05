@@ -21,7 +21,7 @@ abstract class IntervalReportFragment<D : ChartData<*>> : BaseReportFragment<D>(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+        transactionsDbAdapter = readableDatabaseHolder.transactionsDbAdapter
     }
 
     /**

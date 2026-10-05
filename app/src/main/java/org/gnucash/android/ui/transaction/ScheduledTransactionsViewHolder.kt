@@ -14,10 +14,11 @@ import org.gnucash.android.ui.snackLong
 import timber.log.Timber
 
 internal class ScheduledTransactionsViewHolder(
+    bookUID: String,
     scheduledActionDbAdapter: ScheduledActionDbAdapter,
     binding: ListItemScheduledTrxnBinding,
     refreshable: Refreshable
-) : ScheduledViewHolder(scheduledActionDbAdapter, binding, refreshable) {
+) : ScheduledViewHolder(bookUID, scheduledActionDbAdapter, binding, refreshable) {
 
     private val transactionsDbAdapter = scheduledActionDbAdapter.transactionsDbAdapter
 
@@ -82,13 +83,7 @@ internal class ScheduledTransactionsViewHolder(
             return
         }
         val context = itemView.context
-        val intent = Intent(context, FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
-            .putExtra(UxArgument.SCHEDULED_ACTION_UID, scheduledAction.uid)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
-        context.startActivity(intent)
+        FormActivity.showEditTransaction(context, bookUID, accountUID, transactionUID)
     }
 
     @SuppressLint("NotifyDataSetChanged")

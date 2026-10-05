@@ -22,6 +22,7 @@ import org.gnucash.android.util.formatMediumDateTime
 import org.gnucash.android.util.set
 
 abstract class ScheduledViewHolder(
+    protected val bookUID: String,
     protected val scheduledActionDbAdapter: ScheduledActionDbAdapter,
     protected val binding: ListItemScheduledTrxnBinding,
     protected val refreshable: Refreshable

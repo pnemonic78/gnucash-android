@@ -15,8 +15,10 @@
  */
 package org.gnucash.android.test.ui
 
+import android.content.Intent
 import android.net.Uri
 import android.text.format.DateUtils
+import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.GeneralClickAction
@@ -26,6 +28,7 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.rule.ActivityTestRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
@@ -38,6 +41,7 @@ import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.ui.adapter.AccountTypesAdapter
+import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.get
 import org.gnucash.android.ui.report.BaseReportFragment
 import org.gnucash.android.ui.report.ReportsActivity
@@ -54,12 +58,10 @@ import java.util.Locale
 
 class PieChartReportTest : DatabaseTest() {
     private lateinit var commodity: Commodity
-    private lateinit var testBookUID: String
-    private lateinit var oldActiveBookUID: String
 
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(ReportsActivity::class.java)
+    val activityRule = ActivityTestRule(ReportsActivity::class.java, false, false)
 
     private lateinit var reportsActivity: ReportsActivity
 
@@ -68,25 +70,30 @@ class PieChartReportTest : DatabaseTest() {
         configureDevice()
         val context = GnuCashApplication.appContext
         preventFirstRunDialogs(context)
-        oldActiveBookUID = GnuCashApplication.activeBookUID
-        testBookUID = GncXmlImporter.parse(
+        val bookUID = GncXmlImporter.parse(
             context,
             Uri.EMPTY,
             context.resources.openRawResource(R.raw.default_accounts)
         )
 
-        activityRule.finishActivity()
-        activateBook(context, testBookUID)
-        initAdapters(testBookUID)
-        activityRule.launchActivity(null)
+        activateBook(context, bookUID)
+        initAdapters(bookUID)
 
         commodity = commoditiesDbAdapter.setDefaultCurrencyCode("USD")!!
-
         transactionsDbAdapter.deleteAllRecords()
-        reportsActivity = activityRule.activity
         assertThat(accountsDbAdapter.recordsCount)
             .isGreaterThan(20) //lots of accounts in the default
+
+        val intent = Intent(Intent.ACTION_MAIN)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
+        reportsActivity = activityRule.launchActivity(intent)
+
         clickViewId(R.id.btn_pie_chart)
+    }
+
+    @After
+    fun tearDown() {
+        activityRule.finishActivity()
     }
 
     /**
@@ -220,18 +227,9 @@ class PieChartReportTest : DatabaseTest() {
      * Refresh reports
      */
     private fun refreshReport() {
-        activityRule.runOnUiThread {
-            reportsActivity.refresh()
-        }
+        reportsActivity.refresh()
         waitForView(R.id.chart)
         sleep(2000)
-    }
-
-    @After
-    fun tearDown() {
-        if (::reportsActivity.isInitialized) {
-            reportsActivity.finish()
-        }
     }
 
     companion object {

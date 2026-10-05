@@ -103,12 +103,6 @@ abstract class BookHelperTest : GnuCashTest() {
     }
 
     protected fun close() {
-        if (::accountsDbAdapter.isInitialized) accountsDbAdapter.close()
-        if (::budgetsDbAdapter.isInitialized) budgetsDbAdapter.close()
-        if (::commoditiesDbAdapter.isInitialized) commoditiesDbAdapter.close()
-        if (::pricesDbAdapter.isInitialized) pricesDbAdapter.close()
-        if (::scheduledActionDbAdapter.isInitialized) scheduledActionDbAdapter.close()
-        if (::transactionsDbAdapter.isInitialized) transactionsDbAdapter.close()
         if (::dbHolder.isInitialized) dbHolder.close()
     }
 

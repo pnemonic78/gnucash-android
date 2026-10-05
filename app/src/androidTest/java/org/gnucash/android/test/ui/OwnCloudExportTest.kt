@@ -42,6 +42,7 @@ import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.test.ui.util.PerformEnableAction.Companion.enable
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.ui.settings.OwnCloudPreferences
+import org.junit.After
 import org.junit.Assume
 import org.junit.Before
 import org.junit.BeforeClass
@@ -66,7 +67,7 @@ class OwnCloudExportTest : DatabaseTest() {
      */
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(AccountsActivity::class.java)
+    val activityRule = ActivityTestRule(AccountsActivity::class.java, false, false)
 
     @Before
     fun setUp() {
@@ -92,6 +93,13 @@ class OwnCloudExportTest : DatabaseTest() {
 
         val prefs = OwnCloudPreferences(context)
         prefs.isEnabled = false
+
+        activityRule.launchActivity(null)
+    }
+
+    @After
+    fun tearDown() {
+        activityRule.finishActivity()
     }
 
     /**

@@ -42,7 +42,7 @@ class PriceFormFragment : DatabaseFragment() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val pricesDbAdapter = dbHelper.holder.pricesDbAdapter
+                val pricesDbAdapter = databaseHolder.pricesDbAdapter
                 return PriceFormViewModel(pricesDbAdapter) as T
             }
         }
@@ -54,11 +54,11 @@ class PriceFormFragment : DatabaseFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val dbHolder = dbHelper.holder
+        val dbHolder = databaseHolder
         commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
 
         if (savedInstanceState == null) {
-            val priceUID = arguments?.getString(UxArgument.SELECTED_PRICE_UID)
+            val priceUID = requireArguments().getString(UxArgument.SELECTED_PRICE_UID)
             viewModel.load(priceUID)
         }
 

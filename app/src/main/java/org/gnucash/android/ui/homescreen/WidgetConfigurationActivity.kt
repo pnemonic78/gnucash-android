@@ -31,7 +31,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashActivity
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
 import org.gnucash.android.app.arguments
 import org.gnucash.android.databinding.WidgetConfigurationBinding
@@ -60,7 +60,7 @@ class WidgetConfigurationActivity : GnuCashActivity() {
     private var selectedBookUID: String? = null
     private var selectedAccountUID: String? = null
     private var isHideBalance = false
-    private var dbHelper: DatabaseHelper? = null
+    private lateinit var dbHelper: DatabaseHelper
     private lateinit var booksAdapter: BooksAdapter
     private lateinit var accountsDbAdapter: AccountsDbAdapter
     private lateinit var accountNameAdapter: QualifiedAccountNameAdapter
@@ -71,11 +71,7 @@ class WidgetConfigurationActivity : GnuCashActivity() {
         super.onCreate(savedInstanceState)
         val context: Context = this
 
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        val holder = dbHelper.readableHolder
-        accountsDbAdapter = holder.accountsDbAdapter
+        activateBook(context, activeBookUID)
 
         binding = WidgetConfigurationBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -111,11 +107,7 @@ class WidgetConfigurationActivity : GnuCashActivity() {
                                           id: Long ->
                 val context = view!!.context
                 val book = booksAdapter.getBook(position) ?: return@DefaultItemSelectedListener
-                dbHelper?.close()
-                val dbHelper = DatabaseHelper(context, book.uid)
-                this.dbHelper = dbHelper
-                val holder = dbHelper.readableHolder
-                accountsDbAdapter = holder.accountsDbAdapter
+                activateBook(context, book.uid)
                 accountNameAdapter.swapAdapter(accountsDbAdapter)
                 selectedBookUID = book.uid
             }
@@ -191,6 +183,14 @@ class WidgetConfigurationActivity : GnuCashActivity() {
         binding.inputAccountsSpinner.setSelection(accountIndex)
 
         binding.inputHideAccountBalance.isChecked = hideAccountBalance
+    }
+
+    private fun activateBook(context: Context, bookUID: String) {
+        if (::dbHelper.isInitialized) dbHelper.close()
+        val dbHelper = DatabaseHelper(context, bookUID)
+        this.dbHelper = dbHelper
+        val holder = dbHelper.readableHolder
+        accountsDbAdapter = holder.accountsDbAdapter
     }
 
     companion object {

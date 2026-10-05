@@ -72,7 +72,7 @@ class AccountsActivityTest : DatabaseTest() {
 
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(AccountsActivity::class.java)
+    val activityRule = ActivityTestRule(AccountsActivity::class.java, false, false)
 
     @Before
     fun setUp() {
@@ -82,15 +82,13 @@ class AccountsActivityTest : DatabaseTest() {
         simpleAccount.setUID(SIMPLE_ACCOUNT_UID)
         accountsDbAdapter.insert(simpleAccount)
 
-        accountsActivity = activityRule.activity
+        accountsActivity = activityRule.launchActivity(null)
         refreshAccountsList()
     }
 
     @After
     fun tearDown() {
-        if (::accountsActivity.isInitialized) {
-            accountsActivity.finish()
-        }
+        activityRule.finishActivity()
     }
 
     fun testDisplayAccountsList() {
@@ -464,6 +462,7 @@ class AccountsActivityTest : DatabaseTest() {
         editor.remove(accountsActivity.getString(R.string.key_first_run)).commit()
 
         activityRule.runOnUiThread { accountsActivity.recreate() }
+        sleep(1000)
 
         //check that wizard is shown
         onView(withText(accountsActivity.getString(R.string.title_setup_gnucash)))

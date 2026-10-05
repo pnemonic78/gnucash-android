@@ -41,9 +41,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.R
-import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.GnuCashApplication.Companion.defaultCurrencyCode
+import org.gnucash.android.app.MenuFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
 import org.gnucash.android.databinding.CardviewBookBinding
@@ -76,7 +76,7 @@ import timber.log.Timber
 /**
  * Fragment for managing the books in the database
  */
-class BookManagerFragment : DatabaseFragment(), Refreshable, FragmentResultListener {
+class BookManagerFragment : MenuFragment(), Refreshable, FragmentResultListener {
     private var booksAdapter: BooksAdapter? = null
     private var accountsTemplatesAdapter: AccountsTemplatesAdapter? = null
     private var binding: FragmentBookListBinding? = null
@@ -180,7 +180,7 @@ class BookManagerFragment : DatabaseFragment(), Refreshable, FragmentResultListe
                 // Dismisses itself
             }
             .setSingleChoiceItems(adapter, RecyclerView.NO_POSITION) { dialog, which ->
-                val item = adapter[which] as SpinnerItem<AccountsTemplate.Header>
+                val item = adapter[which]
                 val header = item.value
                 val fileId = header.assetId
                 dialog.dismiss()
@@ -200,10 +200,7 @@ class BookManagerFragment : DatabaseFragment(), Refreshable, FragmentResultListe
             return BookViewHolder(binding)
         }
 
-        override fun onBindViewHolder(
-            holder: BookViewHolder,
-            position: Int
-        ) {
+        override fun onBindViewHolder(holder: BookViewHolder, position: Int) {
             val item = getItem(position)
             holder.bind(item)
         }

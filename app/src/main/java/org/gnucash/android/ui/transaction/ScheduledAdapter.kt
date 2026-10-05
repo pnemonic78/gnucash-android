@@ -21,6 +21,7 @@ import org.gnucash.android.ui.common.Refreshable
  * Extends a simple cursor adapter to bind transaction attributes to views
  */
 abstract class ScheduledAdapter<VH : ScheduledViewHolder>(
+    protected val bookUID: String,
     protected val scheduledActionDbAdapter: ScheduledActionDbAdapter,
     protected val refreshable: Refreshable
 ) : ListAdapter<ScheduledAction, VH>(ModelDiff<ScheduledAction>()) {
@@ -39,10 +40,11 @@ abstract class ScheduledAdapter<VH : ScheduledViewHolder>(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ListItemScheduledTrxnBinding.inflate(inflater, parent, false)
-        return createViewHolder(scheduledActionDbAdapter, binding, refreshable)
+        return createViewHolder(bookUID, scheduledActionDbAdapter, binding, refreshable)
     }
 
     protected abstract fun createViewHolder(
+        bookUID: String,
         scheduledActionDbAdapter: ScheduledActionDbAdapter,
         binding: ListItemScheduledTrxnBinding,
         refreshable: Refreshable

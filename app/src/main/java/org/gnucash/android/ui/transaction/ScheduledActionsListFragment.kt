@@ -43,7 +43,7 @@ abstract class ScheduledActionsListFragment : DatabaseFragment(), Refreshable {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        scheduledActionDbAdapter = dbHelper.readableHolder.scheduledActionDbAdapter
+        scheduledActionDbAdapter = readableDatabaseHolder.scheduledActionDbAdapter
     }
 
     override fun onCreateView(

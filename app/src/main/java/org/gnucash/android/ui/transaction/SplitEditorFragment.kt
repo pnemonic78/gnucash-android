@@ -131,7 +131,7 @@ class SplitEditorFragment : DatabaseFragment() {
         imbalanceWatcher = BalanceTextWatcher(binding)
         colorBalanceZero = binding.imbalanceTextview.currentTextColor
 
-        val accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
+        val accountsDbAdapter = readableDatabaseHolder.accountsDbAdapter
         accountNameAdapter = QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
             .load { adapter ->
                 account = adapter.getAccountDb(accountUID)

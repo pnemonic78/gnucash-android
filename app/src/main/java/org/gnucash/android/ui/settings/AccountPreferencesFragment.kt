@@ -23,10 +23,9 @@ import android.os.Bundle
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.defaultCurrencyCode
 import org.gnucash.android.app.getActivity
-import org.gnucash.android.db.DatabaseHelper
+import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.export.ExportAsyncTask
@@ -54,9 +53,8 @@ class AccountPreferencesFragment : BookPreferencesFragment() {
 
     override val titleId: Int = R.string.title_account_preferences
 
-    override fun initDatabase(dbHelper: DatabaseHelper) {
-        val holder = dbHelper.holder
-        commoditiesDbAdapter = holder.commoditiesDbAdapter
+    override fun initDatabase(dbHolder: DatabaseHolder) {
+        commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -159,7 +157,7 @@ class AccountPreferencesFragment : BookPreferencesFragment() {
                     exportTarget = ExportTarget.URI
                     exportLocation = data.data
                 }
-                val exportTask = ExportAsyncTask(activity, activeBookUID)
+                val exportTask = ExportAsyncTask(activity, bookUID)
 
                 try {
                     exportTask.execute(exportParams)

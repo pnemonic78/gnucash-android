@@ -28,6 +28,7 @@ import org.gnucash.android.model.Money
 import org.gnucash.android.model.Split
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.ui.account.AccountsActivity
+import org.junit.After
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
@@ -36,7 +37,7 @@ import org.junit.Test
 class ExportTransactionsTest : DatabaseTest() {
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(AccountsActivity::class.java)
+    val activityRule = ActivityTestRule(AccountsActivity::class.java, false, false)
 
     @Before
     fun setUp() {
@@ -62,11 +63,19 @@ class ExportTransactionsTest : DatabaseTest() {
         )
 
         transactionsDbAdapter.insert(transaction)
+
+        activityRule.launchActivity(null)
+    }
+
+    @After
+    fun tearDown() {
+        activityRule.finishActivity()
     }
 
     @Test
     fun testCreateBackup() {
         val activity = activityRule.activity
+
         onView(withId(R.id.drawer_layout)).perform(open())
         onView(withText(R.string.title_settings))
             .perform(scrollTo())

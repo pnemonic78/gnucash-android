@@ -122,7 +122,7 @@ class AccountFormFragment : DatabaseFragment(), FragmentResultListener {
         super.onCreate(savedInstanceState)
         val context = requireContext()
 
-        val dbHolder = dbHelper.holder
+        val dbHolder = databaseHolder
         accountsDbAdapter = dbHolder.accountsDbAdapter
         commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
         accountTypesAdapter = AccountTypesAdapter(context)

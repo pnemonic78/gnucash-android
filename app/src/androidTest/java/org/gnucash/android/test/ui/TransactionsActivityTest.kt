@@ -81,7 +81,7 @@ class TransactionsActivityTest : DatabaseTest() {
 
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(TransactionsActivity::class.java, true, false)
+    val activityRule = ActivityTestRule(TransactionsActivity::class.java, false, false)
 
     @Rule
     @JvmField
@@ -126,7 +126,7 @@ class TransactionsActivityTest : DatabaseTest() {
         transactionsDbAdapter.insert(transaction)
         assertThat(transactionsDbAdapter.recordsCount).isOne
 
-        val intent = Intent(Intent.ACTION_VIEW)
+        val intent = Intent(Intent.ACTION_MAIN)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, TRANSACTIONS_ACCOUNT_UID)
         transactionsActivity = activityRule.launchActivity(intent)
 
@@ -135,13 +135,7 @@ class TransactionsActivityTest : DatabaseTest() {
 
     @After
     fun tearDown() {
-        if (::templatesActivity.isInitialized) {
-            templatesActivity.finish()
-        }
-        if (::transactionsActivity.isInitialized) {
-            transactionsActivity.finish()
-        }
-        disableAnimationsRule.enable()
+        activityRule.finishActivity()
     }
 
     private fun validateTransactionListDisplayed() {

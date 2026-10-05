@@ -23,7 +23,7 @@ import androidx.test.rule.ActivityTestRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.model.BaseModel.Companion.generateUID
+import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.ui.wizard.FirstRunWizardActivity
 import org.junit.Before
 import org.junit.Rule
@@ -35,17 +35,14 @@ import org.junit.Test
  * @author Ngewi Fet
  */
 class FirstRunWizardActivityTest : DatabaseTest() {
-    private lateinit var activity: FirstRunWizardActivity
-
     @Rule
     @JvmField
-    val activityRule = ActivityTestRule(FirstRunWizardActivity::class.java)
+    val activityRule = ActivityTestRule(FirstRunWizardActivity::class.java, false, false)
 
     @Before
     fun setUp() {
-        activity = activityRule.activity
-        initAdapters(generateUID())
         accountsDbAdapter.deleteAllRecords()
+        activityRule.launchActivity(null)
     }
 
     @Test
@@ -77,7 +74,7 @@ class FirstRunWizardActivityTest : DatabaseTest() {
 
         clickViewId(R.id.btn_save)
         sleep(5000) //give import time to finish
-        initAdapters(null)
+        initAdapters(activeBookUID)
 
         //default accounts should be created
         val actualCount = accountsDbAdapter.recordsCount

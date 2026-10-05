@@ -15,6 +15,7 @@
  */
 package org.gnucash.android.ui.transaction
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
@@ -112,8 +113,9 @@ class TransactionsListFragment : DatabaseFragment(),
             )
         }
 
-        accountsDbAdapter = dbHelper.readableHolder.accountsDbAdapter
-        transactionsDbAdapter = dbHelper.readableHolder.transactionsDbAdapter
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        transactionsDbAdapter = dbHolder.transactionsDbAdapter
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -158,7 +160,7 @@ class TransactionsListFragment : DatabaseFragment(),
             binding.fabAdd.isEnabled = false
         } else {
             binding.fabAdd.setOnClickListener {
-                createNewTransaction(context, accountUID)
+                createNewTransaction(accountUID)
             }
         }
     }
@@ -192,7 +194,6 @@ class TransactionsListFragment : DatabaseFragment(),
     }
 
     private fun showTransactionDetails(
-        context: Context,
         transactionUID: String,
         accountUID: String
     ) {
@@ -200,10 +201,7 @@ class TransactionsListFragment : DatabaseFragment(),
             Timber.w("You must specify both the transaction and account UID")
             return
         }
-        val intent = Intent(context, TransactionDetailActivity::class.java)
-            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-        startActivity(intent)
+        TransactionDetailActivity.show(this, bookUID, accountUID, transactionUID, 0)
     }
 
     @Deprecated("Deprecated in Java")
@@ -263,6 +261,14 @@ class TransactionsListFragment : DatabaseFragment(),
     override fun onFragmentResult(requestKey: String, result: Bundle) {
         if (BulkMoveDialogFragment.TAG == requestKey) {
             val refresh = result.getBoolean(Refreshable.EXTRA_REFRESH)
+            if (refresh) refresh()
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (resultCode == Activity.RESULT_OK) {
+            val refresh = data?.getBooleanExtra(Refreshable.EXTRA_REFRESH, false) ?: false
             if (refresh) refresh()
         }
     }
@@ -328,7 +334,7 @@ class TransactionsListFragment : DatabaseFragment(),
             itemView.setOnClickListener {
                 val transactionUID = transaction?.uid ?: return@setOnClickListener
                 val accountUID = accountUID ?: return@setOnClickListener
-                showTransactionDetails(itemView.context, transactionUID, accountUID)
+                showTransactionDetails(transactionUID, accountUID)
             }
         }
 
@@ -493,11 +499,7 @@ class TransactionsListFragment : DatabaseFragment(),
         }
         val context: Context = context ?: return
         scrollTransactionUID = transactionUID
-        val intent = Intent(context, FormActivity::class.java)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
-            .putExtra(UxArgument.SELECTED_TRANSACTION_UID, transactionUID)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-        startActivity(intent)
+        FormActivity.showEditTransaction(this, bookUID, accountUID, transactionUID, 0)
     }
 
     private fun scrollToTransaction(cursor: Cursor?, transactionUID: String?) {
@@ -516,16 +518,12 @@ class TransactionsListFragment : DatabaseFragment(),
         return adapter.getItemPosition(transactionUID)
     }
 
-    private fun createNewTransaction(context: Context, accountUID: String) {
+    private fun createNewTransaction(accountUID: String) {
         if (accountUID.isEmpty()) {
             Timber.w("Account UID required")
             return
         }
-        val intent = Intent(context, FormActivity::class.java)
-            .setAction(Intent.ACTION_INSERT_OR_EDIT)
-            .putExtra(UxArgument.FORM_TYPE, FormActivity.FormType.TRANSACTION.name)
-            .putExtra(UxArgument.SELECTED_ACCOUNT_UID, accountUID)
-        startActivity(intent)
+        FormActivity.showEditTransaction(this, bookUID, accountUID, null, 0)
     }
 
     companion object {

@@ -31,10 +31,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.getSerializableCompat
+import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.ActivityReportsBinding
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.AccountType
@@ -42,6 +42,7 @@ import org.gnucash.android.ui.adapter.AccountTypesAdapter.Companion.expenseAndIn
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.common.BaseDrawerActivity
 import org.gnucash.android.ui.common.Refreshable
+import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.get
 import org.gnucash.android.ui.report.ReportType.Companion.getReportNames
 import org.gnucash.android.ui.util.dialog.DateRangePickerDialogFragment
@@ -65,7 +66,6 @@ class ReportsActivity : BaseDrawerActivity(),
     DatePickerDialog.OnDateSetListener,
     OnDateRangeSetListener,
     Refreshable {
-    private var dbHelper: DatabaseHelper? = null
     private lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
     private lateinit var transactionsDbAdapter: TransactionsDbAdapter
     var accountType: AccountType = AccountType.EXPENSE
@@ -124,10 +124,7 @@ class ReportsActivity : BaseDrawerActivity(),
         super.onCreate(savedInstanceState)
         val context: Context = this
 
-        val bookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, bookUID)
-        this.dbHelper = dbHelper
-        val holder = dbHelper.readableHolder
+        val holder = readableDatabaseHolder
         commoditiesDbAdapter = holder.commoditiesDbAdapter
         transactionsDbAdapter = holder.transactionsDbAdapter
 
@@ -206,11 +203,6 @@ class ReportsActivity : BaseDrawerActivity(),
         }
     }
 
-    override fun onDestroy() {
-        dbHelper?.close()
-        super.onDestroy()
-    }
-
     fun onFragmentResumed(fragment: Fragment) {
         val binding = this.binding!!
         var reportType = ReportType.NONE
@@ -242,7 +234,7 @@ class ReportsActivity : BaseDrawerActivity(),
         if (fragmentManager.backStackEntryCount > 0) {
             fragmentManager.popBackStack()
         }
-        val fragment = reportType.fragment
+        val fragment = reportType.fragment()
         val tx = fragmentManager
             .beginTransaction()
             .replace(R.id.fragment_container, fragment)
@@ -381,10 +373,11 @@ class ReportsActivity : BaseDrawerActivity(),
         private const val STATE_REPORT_START = "report_start"
         private const val STATE_REPORT_END = "report_end"
 
-        fun show(context: Context) {
+        fun show(context: Context, bookUID: String) {
             val intent = Intent(context, ReportsActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(UxArgument.BOOK_UID, bookUID)
             context.startActivity(intent)
         }
     }
