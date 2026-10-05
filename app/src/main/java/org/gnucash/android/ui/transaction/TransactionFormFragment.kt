@@ -460,7 +460,7 @@ class TransactionFormFragment : MenuFragment(),
             }
         }
 
-        val balance = Transaction.computeBalance(account, splits, true)
+        val balance = Transaction.computeAccountBalance(account, splits, true)
         val amount: BigDecimal? = if (isFirst) {
             if (balance.isZero) null else balance.toBigDecimal()
         } else {

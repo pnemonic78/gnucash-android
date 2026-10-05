@@ -19,7 +19,6 @@ import android.content.Intent
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.export.csv.CsvTransactionsExporter.Companion.toCsv
-import org.gnucash.android.model.Transaction.Companion.computeBalance
 import org.gnucash.android.util.formatShortDate
 import java.math.BigDecimal
 import java.sql.Timestamp
@@ -207,10 +206,10 @@ class Transaction : BaseModel {
      *
      * @param accountUID Unique Identifier of the account
      * @return Money balance of the transaction for the specified account
-     * @see computeBalance
+     * @see computeAccountBalance
      */
     fun getBalance(accountUID: String): Money {
-        return computeBalance(accountUID, splits, true)
+        return computeAccountBalance(accountUID, splits, true)
     }
 
     /**
@@ -220,10 +219,10 @@ class Transaction : BaseModel {
      *
      * @param account The account
      * @return Money balance of the transaction for the specified account
-     * @see computeBalance
+     * @see computeAccountBalance
      */
     fun getBalance(account: Account, display: Boolean): Money {
-        return computeBalance(account, splits, display)
+        return computeAccountBalance(account, splits, display)
     }
 
     /**
@@ -381,10 +380,10 @@ class Transaction : BaseModel {
          * @param splits  List of splits
          * @return Money list of splits
          */
-        fun computeBalance(accountUID: String, splits: List<Split>, display: Boolean): Money {
+        fun computeAccountBalance(accountUID: String, splits: List<Split>, display: Boolean): Money {
             val accountsDbAdapter = AccountsDbAdapter.instance
             val account = accountsDbAdapter.getRecord(accountUID)
-            return computeBalance(account, splits, display)
+            return computeAccountBalance(account, splits, display)
         }
 
         /**
@@ -398,7 +397,7 @@ class Transaction : BaseModel {
          * @param splits  List of splits
          * @return Money The balance.
          */
-        fun computeBalance(account: Account, splits: List<Split>, display: Boolean = false): Money {
+        fun computeAccountBalance(account: Account, splits: List<Split>, display: Boolean = false): Money {
             val accountUID = account.uid
             val accountType = account.type
             val accountCommodity = account.commodity
