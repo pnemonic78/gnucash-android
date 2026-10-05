@@ -20,10 +20,11 @@ import android.content.Intent
 import androidx.core.content.edit
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.clearText
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
-import androidx.test.espresso.action.ViewActions.pressBack
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.swipeDown
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
@@ -631,8 +632,11 @@ class TransactionsActivityTest : GnuAndroidTest() {
         sleep(500)
         clickViewText("Test Split")
         clickViewId(R.id.fab_edit)
+        waitForView(R.id.fragment_transaction_form)
 
         clickViewId(R.id.btn_split_editor)
+        onView(withId(R.id.split_list_scroll))
+            .perform(swipeDown())
 
         clickViewText(TRANSACTIONS_ACCOUNT_NAME)
         clickViewText(account.fullName)
@@ -1001,6 +1005,7 @@ class TransactionsActivityTest : GnuAndroidTest() {
             .perform(typeText("Amazon"))
         onView(withId(R.id.input_transaction_amount))
             .perform(typeText("100"))
+        pressBack() // hide calculator keyboard
         clickViewId(R.id.input_transaction_type) // Expense
 
         clickViewId(R.id.input_recurrence)
@@ -1019,7 +1024,6 @@ class TransactionsActivityTest : GnuAndroidTest() {
             .performClick()
         clickViewId(com.codetroopers.betterpickers.R.id.done_button)
 
-        clickViewId(R.id.notes) // close calculator keyboard
         // Enable auto-create
         clickViewId(R.id.recurrence_auto)
 
