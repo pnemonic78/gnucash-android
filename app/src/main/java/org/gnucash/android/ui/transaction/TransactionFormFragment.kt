@@ -31,6 +31,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
+import android.widget.AdapterView.INVALID_POSITION
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
@@ -271,8 +272,7 @@ class TransactionFormFragment : MenuFragment(),
         if (transaction.isNew) {
             transaction.commodity = account.commodity
 
-            val transferAccount = accountsDbAdapter.getDefaultTransferAccount(account)
-                ?: accountsDbAdapter.getOrCreateImbalanceAccount(context, account.commodity)
+            val transferAccount = findTransferAccount(context, account)
             val amount = Money.createZeroInstance(account.commodity)
             val split1 = Split(amount, account)
             split1.type = getDefaultTransactionType(context)
@@ -447,6 +447,7 @@ class TransactionFormFragment : MenuFragment(),
                 //two splits, one belongs to this account and the other to another account
                 if (useDoubleEntry && split.accountUID != accountUID) {
                     setSelectedTransferAccount(binding, split.accountUID)
+                    break
                 }
             }
         } else {
@@ -512,7 +513,8 @@ class TransactionFormFragment : MenuFragment(),
         binding.inputTransactionAmount.bindKeyboard(binding.calculatorKeyboard)
 
         if (useDoubleEntry) {
-            setSelectedTransferAccount(binding, account.defaultTransferAccountUID)
+            val transferAccount = findTransferAccount(context, account)
+            setSelectedTransferAccount(binding, transferAccount)
         } else {
             setDoubleEntryViewsVisibility(binding, false)
         }
@@ -539,14 +541,17 @@ class TransactionFormFragment : MenuFragment(),
             accountsDbAdapter,
             viewLifecycleOwner
         ).load { _ ->
-            var transferUID = account.defaultTransferAccountUID
             val split = transaction.getTransferSplit(accountUID)
             if (split != null) {
-                transferUID = split.accountUID
+                setSelectedTransferAccount(binding, split.accountUID)
             }
-            setSelectedTransferAccount(binding, transferUID)
         }
         binding.inputTransferAccountSpinner.adapter = accountTransferNameAdapter
+    }
+
+    private fun findTransferAccount(context: Context, account: Account): Account {
+        return accountsDbAdapter.findDefaultTransferAccount(account)
+            ?: accountsDbAdapter.getOrCreateImbalanceAccount(context, account.commodity)
     }
 
     /**
@@ -709,7 +714,26 @@ class TransactionFormFragment : MenuFragment(),
         binding: FragmentTransactionFormBinding,
         accountUID: String?
     ) {
-        val position = accountTransferNameAdapter!!.getPosition(accountUID)
+        if (accountUID.isNullOrEmpty()) {
+            setSelectedTransferAccount(binding, null as Account?)
+        } else {
+            val account = accountsDbAdapter.getRecordOrNull(accountUID)
+            setSelectedTransferAccount(binding, account)
+        }
+    }
+
+    /**
+     * Updates the spinner to the selected transfer account
+     *
+     * @param account the transfer account
+     */
+    private fun setSelectedTransferAccount(
+        binding: FragmentTransactionFormBinding,
+        account: Account?
+    ) {
+        val position = account?.let {
+            accountTransferNameAdapter?.getValuePosition(it) ?: INVALID_POSITION
+        } ?: INVALID_POSITION
         binding.inputTransferAccountSpinner.setSelection(position)
     }
 

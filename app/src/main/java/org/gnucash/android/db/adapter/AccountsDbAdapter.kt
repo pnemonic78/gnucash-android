@@ -1193,6 +1193,25 @@ class AccountsDbAdapter(
         return getAllRecords(where, whereArgs, null).firstOrNull()
     }
 
+    fun findDefaultTransferAccount(account: Account): Account? {
+        val transferAccountUID = account.defaultTransferAccountUID
+        if (!transferAccountUID.isNullOrEmpty()) {
+            val transferAccount = getRecordOrNull(transferAccountUID)
+            if (transferAccount != null) return transferAccount
+        }
+
+        val parentUID = account.parentUID
+        if (!parentUID.isNullOrEmpty()) {
+            val parentAccount = getRecordOrNull(parentUID)
+            if (parentAccount != null) {
+                val transferAccount = findDefaultTransferAccount(parentAccount)
+                if (transferAccount != null) return transferAccount
+            }
+        }
+
+        return getDefaultTransferAccount(account)
+    }
+
     /**
      * Returns the full account name including the account hierarchy (parent accounts)
      *

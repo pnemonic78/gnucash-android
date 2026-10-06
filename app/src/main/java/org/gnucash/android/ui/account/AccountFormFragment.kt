@@ -30,7 +30,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
-import android.widget.Spinner
+import android.widget.AdapterView.INVALID_POSITION
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
@@ -232,13 +232,13 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         loadDefaultTransferAccountList(binding, account)
         if (account != null) {
             actionBar?.setTitle(R.string.title_edit_account)
-            initializeViewsWithAccount(binding, account)
+            bind(binding, account)
             //do not immediately open the keyboard when editing an account
             requireActivity().window
                 .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         } else {
             actionBar?.setTitle(R.string.title_create_account)
-            initializeViews(binding)
+            bind(binding)
         }
     }
 
@@ -248,7 +248,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
      *
      * @param account Account whose fields are used to populate the form
      */
-    private fun initializeViewsWithAccount(binding: FragmentAccountFormBinding, account: Account) {
+    private fun bind(binding: FragmentAccountFormBinding, account: Account) {
         selectedName = account.name
 
         val descendants = accountsDbAdapter.getDescendants(account)
@@ -271,21 +271,14 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         binding.notes.setText(account.notes)
 
         if (useDoubleEntry) {
-            val defaultTransferAccount = accountsDbAdapter.getDefaultTransferAccount(account)
-            if (defaultTransferAccount != null) {
-                setDefaultTransferAccountSelection(binding, defaultTransferAccount.uid, true)
-            } else {
-                var parentUID = account.parentUID
-                while (!parentUID.isNullOrEmpty()) {
-                    val parentAccount = defaultAccountNameAdapter!!.getAccount(parentUID) ?: break
-                    val defaultTransferAccountUID = parentAccount.defaultTransferAccountUID
-                    if (!defaultTransferAccountUID.isNullOrEmpty()) {
-                        setDefaultTransferAccountSelection(binding, parentUID, false)
-                        break //we found a parent with default transfer setting
-                    }
-                    parentUID = parentAccount.parentUID
-                }
-            }
+            val context = binding.root.context
+            val defaultTransferAccountUID = account.defaultTransferAccountUID
+            val defaultTransferAccount = findTransferAccount(context, account)
+            setDefaultTransferAccountSelection(
+                binding,
+                defaultTransferAccount,
+                !defaultTransferAccountUID.isNullOrEmpty()
+            )
         }
 
         binding.placeholderStatus.isChecked = account.isPlaceholder
@@ -298,7 +291,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
     /**
      * Initialize views with defaults for new account
      */
-    private fun initializeViews(binding: FragmentAccountFormBinding) {
+    private fun bind(binding: FragmentAccountFormBinding) {
         selectedName = ""
         setSelectedCurrency(binding, commoditiesDbAdapter.defaultCommodity)
         binding.inputColorPicker.setBackgroundTintList(ColorStateList.valueOf(selectedColor))
@@ -387,21 +380,20 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
      */
     private fun setDefaultTransferAccountSelection(
         binding: FragmentAccountFormBinding,
-        defaultTransferAccountUID: String?,
+        defaultTransferAccount: Account?,
         enableTransferAccount: Boolean
     ) {
-        setDefaultTransferAccountInputsVisible(binding, enableTransferAccount)
-        binding.checkboxDefaultTransferAccount.isChecked = enableTransferAccount
-        binding.inputDefaultTransferAccount.isEnabled = enableTransferAccount
-
-        if (defaultTransferAccountUID.isNullOrEmpty()) {
+        if (defaultTransferAccount == null) {
             binding.checkboxDefaultTransferAccount.isChecked = false
             binding.inputDefaultTransferAccount.isEnabled = false
             return
         }
-        val defaultAccountPosition =
-            defaultAccountNameAdapter!!.getPosition(defaultTransferAccountUID)
-        binding.inputDefaultTransferAccount.setSelection(defaultAccountPosition)
+        binding.checkboxDefaultTransferAccount.isChecked = enableTransferAccount
+        binding.inputDefaultTransferAccount.isEnabled = enableTransferAccount
+
+        val position = defaultAccountNameAdapter?.getValuePosition(defaultTransferAccount)
+            ?: INVALID_POSITION
+        binding.inputDefaultTransferAccount.setSelection(position)
     }
 
     /**
@@ -470,7 +462,11 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
                 + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
                 + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
                 + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0")
-        val whereArgs = arrayOf<String?>(accountUID, account?.type?.name ?: AccountType.ROOT.name, AccountType.ROOT.name)
+        val whereArgs = arrayOf<String?>(
+            accountUID,
+            account?.type?.name ?: AccountType.ROOT.name,
+            AccountType.ROOT.name
+        )
 
         defaultAccountNameAdapter = QualifiedAccountNameAdapter(
             context,
@@ -479,11 +475,15 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
             accountsDbAdapter,
             viewLifecycleOwner
         ).load { adapter ->
+            val defaultTransferAccountUID = account?.defaultTransferAccountUID
+            val defaultTransferAccount = account?.let { findTransferAccount(context, account) }
+            val hasTransferAccounts = useDoubleEntry && (adapter.count > 0)
             setDefaultTransferAccountSelection(
                 binding,
-                account?.defaultTransferAccountUID,
-                useDoubleEntry && (adapter.count > 0)
+                defaultTransferAccount,
+                hasTransferAccounts && !defaultTransferAccountUID.isNullOrEmpty()
             )
+            setDefaultTransferAccountInputsVisible(binding, hasTransferAccounts)
         }
         binding.inputDefaultTransferAccount.adapter = defaultAccountNameAdapter
         setDefaultTransferAccountInputsVisible(binding, useDoubleEntry)
@@ -668,7 +668,7 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         account.parentUID = newParentAccountUID
 
         if (binding.checkboxDefaultTransferAccount.isChecked
-            && binding.inputDefaultTransferAccount.selectedItemPosition != Spinner.INVALID_POSITION
+            && binding.inputDefaultTransferAccount.selectedItemPosition != INVALID_POSITION
         ) {
             account.defaultTransferAccountUID = selectedDefaultTransferAccount?.uid
         } else {
@@ -680,5 +680,10 @@ class AccountFormFragment : MenuFragment(), FragmentResultListener {
         accountsDbAdapter.bulkAddRecords(accountsToUpdate, DatabaseAdapter.UpdateMethod.Update)
 
         finishFragment()
+    }
+
+    private fun findTransferAccount(context: Context, account: Account): Account {
+        return accountsDbAdapter.findDefaultTransferAccount(account)
+            ?: accountsDbAdapter.getOrCreateImbalanceAccount(context, account.commodity)
     }
 }
