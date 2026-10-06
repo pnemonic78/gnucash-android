@@ -14,7 +14,7 @@ plugins {
 
 val versionMajor = 3
 val versionMinor = 3
-val versionPatch = 7
+val versionPatch = 8
 val versionBuild = 0
 
 val dropboxAppKey =
