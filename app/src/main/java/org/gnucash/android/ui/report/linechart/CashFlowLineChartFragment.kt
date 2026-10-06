@@ -49,6 +49,7 @@ import org.gnucash.android.util.lastDayOfYear
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDateTime
 import timber.log.Timber
+import java.text.SimpleDateFormat
 
 /**
  * Fragment for line chart reports
@@ -171,6 +172,7 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
         }
 
         val pattern = getXAxisPattern(groupInterval)
+        val dateFormatter = SimpleDateFormat(pattern)
 
         val where = (AccountEntry.COLUMN_TYPE + "=?"
                 + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
@@ -203,20 +205,20 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
             var datePretty = ""
             when (groupInterval) {
                 GroupInterval.MONTH -> {
-                    datePretty = startPeriod.toString(pattern)
+                    datePretty = dateFormatter.format(startTime)
                     startPeriod = startPeriod.plusMonths(1)
                     endPeriod = endPeriod.plusMonths(1)
                 }
 
                 GroupInterval.QUARTER -> {
                     val quarter = startPeriod.getQuarter()
-                    datePretty = "Q" + quarter + " " + startPeriod.toString(pattern)
+                    datePretty = "Q" + quarter + " " + dateFormatter.format(startTime)
                     startPeriod = startPeriod.plusMonths(3)
                     endPeriod = endPeriod.plusMonths(3)
                 }
 
                 GroupInterval.YEAR -> {
-                    datePretty = startPeriod.toString(pattern)
+                    datePretty = dateFormatter.format(startTime)
                     startPeriod = startPeriod.plusYears(1)
                     endPeriod = endPeriod.plusYears(1)
                 }

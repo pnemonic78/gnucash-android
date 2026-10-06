@@ -17,7 +17,6 @@
 package org.gnucash.android.ui.report.barchart
 
 import android.content.Context
-import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.Menu
@@ -43,17 +42,13 @@ import org.gnucash.android.ui.report.ReportType
 import org.gnucash.android.ui.report.ReportsActivity.GroupInterval
 import org.gnucash.android.ui.snackLong
 import org.gnucash.android.util.endOfDay
-import org.gnucash.android.util.firstDayOfMonth
-import org.gnucash.android.util.firstDayOfYear
-import org.gnucash.android.util.getFirstQuarterMonth
 import org.gnucash.android.util.getQuarter
 import org.gnucash.android.util.lastDayOfMonth
 import org.gnucash.android.util.lastDayOfYear
-import org.gnucash.android.util.startOfDay
 import org.gnucash.android.util.toMillis
 import org.joda.time.LocalDateTime
 import timber.log.Timber
-import java.util.Locale
+import java.text.SimpleDateFormat
 
 /**
  * Activity used for drawing a bar chart
@@ -111,6 +106,7 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
         }
 
         val pattern = getXAxisPattern(groupInterval)
+        val dateFormatter = SimpleDateFormat(pattern)
 
         val where = (AccountEntry.COLUMN_TYPE + "=?"
                 + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
@@ -154,20 +150,20 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
             var datePretty = ""
             when (groupInterval) {
                 GroupInterval.MONTH -> {
-                    datePretty = startPeriod.toString(pattern)
+                    datePretty = dateFormatter.format(startTime)
                     startPeriod = startPeriod.plusMonths(1)
                     endPeriod = endPeriod.plusMonths(1)
                 }
 
                 GroupInterval.QUARTER -> {
                     val quarter = startPeriod.getQuarter()
-                    datePretty = "Q" + quarter + " " + startPeriod.toString(pattern)
+                    datePretty = "Q" + quarter + " " + dateFormatter.format(startTime)
                     startPeriod = startPeriod.plusMonths(3)
                     endPeriod = endPeriod.plusMonths(3)
                 }
 
                 GroupInterval.YEAR -> {
-                    datePretty = startPeriod.toString(pattern)
+                    datePretty = dateFormatter.format(startTime)
                     startPeriod = startPeriod.plusYears(1)
                     endPeriod = endPeriod.plusYears(1)
                 }
