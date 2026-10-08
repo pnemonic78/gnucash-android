@@ -196,7 +196,7 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
     protected fun updateActiveBookName() {
         val bookNameSpinner = bookNameSpinner!!
         val books = BooksDbAdapter.instance.allRecords
-        val bookItems = mutableListOf<SpinnerItem<Book?>>()
+        val bookItems = mutableListOf<SpinnerItem<Book>>()
         var activeBookIndex = INVALID_POSITION
 
         for ((i, book) in books.withIndex()) {
@@ -205,7 +205,6 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
                 activeBookIndex = i
             }
         }
-        bookItems.add(SpinnerItem(null, getString(R.string.menu_manage_books)))
 
         val context: Context = ContextThemeWrapper(this, R.style.Theme_GnuCash_Toolbar)
         val adapter = SpinnerArrayAdapter(context, bookItems)
@@ -221,13 +220,8 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
                 if (position == activeBookIndex) return@DefaultItemSelectedListener
                 val context = view.context
                 val book = bookItems[position].value
-                if (book != null) {
-                    showBook(context, book.uid)
-                    finish()
-                    AccountsActivity.start(context, book.uid)
-                } else {
-                    showBooks(context)
-                }
+                showBook(context, book.uid)
+                finish()
             }
     }
 
@@ -240,6 +234,8 @@ abstract class BaseDrawerActivity : PasscodeLockActivity() {
         val navigationView = navigationView ?: return
 
         when (itemId) {
+            R.id.nav_item_books -> showBooks(context)
+
             R.id.nav_item_open -> pickDocumentLauncher.launch(documentMimeTypes)
 
             R.id.nav_item_favorites -> showFavorites(context, bookUID)
