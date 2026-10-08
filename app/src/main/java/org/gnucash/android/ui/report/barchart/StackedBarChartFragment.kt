@@ -247,9 +247,11 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
             axisRight.isEnabled = false
             xAxis.setDrawLabels(isChartDataPresent)
             xAxis.setDrawGridLines(false)
+            xAxis.setGranularity(1f)
             xAxis.textColor = textColorPrimary
             xAxis.valueFormatter = IndexAxisValueFormatter(getXAxisLabels(data))
             legend.textColor = textColorPrimary
+            legend.isEnabled = isLegendVisible
             description.isEnabled = false
             setTouchEnabled(isChartDataPresent)
 
@@ -286,24 +288,17 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
         menu.findItem(R.id.menu_toggle_labels).isVisible = false
         menu.findItem(R.id.menu_toggle_average_lines).isVisible = false
         menu.findItem(R.id.menu_group_other_slice).isVisible = false
+
+        menu.findItem(R.id.menu_toggle_legend).isChecked = isLegendVisible
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.isCheckable) {
-            item.isChecked = !item.isChecked
-        }
+        if (item.isCheckable) item.isChecked = !item.isChecked
+
         return when (item.itemId) {
             R.id.menu_toggle_legend -> {
                 val chart = chart ?: return false
-                val legend = chart.legend
-                if (!legend.isLegendCustom) {
-                    snackLong(R.string.toast_legend_too_long)
-                    item.isChecked = false
-                } else {
-                    item.isChecked = !legend.isEnabled
-                    legend.isEnabled = !legend.isEnabled
-                    chart.invalidate()
-                }
+                showLegend(chart, item.isChecked)
                 true
             }
 
@@ -323,8 +318,7 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
 
     override fun onValueSelected(e: Entry?, h: Highlight) {
         val chart = chart ?: return
-        if (e == null) return
-        val entry = e as BarEntry
+        val entry = e as? BarEntry ?: return
         var index = h.stackIndex
         if ((index < 0) && (entry.yVals.isNotEmpty())) {
             index = 0
@@ -335,6 +329,7 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
         if (labels.size <= index) return
         val label = labels[index].name
         if (label.isEmpty()) return
+        val date = entryData.date
 
         val total: Float
         if (totalPercentageMode) {
@@ -346,7 +341,7 @@ class StackedBarChartFragment : IntervalReportFragment<BarData>() {
             total = entry.negativeSum + entry.positiveSum
         }
         val percentage = if (total != 0f) ((value * 100) / total) else 0f
-        selectedValueTextView?.text = formatSelectedValue(label, value, percentage)
+        selectedValueTextView?.text = formatSelectedValue(label, value, percentage, date)
     }
 
     private fun getXAxisLabels(data: BarData): List<String> {

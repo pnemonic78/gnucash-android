@@ -255,6 +255,7 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
             id = R.id.chart
             setOnChartValueSelectedListener(this@CashFlowLineChartFragment)
             xAxis.setDrawGridLines(false)
+            xAxis.setGranularity(1f)
             xAxis.textColor = textColorPrimary
             xAxis.valueFormatter = IndexAxisValueFormatter(getXAxisLabels(data))
             axisRight.isEnabled = false
@@ -262,6 +263,7 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
             axisLeft.valueFormatter = LargeValueFormatter(commodity.symbol)
             axisLeft.textColor = textColorPrimary
             legend.textColor = textColorPrimary
+            legend.isEnabled = isLegendVisible
             description.isEnabled = false
 
             this.data = data
@@ -296,25 +298,27 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
         menu.findItem(R.id.menu_toggle_average_lines).isVisible = isChartDataPresent
-        showLegend(menu.findItem(R.id.menu_toggle_legend).isChecked)
         showAverageLines(menu.findItem(R.id.menu_toggle_average_lines).isChecked)
         // hide pie/bar chart specific menu items
         menu.findItem(R.id.menu_order_by_size).isVisible = false
         menu.findItem(R.id.menu_toggle_labels).isVisible = false
         menu.findItem(R.id.menu_percentage_mode).isVisible = false
         menu.findItem(R.id.menu_group_other_slice).isVisible = false
+
+        menu.findItem(R.id.menu_toggle_legend).isChecked = isLegendVisible
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.isCheckable) item.isChecked = !item.isChecked
+
         return when (item.itemId) {
             R.id.menu_toggle_legend -> {
-                item.isChecked = !item.isChecked
-                showLegend(item.isChecked)
+                val chart = chart ?: return false
+                showLegend(chart, item.isChecked)
                 true
             }
 
             R.id.menu_toggle_average_lines -> {
-                item.isChecked = !item.isChecked
                 showAverageLines(item.isChecked)
                 true
             }
@@ -325,21 +329,16 @@ class CashFlowLineChartFragment : IntervalReportFragment<LineData>() {
 
     override fun onValueSelected(e: Entry?, h: Highlight) {
         val chart = chart ?: return
-        if (e == null) return
-        val value = e.y
+        val entry = e ?: return
+        val value = entry.y
         val dataSetIndex = h.dataSetIndex
         val data = chart.data
         val dataSet = data.getDataSetByIndex(dataSetIndex) ?: return
         val label = dataSet.label ?: return
+        val date = entry.data as? String
         val total = getYValueSum<Entry>(dataSet)
         val percent = if (total != 0f) ((value * 100) / total) else 0f
-        selectedValueTextView?.text = formatSelectedValue(label, value, percent)
-    }
-
-    private fun showLegend(isVisible: Boolean) {
-        val lineChart = chart ?: return
-        lineChart.legend.isEnabled = isVisible
-        lineChart.invalidate()
+        selectedValueTextView?.text = formatSelectedValue(label, value, percent, date)
     }
 
     private fun showAverageLines(isVisible: Boolean) {

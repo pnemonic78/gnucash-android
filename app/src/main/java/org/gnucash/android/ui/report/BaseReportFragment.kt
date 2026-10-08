@@ -34,6 +34,7 @@ import androidx.annotation.WorkerThread
 import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
 import androidx.preference.PreferenceManager
+import com.github.mikephil.charting.charts.Chart
 import com.github.mikephil.charting.data.ChartData
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.highlight.Highlight
@@ -99,6 +100,7 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
     protected var accountsDbAdapter: AccountsDbAdapter = AccountsDbAdapter.instance
     protected var pricesDbAdapter: PricesDbAdapter = PricesDbAdapter.instance
     protected var useAccountColor: Boolean = true
+    protected var isLegendVisible = false
 
     /**
      * Commodity for which to display reports
@@ -341,15 +343,19 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
         selectedValueTextView?.setText(R.string.select_chart_to_view_details)
     }
 
-    protected fun formatSelectedValue(label: String, value: Float, percentage: Float): String {
-        return formatSelectedValue(
-            Locale.getDefault(),
-            label.trim(),
-            value,
-            commodity,
-            percentage
-        )
-    }
+    protected fun formatSelectedValue(
+        label: String,
+        value: Float,
+        percentage: Float,
+        date: String?
+    ): String = formatSelectedValue(
+        Locale.getDefault(),
+        label.trim(),
+        value,
+        commodity,
+        percentage,
+        date
+    )
 
     protected fun formatTotalValue(value: Float): String {
         return formatTotalValue(requireContext(), Locale.getDefault(), value, commodity)
@@ -401,6 +407,13 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
         }
     }
 
+    protected fun showLegend(chart: Chart<*>, isVisible: Boolean) {
+        isLegendVisible = isVisible
+        chart.legend.isEnabled = isVisible
+        chart.notifyDataSetChanged()
+        chart.invalidate()
+    }
+
     companion object {
         /**
          * Color for chart with no data
@@ -411,6 +424,7 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
         /**
          * Pattern to use to display selected chart values
          */
+        private const val SELECTED_VALUE_PATTERN_WITH_DATE = "%s — %s — %s %s (%.2f%%)"
         private const val SELECTED_VALUE_PATTERN = "%s — %s %s (%.2f%%)"
         private const val TOTAL_VALUE_LABEL_PATTERN = "%s\n%s %s"
 
@@ -420,20 +434,33 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
             label: String,
             value: Float,
             commodity: Commodity,
-            percentage: Float
+            percentage: Float,
+            date: String?
         ): String {
             val formatter = NumberFormat.getNumberInstance(locale)
             formatter.setMinimumFractionDigits(0)
             formatter.setMaximumFractionDigits(commodity.smallestFractionDigits)
             val currencySymbol = commodity.symbol
-            return String.format(
-                locale,
-                SELECTED_VALUE_PATTERN,
-                label.trim(),
-                formatter.format(value.toDouble()),
-                currencySymbol,
-                percentage
-            )
+            return if (date.isNullOrEmpty()) {
+                String.format(
+                    locale,
+                    SELECTED_VALUE_PATTERN,
+                    label.trim(),
+                    formatter.format(value.toDouble()),
+                    currencySymbol,
+                    percentage
+                )
+            } else {
+                String.format(
+                    locale,
+                    SELECTED_VALUE_PATTERN_WITH_DATE,
+                    date,
+                    label.trim(),
+                    formatter.format(value.toDouble()),
+                    currencySymbol,
+                    percentage
+                )
+            }
         }
 
         @VisibleForTesting //TODO get locale from context.
