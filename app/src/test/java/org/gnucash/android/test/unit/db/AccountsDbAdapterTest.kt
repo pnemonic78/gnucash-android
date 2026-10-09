@@ -221,7 +221,6 @@ class AccountsDbAdapterTest : DatabaseTest() {
             actionUID = "Test-uid"
             setRecurrence(Recurrence(PeriodType.WEEK))
         }
-        }
 
         scheduledActionDbAdapter.addRecord(scheduledAction)
 
@@ -377,7 +376,6 @@ class AccountsDbAdapterTest : DatabaseTest() {
         assertThat(imbalanceUID).isNotNull().isNotEmpty()
         assertThat(accountsDbAdapter.recordsCount).isEqualTo(2)
     }
-
 
     @Test
     fun editingAccountShouldNotDeleteTemplateSplits() {

@@ -45,8 +45,6 @@ import org.gnucash.android.ui.report.BaseReportFragment
 import org.gnucash.android.ui.report.ReportsActivity
 import org.gnucash.android.util.BookUtils.activateBook
 import org.gnucash.android.util.toMillis
-import org.gnucash.android.util.BookUtils
-import org.gnucash.android.util.toMillis
 import org.hamcrest.Matchers.not
 import org.joda.time.LocalDateTime
 import org.junit.After
@@ -156,7 +154,8 @@ class PieChartReportTest : DatabaseTest() {
             DINING_EXPENSE_ACCOUNT_NAME,
             TRANSACTION_AMOUNT.toFloat(),
             commodity,
-            percent
+            percent,
+            null
         )
         onView(withId(R.id.selected_chart_slice))
             .check(matches(withText(selectedText)))
@@ -188,7 +187,8 @@ class PieChartReportTest : DatabaseTest() {
             GIFTS_RECEIVED_INCOME_ACCOUNT_NAME,
             TRANSACTION3_AMOUNT.toFloat(),
             commodity,
-            100f
+            100f,
+            null
         )
         onView(withId(R.id.selected_chart_slice))
             .check(matches(withText(selectedText)))

@@ -196,12 +196,11 @@ abstract class BaseReportFragment<D : ChartData<*>> : DatabaseFragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val context = requireContext()
-        accountsDbAdapter = AccountsDbAdapter.instance
+
         useAccountColor = PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean(getString(R.string.key_use_account_color), false)
         // Ignore the first few colors as they look disabled.
         accountColors = context.resources.getIntArray(R.array.colors_gtk).dropLast(10).shuffle(5)
-    }
 
         val dbHolder = readableDatabaseHolder
         accountsDbAdapter = dbHolder.accountsDbAdapter

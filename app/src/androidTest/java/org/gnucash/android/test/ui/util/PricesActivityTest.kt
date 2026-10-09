@@ -1,5 +1,6 @@
 package org.gnucash.android.test.ui.util
 
+import android.content.Intent
 import androidx.test.core.app.launchActivity
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.clearText
@@ -15,6 +16,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import kotlinx.coroutines.runBlocking
 import org.gnucash.android.R
 import org.gnucash.android.test.ui.DatabaseTest
+import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.price.PriceDatabaseActivity
 import org.gnucash.android.ui.price.PriceViewHolder
 import org.hamcrest.Matchers.allOf
@@ -32,7 +34,10 @@ class PricesActivityTest : DatabaseTest() {
 
     @Test
     fun empty_list() {
-        launchActivity<PriceDatabaseActivity>().use {
+        val intent = Intent(context, PriceDatabaseActivity::class.java)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
+
+        launchActivity<PriceDatabaseActivity>(intent).use {
             onView(withId(android.R.id.empty))
                 .check(matches(isDisplayed()))
             onView(withText(R.string.price_list_empty))
@@ -42,9 +47,13 @@ class PricesActivityTest : DatabaseTest() {
 
     @Test
     fun common_prices_list() {
-        importGnuCash("common_1.gnucash")
+        val bookUID = importGnuCash("common_1.gnucash")
+        initAdapters(bookUID)
 
-        launchActivity<PriceDatabaseActivity>().use {
+        val intent = Intent(context, PriceDatabaseActivity::class.java)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
+
+        launchActivity<PriceDatabaseActivity>(intent).use {
             onView(withId(android.R.id.empty))
                 .check(matches(not(isDisplayed())))
             onView(withId(android.R.id.list))
@@ -64,7 +73,8 @@ class PricesActivityTest : DatabaseTest() {
 
     @Test
     fun common_prices_edit() {
-        importGnuCash("common_1.gnucash")
+        val bookUID = importGnuCash("common_1.gnucash")
+        initAdapters(bookUID)
 
         val currencyUSD = commoditiesDbAdapter.getCurrency("USD")!!
         val currencyEUR = commoditiesDbAdapter.getCurrency("EUR")!!
@@ -72,7 +82,10 @@ class PricesActivityTest : DatabaseTest() {
         assertEquals(93L, priceBefore.valueNum)
         assertEquals(100L, priceBefore.valueDenom)
 
-        launchActivity<PriceDatabaseActivity>().use {
+        val intent = Intent(context, PriceDatabaseActivity::class.java)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
+
+        launchActivity<PriceDatabaseActivity>(intent).use {
             onView(withId(android.R.id.empty))
                 .check(matches(not(isDisplayed())))
             onView(withId(android.R.id.list))
@@ -108,6 +121,7 @@ class PricesActivityTest : DatabaseTest() {
                     .performClick()
             }
 
+            pricesDbAdapter.clearCache()
             val priceAfter = pricesDbAdapter.getPrice(currencyUSD, currencyEUR)!!
             assertEquals(123L, priceAfter.valueNum)
             assertEquals(100L, priceAfter.valueDenom)

@@ -213,6 +213,11 @@ class PricesDbAdapter(val commoditiesDbAdapter: CommoditiesDbAdapter) : Database
         }
     }
 
+    override fun clearCache() {
+        super.clearCache()
+        cachePair.clear()
+    }
+
     companion object {
         private val entryColumns = arrayOf(
             PriceEntry.COLUMN_SECURITY_UID,

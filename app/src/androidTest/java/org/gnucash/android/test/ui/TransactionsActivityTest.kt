@@ -39,12 +39,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
-import org.gnucash.android.db.adapter.RecurrenceDbAdapter
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
-import org.gnucash.android.db.adapter.SplitsDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
@@ -84,7 +78,6 @@ class TransactionsActivityTest : DatabaseTest() {
     private var transactionTimeMillis: Long = 0
 
     private lateinit var transactionsActivity: TransactionsActivity
-    private lateinit var templatesActivity: ScheduledActionsActivity
     private lateinit var templatesActivity: ScheduledActionsActivity
 
     @Rule

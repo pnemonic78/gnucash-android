@@ -891,4 +891,8 @@ abstract class DatabaseAdapter<Model : BaseModel>(
     internal fun allColumnsPrefix(prefix: String): Array<String> {
         return allColumns.map { prefix + it }.toTypedArray()
     }
+
+    open fun clearCache() {
+        cache.clear()
+    }
 }
