@@ -17,7 +17,6 @@ package org.gnucash.android.test.unit.export
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.export.xml.GncXmlHelper
 import org.gnucash.android.export.xml.GncXmlHelper.formatDateTime
 import org.gnucash.android.export.xml.GncXmlHelper.formatNumeric
 import org.gnucash.android.export.xml.GncXmlHelper.formatSplitAmount

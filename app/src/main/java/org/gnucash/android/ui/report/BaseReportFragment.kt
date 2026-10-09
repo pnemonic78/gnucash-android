@@ -41,7 +41,7 @@ import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.interfaces.datasets.IDataSet
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
@@ -78,7 +78,7 @@ import kotlin.math.max
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
+abstract class BaseReportFragment<D : ChartData<*>> : DatabaseFragment(),
     OnChartValueSelectedListener,
     ReportOptionsListener,
     Refreshable {
@@ -96,16 +96,16 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
      * Account type for which to display reports
      */
     protected var accountType: AccountType = AccountType.EXPENSE
-    protected var commoditiesDbAdapter: CommoditiesDbAdapter = CommoditiesDbAdapter.instance
-    protected var accountsDbAdapter: AccountsDbAdapter = AccountsDbAdapter.instance
-    protected var pricesDbAdapter: PricesDbAdapter = PricesDbAdapter.instance
+    protected lateinit var commoditiesDbAdapter: CommoditiesDbAdapter
+    protected lateinit var accountsDbAdapter: AccountsDbAdapter
+    protected lateinit var pricesDbAdapter: PricesDbAdapter
     protected var useAccountColor: Boolean = true
     protected var isLegendVisible = false
 
     /**
      * Commodity for which to display reports
      */
-    protected var commodity: Commodity = commoditiesDbAdapter.defaultCommodity
+    protected lateinit var commodity: Commodity
 
     /**
      * Intervals in which to group reports
@@ -181,7 +181,7 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val view = inflateView(inflater, container)
         selectedValueTextView = view.findViewById(R.id.selected_chart_slice)
         return view
@@ -203,11 +203,10 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
         accountColors = context.resources.getIntArray(R.array.colors_gtk).dropLast(10).shuffle(5)
     }
 
-    override fun onStart() {
-        super.onStart()
-        accountsDbAdapter = AccountsDbAdapter.instance
-        commoditiesDbAdapter = accountsDbAdapter.commoditiesDbAdapter
-        pricesDbAdapter = PricesDbAdapter.instance
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        commoditiesDbAdapter = dbHolder.commoditiesDbAdapter
+        pricesDbAdapter = dbHolder.pricesDbAdapter
         commodity = commoditiesDbAdapter.defaultCommodity
     }
 
@@ -240,11 +239,11 @@ abstract class BaseReportFragment<D : ChartData<*>> : MenuFragment(),
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         if (generatorTask != null) {
             generatorTask!!.cancel(true)
             generatorTask = null
         }
+        super.onDestroy()
     }
 
     private fun toggleBaseReportingOptionsVisibility(activity: ReportsActivity) {

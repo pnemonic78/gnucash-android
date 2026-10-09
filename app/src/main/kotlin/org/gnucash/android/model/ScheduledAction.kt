@@ -295,8 +295,6 @@ class ScheduledAction(
     /**
      * Creates an RFC 2445 string which describes this recurring event
      *
-     * See [recurrance](http://recurrance.sourceforge.net/)
-     *
      * @return String describing event
      */
     val ruleString: String

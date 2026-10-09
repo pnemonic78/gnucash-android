@@ -22,7 +22,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.ScheduledActionEntry
@@ -68,36 +67,6 @@ class ScheduledActionService {
         }
     }
 
-    private fun processScheduledBooks(context: Context) {
-        val booksDbAdapter = BooksDbAdapter.instance
-        val books = booksDbAdapter.allRecords
-        for (book in books) {
-            processScheduledBook(context, book)
-        }
-    }
-
-    private fun processScheduledBook(context: Context, book: Book) {
-        val activeBookUID = GnuCashApplication.activeBookUID
-        val dbHelper = DatabaseHelper(context, book.uid)
-        val dbHolder = dbHelper.holder
-        val recurrenceDbAdapter = RecurrenceDbAdapter(dbHolder)
-        val transactionsDbAdapter = TransactionsDbAdapter(dbHolder)
-        val scheduledActionDbAdapter =
-            ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
-
-        val scheduledActions = scheduledActionDbAdapter.allEnabledScheduledActions
-        Timber.i(
-            "Processing %d total scheduled actions for Book: %s",
-            scheduledActions.size, book.displayName
-        )
-        processScheduledActions(dbHolder, scheduledActions)
-
-        //close all databases except the currently active database
-        if (book.uid != activeBookUID) {
-            dbHelper.close()
-        }
-    }
-
     companion object {
         fun schedulePeriodic(context: Context) {
             WorkManager.getInstance(context)
@@ -124,6 +93,32 @@ class ScheduledActionService {
 
             WorkManager.getInstance(context)
                 .enqueue(request)
+        }
+
+        private fun processScheduledBooks(context: Context) {
+            val booksDbAdapter = BooksDbAdapter.instance
+            val books = booksDbAdapter.allRecords
+            for (book in books) {
+                processScheduledBook(context, book)
+            }
+        }
+
+        fun processScheduledBook(context: Context, book: Book) {
+            val dbHelper = DatabaseHelper(context, book.uid)
+            val dbHolder = dbHelper.holder
+            val recurrenceDbAdapter = RecurrenceDbAdapter(dbHolder)
+            val transactionsDbAdapter = TransactionsDbAdapter(dbHolder)
+            val scheduledActionDbAdapter =
+                ScheduledActionDbAdapter(recurrenceDbAdapter, transactionsDbAdapter)
+
+            val scheduledActions = scheduledActionDbAdapter.allEnabledScheduledActions
+            Timber.i(
+                "Processing %d total scheduled actions for Book: %s",
+                scheduledActions.size, book.displayName
+            )
+            processScheduledActions(dbHolder, scheduledActions)
+
+            dbHelper.close()
         }
 
         /**

@@ -39,7 +39,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.app.ActionBar
 import androidx.core.view.isVisible
 import org.gnucash.android.R
-import org.gnucash.android.app.MenuFragment
+import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
 import org.gnucash.android.app.getParcelableArrayListCompat
@@ -71,8 +71,9 @@ import java.math.BigDecimal
  *
  * @author Ngewi Fet <ngewif@gmail.com>
  */
-class SplitEditorFragment : MenuFragment() {
-    private var accountsDbAdapter = AccountsDbAdapter.instance
+class SplitEditorFragment : DatabaseFragment() {
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var pricesDbAdapter: PricesDbAdapter
     private var accountNameAdapter: QualifiedAccountNameAdapter? = null
     private val splitViewHolders = mutableListOf<SplitViewHolder>()
     private var account: Account? = null
@@ -99,9 +100,12 @@ class SplitEditorFragment : MenuFragment() {
     @ColorInt
     private var colorBalanceZero = Color.TRANSPARENT
 
-    override fun onStart() {
-        super.onStart()
-        accountsDbAdapter = AccountsDbAdapter.instance
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        pricesDbAdapter = dbHolder.pricesDbAdapter
     }
 
     override fun onCreateView(
@@ -139,7 +143,8 @@ class SplitEditorFragment : MenuFragment() {
         imbalanceWatcher = BalanceTextWatcher(binding)
         colorBalanceZero = binding.imbalanceTextview.currentTextColor
 
-        accountNameAdapter = QualifiedAccountNameAdapter(context, viewLifecycleOwner)
+        val accountsDbAdapter = readableDatabaseHolder.accountsDbAdapter
+        accountNameAdapter = QualifiedAccountNameAdapter(context, accountsDbAdapter, viewLifecycleOwner)
             .load { adapter ->
                 account = adapter.getAccountDb(accountUID)
                 if (account == null) {
@@ -426,7 +431,6 @@ class SplitEditorFragment : MenuFragment() {
         val commodity = account.commodity
         val accountNameAdapter = accountNameAdapter!!
         val splits = mutableListOf<Split>()
-        val pricesDbAdapter = PricesDbAdapter.instance
 
         for (viewHolder in splitViewHolders) {
             val enteredAmount = viewHolder.splitAmountEditText.value ?: continue

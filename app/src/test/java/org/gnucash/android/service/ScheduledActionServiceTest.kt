@@ -66,8 +66,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
     private val transferAccount = Account("Transfer Account")
 
     @Before
-    override fun setUp() {
-        super.setUp()
+    fun setUp() {
         baseAccount.commodity = Commodity.DEFAULT_COMMODITY
         transferAccount.commodity = Commodity.DEFAULT_COMMODITY
 
@@ -84,11 +83,9 @@ class ScheduledActionServiceTest : BookHelperTest() {
         actionUID = templateTransaction.uid
         Timber.v("action ID: $actionUID")
 
-        val accountsDbAdapter = AccountsDbAdapter.instance
         accountsDbAdapter.addRecord(baseAccount)
         accountsDbAdapter.addRecord(transferAccount)
 
-        transactionsDbAdapter = TransactionsDbAdapter.instance
         transactionsDbAdapter.insert(templateTransaction)
     }
 
@@ -158,7 +155,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
             byDays = listOf(Calendar.MONDAY)
         }
         scheduledAction.setRecurrence(recurrence)
-        ScheduledActionDbAdapter.instance.insert(scheduledAction)
+        scheduledActionDbAdapter.insert(scheduledAction)
 
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
@@ -176,7 +173,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
 
         scheduledAction.setRecurrence(PeriodType.WEEK, 2)
         scheduledAction.endDate = DateTime(2017, 8, 16, 9, 0).millis
-        ScheduledActionDbAdapter.instance.insert(scheduledAction)
+        scheduledActionDbAdapter.insert(scheduledAction)
 
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
@@ -211,7 +208,7 @@ class ScheduledActionServiceTest : BookHelperTest() {
             byDays = listOf(Calendar.MONDAY)
         }
         scheduledAction.setRecurrence(recurrence)
-        ScheduledActionDbAdapter.instance.insert(scheduledAction)
+        scheduledActionDbAdapter.insert(scheduledAction)
 
         assertThat(transactionsDbAdapter.recordsCount).isZero()
 
