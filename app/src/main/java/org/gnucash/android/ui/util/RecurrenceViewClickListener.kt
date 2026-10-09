@@ -34,9 +34,6 @@ class RecurrenceViewClickListener(
     override fun onClick(v: View) {
         val now = Calendar.getInstance()
 
-        // may be more efficient to serialize and pass in EventRecurrence
-        args.putString(RecurrencePickerDialogFragment.BUNDLE_RRULE, recurrenceRule)
-
         val fragmentOld = fragmentManager.findFragmentByTag(TAG_RECURRENCE_PICKER) as? RecurrencePickerDialogFragment
         fragmentOld?.dismiss()
         val fragment = RecurrencePickerDialogFragment().withArguments {

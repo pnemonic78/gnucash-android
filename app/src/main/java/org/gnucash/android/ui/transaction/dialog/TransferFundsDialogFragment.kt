@@ -25,9 +25,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import org.gnucash.android.R
 import org.gnucash.android.app.DatabaseDialogFragment
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.databinding.DialogTransferFundsBinding
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.PricesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money

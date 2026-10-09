@@ -18,7 +18,6 @@ package org.gnucash.android.test.ui
 import android.content.Intent
 import android.net.Uri
 import android.text.format.DateUtils
-import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.GeneralClickAction
@@ -28,7 +27,6 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.rule.ActivityTestRule
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
@@ -227,7 +225,7 @@ class PieChartReportTest : DatabaseTest() {
      * Refresh reports
      */
     private fun refreshReport() {
-        reportsActivity.refresh()
+        activityRule.runOnUiThread { reportsActivity.refresh() }
         waitForView(R.id.chart)
         sleep(2000)
     }

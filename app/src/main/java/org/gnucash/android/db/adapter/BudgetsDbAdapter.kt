@@ -17,7 +17,6 @@ package org.gnucash.android.db.adapter
 
 import android.database.Cursor
 import android.database.sqlite.SQLiteStatement
-import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema.BudgetAmountEntry
 import org.gnucash.android.db.DatabaseSchema.BudgetEntry

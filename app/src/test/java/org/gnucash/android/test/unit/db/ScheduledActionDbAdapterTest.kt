@@ -2,14 +2,10 @@ package org.gnucash.android.test.unit.db
 
 import android.text.format.DateUtils
 import org.assertj.core.api.Assertions.assertThat
-import org.gnucash.android.R
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.model.BaseModel.Companion.generateUID
 import org.gnucash.android.model.PeriodType
 import org.gnucash.android.model.Recurrence
 import org.gnucash.android.model.ScheduledAction
-import org.gnucash.android.test.unit.GnuCashTest
-import org.junit.Before
 import org.junit.Test
 
 /**

@@ -20,9 +20,6 @@ import android.text.format.DateUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseSchema.TransactionEntry
-import org.gnucash.android.db.adapter.AccountsDbAdapter
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
-import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.db.toTimestamp
 import org.gnucash.android.export.ExportFormat
 import org.gnucash.android.export.ExportParams

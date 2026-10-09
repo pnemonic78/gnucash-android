@@ -70,6 +70,8 @@ import java.math.BigDecimal
  * @author Ngewi Fet <ngewif@gmail.com>
  */
 class SplitEditorFragment : DatabaseFragment() {
+    private lateinit var accountsDbAdapter: AccountsDbAdapter
+    private lateinit var pricesDbAdapter: PricesDbAdapter
     private var accountNameAdapter: QualifiedAccountNameAdapter? = null
     private val splitViewHolders = mutableListOf<SplitViewHolder>()
     private var account: Account? = null
@@ -95,6 +97,14 @@ class SplitEditorFragment : DatabaseFragment() {
 
     @ColorInt
     private var colorBalanceZero = Color.TRANSPARENT
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val dbHolder = readableDatabaseHolder
+        accountsDbAdapter = dbHolder.accountsDbAdapter
+        pricesDbAdapter = dbHolder.pricesDbAdapter
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -421,7 +431,6 @@ class SplitEditorFragment : DatabaseFragment() {
         val commodity = account.commodity
         val accountNameAdapter = accountNameAdapter!!
         val splits = mutableListOf<Split>()
-        val pricesDbAdapter = PricesDbAdapter.instance
 
         for (viewHolder in splitViewHolders) {
             val enteredAmount = viewHolder.splitAmountEditText.value ?: continue
@@ -446,7 +455,6 @@ class SplitEditorFragment : DatabaseFragment() {
 
         var balance = calculateBalance(account)
         if (!balance.isZero) {
-            val accountsDbAdapter = AccountsDbAdapter.instance
             val imbalanceAccount =
                 accountsDbAdapter.getOrCreateImbalanceAccount(context, account.commodity)
             if (balance.isNegative && account.type.hasDebitNormalBalance) {
@@ -612,7 +620,6 @@ class SplitEditorFragment : DatabaseFragment() {
      */
     private fun squashImbalances(splits: List<Split>): List<Split> {
         val context = requireContext()
-        val accountsDbAdapter = AccountsDbAdapter.instance
         val imbalances = mutableMapOf<String, MutableList<Split>>()
         val squashed = mutableListOf<Split>()
 

@@ -30,15 +30,12 @@ import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
 import org.gnucash.android.ui.adapter.QualifiedAccountNameAdapter
 import org.gnucash.android.ui.adapter.SpinnerArrayAdapter
 import org.gnucash.android.ui.adapter.SpinnerItem
-import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.search.SearchResultsFragment.Companion.EXTRA_FORM
 import org.gnucash.android.ui.text.DefaultTextWatcher
 import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment
-import org.gnucash.android.ui.util.widget.CalculatorEditText.OnValueChangedListener
 import org.gnucash.android.util.toMillis
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
-import java.math.BigDecimal
 
 class SearchFormFragment : DatabaseFragment() {
     private val viewModel by viewModels<SearchFormViewModel>()

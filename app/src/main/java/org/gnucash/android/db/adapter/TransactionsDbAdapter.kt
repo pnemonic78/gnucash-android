@@ -423,29 +423,6 @@ class TransactionsDbAdapter(
     }
 
     /**
-     * Returns the number of transactions belonging to an account
-     *
-     * @param accountUID GUID of the account
-     * @return Number of transactions with splits in the account
-     */
-    fun getCountByAccount(accountUID: String): Int {
-        val cursor = fetchTransactionsForAccount(accountUID)
-        return cursor.use { cursor ->
-            cursor.count
-        }
-    }
-
-    /**
-     * Returns the number of transactions belonging to an account
-     *
-     * @param account the account
-     * @return Number of transactions with splits in the account
-     */
-    fun getTransactionsCount(account: Account): Int {
-        return getTransactionsCount(account.uid)
-    }
-
-    /**
      * Returns the number of template transactions in the database
      *
      * @return Number of template transactions
@@ -631,7 +608,7 @@ class TransactionsDbAdapter(
         return timestamp
     }
 
-    fun getTransactionsCountForAccount(accountUID: String): Long {
+    fun getCountByAccount(accountUID: String): Int {
         val queryBuilder = SQLiteQueryBuilder()
         queryBuilder.tables = TransactionEntry.TABLE_NAME + " t " +
                 " INNER JOIN " + SplitEntry.TABLE_NAME + " s ON" +
@@ -643,14 +620,16 @@ class TransactionsDbAdapter(
 
         val cursor =
             queryBuilder.query(db, projectionIn, selection, selectionArgs, null, null, null)
-        try {
+        cursor.use { cursor ->
             if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getLong(0)
+                return cursor.getLong(0).toInt()
             }
-        } finally {
-            cursor.close()
         }
-        return 0L
+        return 0
+    }
+
+    fun getCountByAccount(account: Account): Int {
+        return getCountByAccount(account.uid)
     }
 
     @Throws(IOException::class)

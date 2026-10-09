@@ -23,10 +23,9 @@ import androidx.fragment.app.FragmentActivity
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
-import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.ActivityScheduledEventsBinding
 import org.gnucash.android.ui.common.BaseDrawerActivity
+import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.common.UxArgument.EXTRA_TAB_INDEX
 import org.gnucash.android.ui.util.widget.FragmentStateAdapter
 

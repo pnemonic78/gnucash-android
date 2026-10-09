@@ -20,10 +20,11 @@ import android.content.Intent
 import androidx.core.content.edit
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.action.ViewActions.clearText
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
-import androidx.test.espresso.action.ViewActions.pressBack
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.swipeDown
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
@@ -128,6 +129,7 @@ class TransactionsActivityTest : DatabaseTest() {
 
         val intent = Intent(Intent.ACTION_MAIN)
             .putExtra(UxArgument.SELECTED_ACCOUNT_UID, TRANSACTIONS_ACCOUNT_UID)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
         transactionsActivity = activityRule.launchActivity(intent)
 
         validateTransactionListDisplayed()
@@ -627,6 +629,7 @@ class TransactionsActivityTest : DatabaseTest() {
 
         clickViewId(R.id.btn_split_editor)
 
+        onView(withId(R.id.split_list_scroll)).perform(swipeDown())
         clickViewText(TRANSACTIONS_ACCOUNT_NAME)
         clickViewText(account.fullName)
 
@@ -997,6 +1000,7 @@ class TransactionsActivityTest : DatabaseTest() {
             .perform(typeText("Amazon"))
         onView(withId(R.id.input_transaction_amount))
             .perform(typeText("100"))
+        pressBack() // close calculator keyboard
         clickViewId(R.id.input_transaction_type) // Expense
 
         clickViewId(R.id.input_recurrence)
@@ -1015,7 +1019,6 @@ class TransactionsActivityTest : DatabaseTest() {
             .performClick()
         clickViewId(com.codetroopers.betterpickers.R.id.done_button)
 
-        clickViewId(R.id.notes) // close calculator keyboard
         // Enable auto-create
         clickViewId(R.id.recurrence_auto)
 
@@ -1138,6 +1141,7 @@ class TransactionsActivityTest : DatabaseTest() {
         // 2. Show scheduled transactions tab.
         val intent = Intent(Intent.ACTION_VIEW)
             .putExtra(UxArgument.EXTRA_TAB_INDEX, ScheduledActionsActivity.TAB_TRANSACTIONS)
+            .putExtra(UxArgument.BOOK_UID, bookUID)
         templatesActivity = scheduledActionsActivityRule.launchActivity(intent)
         sleep(1000) // wait for animations to finish
         // 3. Click the transaction.

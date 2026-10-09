@@ -18,7 +18,6 @@ package org.gnucash.android.util
 import android.content.Context
 import androidx.core.content.edit
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.util.TimestampHelper.getUtcStringFromTimestamp
 import timber.log.Timber
 import java.sql.Timestamp

@@ -32,9 +32,7 @@ import org.gnucash.android.ui.transaction.TransactionFormFragment.Companion.DATE
 import org.gnucash.android.ui.transaction.TransactionFormFragment.Companion.TIME_FORMATTER
 import org.gnucash.android.ui.util.dialog.DatePickerDialogFragment
 import org.gnucash.android.ui.util.dialog.TimePickerDialogFragment
-import org.gnucash.android.ui.util.widget.CalculatorEditText
 import org.gnucash.android.ui.util.widget.CalculatorKeyboard.Companion.rebind
-import java.math.BigDecimal
 
 class PriceFormFragment : DatabaseFragment() {
 

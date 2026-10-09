@@ -37,9 +37,7 @@ import com.owncloud.android.lib.resources.files.UploadFileRemoteOperation
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.db.DatabaseHelper
-import org.gnucash.android.db.DatabaseSchema.BookEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.BudgetsDbAdapter

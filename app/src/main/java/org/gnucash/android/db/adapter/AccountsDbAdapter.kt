@@ -1417,8 +1417,8 @@ class AccountsDbAdapter(
         return transactionsDbAdapter.getTransactionMaxSplitNum(accountUID)
     }
 
-    fun getTransactionCount(uid: String): Long {
-        return transactionsDbAdapter.getTransactionsCountForAccount(uid)
+    fun getTransactionCount(accountUID: String): Int {
+        return transactionsDbAdapter.getCountByAccount(accountUID)
     }
 
     /**

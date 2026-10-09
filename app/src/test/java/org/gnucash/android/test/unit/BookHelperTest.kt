@@ -2,7 +2,6 @@ package org.gnucash.android.test.unit
 
 import android.net.Uri
 import org.assertj.core.api.Assertions.assertThat
-import org.gnucash.android.BuildConfig
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
@@ -20,11 +19,8 @@ import org.gnucash.android.importer.ImporterFactory.getInputStream
 import org.gnucash.android.importer.sql.SqliteImporter
 import org.gnucash.android.importer.xml.GncXmlImporter
 import org.gnucash.android.net.toUri
-import org.gnucash.android.util.ConsoleTree
 import org.junit.After
 import org.junit.Before
-import org.junit.BeforeClass
-import timber.log.Timber
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 

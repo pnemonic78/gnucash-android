@@ -33,7 +33,6 @@ import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import org.gnucash.android.R
-import org.gnucash.android.app.requireArguments
 import org.gnucash.android.db.NoActiveBookException
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.model.Book

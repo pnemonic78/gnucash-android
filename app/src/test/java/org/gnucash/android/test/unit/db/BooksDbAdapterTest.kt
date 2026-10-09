@@ -19,8 +19,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.NoActiveBookException
+import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.model.Book
 import org.gnucash.android.test.unit.GnuCashTest
 import org.gnucash.android.test.unit.export.BackupTest

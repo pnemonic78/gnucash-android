@@ -31,9 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.getSerializableCompat
-import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.ActivityReportsBinding
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter

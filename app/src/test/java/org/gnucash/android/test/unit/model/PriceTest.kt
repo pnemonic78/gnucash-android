@@ -65,7 +65,6 @@ class PriceTest : DatabaseTest() {
         val commodity1 = Commodity.EUR
         val commodity2 = Commodity.USD
 
-        val pricesDbAdapter = PricesDbAdapter.instance
         val price = pricesDbAdapter.getPrice(commodity1, commodity2)
         assertThat(price).isNull()
 

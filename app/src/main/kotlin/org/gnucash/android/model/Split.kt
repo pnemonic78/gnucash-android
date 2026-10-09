@@ -2,7 +2,7 @@ package org.gnucash.android.model
 
 import android.os.Parcel
 import android.os.Parcelable
-import org.gnucash.android.model.Split.Companion.CREATOR
+import org.gnucash.android.model.Money.CurrencyMismatchException
 
 /**
  * A split amount in a transaction.

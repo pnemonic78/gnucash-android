@@ -21,7 +21,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Index
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
-import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
 import org.gnucash.android.importer.xml.GncXmlImporter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
@@ -222,7 +221,6 @@ class AccountsDbAdapterTest : DatabaseTest() {
             actionUID = "Test-uid"
             setRecurrence(Recurrence(PeriodType.WEEK))
         }
-        val scheduledActionDbAdapter = ScheduledActionDbAdapter.instance
 
         scheduledActionDbAdapter.addRecord(scheduledAction)
 

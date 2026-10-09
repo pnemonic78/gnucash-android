@@ -21,7 +21,6 @@ import android.content.Intent
 import org.gnucash.android.app.GnuCashApplication
 import org.gnucash.android.app.isNullOrEmpty
 import org.gnucash.android.db.DatabaseHelper
-import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Commodity
 import timber.log.Timber

@@ -5,7 +5,6 @@ import androidx.core.content.edit
 import org.assertj.core.api.Assertions.assertThat
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication.Companion.getBookPreferences
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Money
 import org.gnucash.android.test.unit.BookHelperTest

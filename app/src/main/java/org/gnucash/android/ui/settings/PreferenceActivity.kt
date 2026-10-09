@@ -27,7 +27,6 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.R
-import org.gnucash.android.app.withArguments
 import org.gnucash.android.databinding.ActivitySettingsBinding
 import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.passcode.PasscodeLockActivity

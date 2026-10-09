@@ -19,8 +19,6 @@ import android.content.Context
 import android.os.Bundle
 import androidx.preference.Preference
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
-import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.DatabaseSchema
 import org.gnucash.android.db.adapter.AccountsDbAdapter

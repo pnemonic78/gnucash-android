@@ -21,10 +21,8 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import org.gnucash.android.R
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransactions
 import org.gnucash.android.app.GnuCashApplication.Companion.shouldSaveOpeningBalances
-import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.DatabaseAdapter
 import org.gnucash.android.model.Transaction

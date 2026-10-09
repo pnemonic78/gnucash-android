@@ -1,7 +1,6 @@
 package org.gnucash.android.ui.transaction
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import org.gnucash.android.R
 import org.gnucash.android.databinding.ListItemScheduledTrxnBinding
 import org.gnucash.android.db.adapter.ScheduledActionDbAdapter
@@ -9,7 +8,6 @@ import org.gnucash.android.model.ScheduledAction
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.ui.common.FormActivity
 import org.gnucash.android.ui.common.Refreshable
-import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.snackLong
 import timber.log.Timber
 

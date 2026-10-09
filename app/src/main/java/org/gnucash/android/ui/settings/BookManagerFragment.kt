@@ -55,14 +55,12 @@ import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.db.adapter.TransactionsDbAdapter
 import org.gnucash.android.importer.ImportBookCallback
-import org.gnucash.android.importer.xml.AccountsTemplate
 import org.gnucash.android.lang.trim
 import org.gnucash.android.model.Book
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.ui.account.AccountsActivity.Companion.importXmlFileFromIntent
 import org.gnucash.android.ui.adapter.AccountsTemplatesAdapter
 import org.gnucash.android.ui.adapter.ModelDiff
-import org.gnucash.android.ui.adapter.SpinnerItem
 import org.gnucash.android.ui.common.GnucashProgressDialog
 import org.gnucash.android.ui.common.Refreshable
 import org.gnucash.android.ui.get

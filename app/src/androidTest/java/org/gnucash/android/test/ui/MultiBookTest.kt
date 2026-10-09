@@ -35,6 +35,7 @@ import org.gnucash.android.test.ui.util.performClick
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.ui.settings.PreferenceActivity
 import org.hamcrest.Matchers.allOf
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
@@ -46,12 +47,16 @@ import org.junit.Test
 class MultiBookTest : GnuAndroidTest() {
     @Rule
     @JvmField
-    val activityRule = IntentsTestRule(AccountsActivity::class.java)
+    val activityRule = IntentsTestRule(AccountsActivity::class.java, false, false)
+
+    @Before
+    fun setUp() {
+        activityRule.launchActivity(null)
+    }
 
     @Test
     fun shouldOpenBookManager() {
         onView(withId(R.id.drawer_layout)).perform(open())
-        clickViewId(R.id.book_name)
 
         clickViewText(R.string.menu_manage_books)
 

@@ -11,7 +11,6 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.util.HumanReadables
 import androidx.test.espresso.util.TreeIterables
-import org.gnucash.android.R
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.any

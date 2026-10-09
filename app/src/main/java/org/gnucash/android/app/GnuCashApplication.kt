@@ -25,10 +25,8 @@ import com.google.firebase.FirebaseApp
 import org.gnucash.android.BuildConfig
 import org.gnucash.android.R
 import org.gnucash.android.db.DatabaseHelper
-import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.NoActiveBookException
 import org.gnucash.android.db.adapter.BooksDbAdapter
-import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Commodity.Companion.getLocaleCurrencyCode
 import org.gnucash.android.model.TransactionType
@@ -36,7 +34,6 @@ import org.gnucash.android.ui.settings.ThemeHelper
 import org.gnucash.android.util.CrashlyticsTree
 import org.gnucash.android.util.LogTree
 import timber.log.Timber
-import java.io.IOException
 import java.util.Locale
 
 /**

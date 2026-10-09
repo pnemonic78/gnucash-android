@@ -205,8 +205,8 @@ class GncXmlHandlerTest : BookHelperTest() {
         assertThat(transactionsDbAdapter.recordsCount).isOne()
 
         val transaction = transactionsDbAdapter.getRecord("ded49386f8ea319ccaee043ba062b3e1")
-        val amountValue = Money("20", "USD")
-        val amountQuantity = Money("17.93", "EUR")
+        val amountValue = Money("20", Commodity.USD)
+        val amountQuantity = Money("17.93", Commodity.EUR)
 
         // Ensure it's the correct one
         assertThat(transaction.description).isEqualTo("Salad express")
@@ -366,8 +366,8 @@ class GncXmlHandlerTest : BookHelperTest() {
             .isEqualTo(2)
 
         var transaction = transactionsDbAdapter.getRecord("ded49386f8ea319ccaee043ba062b3e1")
-        val amountValue = Money("20", "USD")
-        val amountQuantity = Money("17.93", "EUR")
+        val amountValue = Money("20", Commodity.USD)
+        val amountQuantity = Money("17.93", Commodity.EUR)
 
         // Ensure it's the correct one
         assertThat(transaction.description).isEqualTo("Salad express")

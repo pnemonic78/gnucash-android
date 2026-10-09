@@ -24,7 +24,6 @@ import org.gnucash.android.db.adapter.CommoditiesDbAdapter
 import org.gnucash.android.db.forEach
 import org.gnucash.android.export.ExportParams
 import org.gnucash.android.export.Exporter
-import org.gnucash.android.export.csv.CsvTransactionsExporter.Companion.parseSplit
 import org.gnucash.android.gnc.GncProgressListener
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.Commodity

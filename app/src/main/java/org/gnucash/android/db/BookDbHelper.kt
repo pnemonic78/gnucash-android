@@ -26,7 +26,6 @@ import org.gnucash.android.db.DatabaseSchema.BookEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.db.adapter.BooksDbAdapter
 import org.gnucash.android.model.Book
-import org.gnucash.android.util.BookUtils.activateBook
 import java.io.File
 
 /**

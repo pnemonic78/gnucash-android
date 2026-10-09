@@ -19,7 +19,6 @@ import android.widget.CheckBox
 import androidx.appcompat.app.AlertDialog
 import org.gnucash.android.R
 import org.gnucash.android.app.DatabaseDialogFragment
-import org.gnucash.android.ui.util.dialog.VolatileDialogFragment
 
 /**
  * Confirmation dialog with additional checkbox to confirm the action.

@@ -41,7 +41,6 @@ import androidx.preference.PreferenceManager
 import com.codetroopers.betterpickers.recurrencepicker.RecurrencePickerDialogFragment.OnRecurrenceSetListener
 import org.gnucash.android.R
 import org.gnucash.android.app.DatabaseFragment
-import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.finish
