@@ -102,13 +102,14 @@ class TransactionsActivityTest : DatabaseTest() {
         COMMODITY = commoditiesDbAdapter.getCurrency("USD")!!
         accountsDbAdapter.deleteAllRecords()
 
-        baseAccount = Account(TRANSACTIONS_ACCOUNT_NAME, COMMODITY)
-        baseAccount.setUID(TRANSACTIONS_ACCOUNT_UID)
-        accountsDbAdapter.insert(baseAccount)
-
         transferAccount = Account(TRANSFER_ACCOUNT_NAME, COMMODITY)
         transferAccount.setUID(TRANSFER_ACCOUNT_UID)
         accountsDbAdapter.insert(transferAccount)
+
+        baseAccount = Account(TRANSACTIONS_ACCOUNT_NAME, COMMODITY)
+        baseAccount.setUID(TRANSACTIONS_ACCOUNT_UID)
+        baseAccount.defaultTransferAccountUID = TRANSFER_ACCOUNT_UID
+        accountsDbAdapter.insert(baseAccount)
 
         assertThat(accountsDbAdapter.recordsCount)
             .isEqualTo(3) //including ROOT account
@@ -224,7 +225,7 @@ class TransactionsActivityTest : DatabaseTest() {
         closeSoftKeyboard()
         onView(withId(R.id.input_transaction_amount))
             .perform(typeText("899"))
-        closeSoftKeyboard()
+        pressBack() //close calculator keyboard
         onView(withId(R.id.input_transaction_type))
             .check(
                 matches(
@@ -393,7 +394,7 @@ class TransactionsActivityTest : DatabaseTest() {
             .perform(typeText("Autobalance"))
         onView(withId(R.id.input_transaction_amount))
             .perform(typeText("499"))
-        closeSoftKeyboard()
+        pressBack() // close calculator keyboard
         clickViewId(R.id.btn_split_editor)
 
         onView(withId(R.id.split_list_layout))
@@ -431,7 +432,7 @@ class TransactionsActivityTest : DatabaseTest() {
 
         val transaction = transactions[0]
 
-        assertThat(transaction.splits).hasSize(2) //auto-balanced
+        assertThat(transaction.splits).hasSize(3) //auto-balanced
         imbalanceAcctUID = accountsDbAdapter.getImbalanceAccountUID(context, COMMODITY)
         assertThat(imbalanceAcctUID).isNotNull()
         assertThat(imbalanceAcctUID).isNotEmpty()
@@ -445,8 +446,8 @@ class TransactionsActivityTest : DatabaseTest() {
         assertThat(imbalanceSplits).hasSize(1)
 
         val split = imbalanceSplits[0]
-        assertThat(split.value.toBigDecimal()).isEqualTo(BigDecimal("400.00"))
-        assertThat(split.type).isEqualTo(TransactionType.CREDIT)
+        assertThat(split.value.toBigDecimal()).isEqualTo(BigDecimal("99.00"))
+        assertThat(split.type).isEqualTo(TransactionType.DEBIT)
     }
 
 
@@ -1003,7 +1004,7 @@ class TransactionsActivityTest : DatabaseTest() {
             .perform(typeText("Amazon"))
         onView(withId(R.id.input_transaction_amount))
             .perform(typeText("100"))
-        pressBack() // hide calculator keyboard
+        pressBack() // close calculator keyboard
         clickViewId(R.id.input_transaction_type) // Expense
 
         clickViewId(R.id.input_recurrence)

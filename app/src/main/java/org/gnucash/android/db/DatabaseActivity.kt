@@ -32,6 +32,11 @@ open class DatabaseActivity : GnuCashActivity(), BookProvider {
         super.onDestroy()
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (::dbHelper.isInitialized) dbHelper.clearCache()
+    }
+
     override val bookUID: String
         get() = dbHelper.bookUID
     override val databaseHolder: DatabaseHolder

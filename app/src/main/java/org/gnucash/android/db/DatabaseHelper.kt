@@ -167,6 +167,10 @@ class DatabaseHelper(private val context: Context, databaseName: String) :
         _holder?.close()
     }
 
+    fun clearCache() {
+        _holder?.clearCache()
+    }
+
     companion object {
         /**
          * SQL statement to create the accounts table in the database

@@ -143,4 +143,17 @@ data class DatabaseHolder(
         _transactionsDbAdapter?.close()
         db.close()
     }
+
+    fun clearCache() {
+        _accountsDbAdapter?.clearCache()
+        _booksDbAdapter?.clearCache()
+        _budgetAmountsDbAdapter?.clearCache()
+        _budgetDbAdapter?.clearCache()
+        _commoditiesDbAdapter?.clearCache()
+        _pricesDbAdapter?.clearCache()
+        _recurrenceDbAdapter?.clearCache()
+        _scheduledActionDbAdapter?.clearCache()
+        _splitsDbAdapter?.clearCache()
+        _transactionsDbAdapter?.clearCache()
+    }
 }
