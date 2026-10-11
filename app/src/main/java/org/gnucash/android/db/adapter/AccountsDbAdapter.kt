@@ -1165,13 +1165,17 @@ class AccountsDbAdapter(
         val defaultTransferUid = account.defaultTransferAccountUID
 
         if (defaultTransferUid.isNullOrEmpty()) {
-            val where = (AccountEntry.COLUMN_UID + " != ?"
-                    + " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0"
-                    + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
-                    + " AND " + AccountEntry.COLUMN_TYPE + " != ?"
-                    + " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0")
+            val where = AccountEntry.COLUMN_UID + " != ?" +
+                    " AND " + AccountEntry.COLUMN_PLACEHOLDER + " = 0" +
+                    " AND " + AccountEntry.COLUMN_TEMPLATE + " = 0" +
+                    " AND " + AccountEntry.COLUMN_TYPE + " != ?" +
+                    " AND " + AccountEntry.COLUMN_TYPE + " != ?"
             val whereArgs = arrayOf<String?>(accountUID, account.type.name, AccountType.ROOT.name)
-            return getAllRecords(where, whereArgs, null).firstOrNull()
+            val transferAccount = getAllRecords(where, whereArgs, null).firstOrNull()
+            if (transferAccount != null && transferAccount.uid == account.uid) {
+                return null
+            }
+            return transferAccount
         }
 
         if (isCached) {
@@ -1181,16 +1185,16 @@ class AccountsDbAdapter(
                 }
             }
         }
-        val where = AccountEntry.COLUMN_DEFAULT_TRANSFER_ACCOUNT_UID + " = ?"
-        val whereArgs = arrayOf<String?>(defaultTransferUid)
-        return getAllRecords(where, whereArgs, null).firstOrNull()
+        return getRecordOrNull(defaultTransferUid)
     }
 
     fun findDefaultTransferAccount(account: Account): Account? {
         val transferAccountUID = account.defaultTransferAccountUID
         if (!transferAccountUID.isNullOrEmpty()) {
             val transferAccount = getRecordOrNull(transferAccountUID)
-            if (transferAccount != null) return transferAccount
+            if (transferAccount != null && transferAccount.uid != account.uid) {
+                return transferAccount
+            }
         }
 
         val parentUID = account.parentUID
@@ -1198,7 +1202,9 @@ class AccountsDbAdapter(
             val parentAccount = getRecordOrNull(parentUID)
             if (parentAccount != null) {
                 val transferAccount = findDefaultTransferAccount(parentAccount)
-                if (transferAccount != null) return transferAccount
+                if (transferAccount != null && transferAccount.uid != account.uid) {
+                    return transferAccount
+                }
             }
         }
 
@@ -1403,14 +1409,7 @@ class AccountsDbAdapter(
             )
 
             if (isCached) {
-                for (account in cache.values) {
-                    if (uid == account.defaultTransferAccountUID) {
-                        account.defaultTransferAccountUID = null
-                    }
-                    if (uid == account.parentUID) {
-                        account.parentUID = rootAccountUID
-                    }
-                }
+                cache.clear()
             }
         }
         return result
