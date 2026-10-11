@@ -116,7 +116,7 @@ class SearchResultViewHolder(
                 val accountUID = transaction.defaultAccountUID
                 if (accountUID != null) {
                     val account = accountsDbAdapter.getRecord(accountUID)
-                    text = accountsDbAdapter.getFullyQualifiedAccountName(accountUID)
+                    text = accountsDbAdapter.getFullyQualifiedAccountName(account)
 
                     val amount = transaction.getBalance(account, true)
                     transactionAmount.displayBalance(amount, colorBalanceZero)

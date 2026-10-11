@@ -761,23 +761,9 @@ abstract class DatabaseAdapter<Model : BaseModel>(
      * @return String value of the column entry
      * @throws IllegalArgumentException if either the `recordUID` or `columnName` do not exist in the database
      */
+    @Throws(IllegalArgumentException::class)
     fun getAttribute(recordUID: String, columnName: String): String {
         return getAttribute(tableName, recordUID, columnName)
-    }
-
-    /**
-     * Returns an attribute from a specific column in the database for a specific record.
-     *
-     * The attribute is returned as a string which can then be converted to another type if
-     * the caller was expecting something other type
-     *
-     * @param model      the record with a GUID.
-     * @param columnName Name of the column to be retrieved
-     * @return String value of the column entry
-     * @throws IllegalArgumentException if either the `recordUID` or `columnName` do not exist in the database
-     */
-    fun getAttribute(model: Model, columnName: String): String {
-        return getAttribute(tableName, getUID(model), columnName)
     }
 
     /**

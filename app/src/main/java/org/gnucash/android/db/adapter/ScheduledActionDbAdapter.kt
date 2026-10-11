@@ -77,41 +77,6 @@ class ScheduledActionDbAdapter(
         return super.bulkAddRecords(scheduledActions, updateMethod)
     }
 
-    /**
-     * Updates only the recurrence attributes of the scheduled action.
-     * The recurrence attributes are the period, start time, end time and/or total frequency.
-     * All other properties of a scheduled event are only used for internal database tracking and are
-     * not central to the recurrence schedule.
-     *
-     * **The GUID of the scheduled action should already exist in the database**
-     *
-     * @param scheduledAction Scheduled action
-     * @return the number of rows affected
-     */
-    fun updateRecurrenceAttributes(scheduledAction: ScheduledAction): Int {
-        //since we are updating, first fetch the existing recurrence UID and set it to the object
-        //so that it will be updated and not a new one created
-        val recurrenceUID =
-            getAttribute(scheduledAction, ScheduledActionEntry.COLUMN_RECURRENCE_UID)
-
-        val recurrence = scheduledAction.recurrence
-        recurrence.setUID(recurrenceUID)
-        recurrenceDbAdapter.update(recurrence)
-
-        val contentValues = ContentValues()
-        extractBaseModelAttributes(contentValues, scheduledAction)
-        contentValues[ScheduledActionEntry.COLUMN_START_TIME] = scheduledAction.startDate
-        contentValues[ScheduledActionEntry.COLUMN_END_TIME] = scheduledAction.endDate
-        contentValues[ScheduledActionEntry.COLUMN_TAG] = scheduledAction.tag
-        contentValues[ScheduledActionEntry.COLUMN_TOTAL_FREQUENCY] =
-            scheduledAction.totalPlannedExecutionCount
-
-        Timber.d("Updating scheduled event recurrence attributes")
-        val where = ScheduledActionEntry.COLUMN_UID + "=?"
-        val whereArgs = arrayOf<String?>(scheduledAction.uid)
-        return db.update(ScheduledActionEntry.TABLE_NAME, contentValues, where, whereArgs)
-    }
-
     override fun bind(stmt: SQLiteStatement, schedxAction: ScheduledAction): SQLiteStatement {
         bindBaseModel(stmt, schedxAction)
         stmt.bindString(1 + INDEX_COLUMN_ACTION_UID, schedxAction.actionUID)

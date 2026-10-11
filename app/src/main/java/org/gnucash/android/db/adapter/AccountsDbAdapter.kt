@@ -1150,9 +1150,8 @@ class AccountsDbAdapter(
      * @see .getFullyQualifiedAccountName
      */
     fun getAccountName(accountUID: String): String {
-        val account = getRecordOrNull(accountUID)
-        if (account != null) return account.name
-        return getAttribute(accountUID, AccountEntry.COLUMN_NAME)
+        val account = getRecordOrNull(accountUID) ?: return ""
+        return account.name
     }
 
     /**
@@ -1212,17 +1211,9 @@ class AccountsDbAdapter(
      * @param accountUID Unique ID of account
      * @return Fully qualified (with parent hierarchy) account name
      */
-    fun getFullyQualifiedAccountName(accountUID: String): String? {
-        val accountName = getAccountName(accountUID)
-        val parentAccountUID = getParentAccountUID(accountUID)
-
-        if (parentAccountUID == null || parentAccountUID == accountUID || parentAccountUID == rootAccountUID) {
-            return accountName
-        }
-
-        val parentAccountName = getFullyQualifiedAccountName(parentAccountUID)
-
-        return parentAccountName + ACCOUNT_NAME_SEPARATOR + accountName
+    fun getFullyQualifiedAccountName(accountUID: String): String {
+        val account = getRecordOrNull(accountUID) ?: return ""
+        return getFullyQualifiedAccountName(account)
     }
 
     /**
@@ -1240,7 +1231,6 @@ class AccountsDbAdapter(
         }
 
         val parentAccountName = getFullyQualifiedAccountName(parentAccountUID)
-
         return parentAccountName + ACCOUNT_NAME_SEPARATOR + accountName
     }
 
@@ -1265,10 +1255,8 @@ class AccountsDbAdapter(
      * @return `true` if the account is a placeholder account, `false` otherwise
      */
     fun isPlaceholderAccount(accountUID: String): Boolean {
-        val account = getRecordOrNull(accountUID)
-        if (account != null) return account.isPlaceholder
-        val isPlaceholder = getAttribute(accountUID, AccountEntry.COLUMN_PLACEHOLDER)
-        return isPlaceholder.toInt() != 0
+        val account = getRecordOrNull(accountUID) ?: return false
+        return account.isPlaceholder
     }
 
     /**
@@ -1278,10 +1266,8 @@ class AccountsDbAdapter(
      * @return `true` if the account is hidden, `false` otherwise
      */
     fun isHiddenAccount(accountUID: String): Boolean {
-        val account = getRecordOrNull(accountUID)
-        if (account != null) return account.isHidden
-        val isHidden = getAttribute(accountUID, AccountEntry.COLUMN_HIDDEN)
-        return isHidden.toInt() != 0
+        val account = getRecordOrNull(accountUID) ?: return false
+        return account.isHidden
     }
 
     /**
@@ -1291,10 +1277,8 @@ class AccountsDbAdapter(
      * @return `true` if the account is a favorite account, `false` otherwise
      */
     fun isFavoriteAccount(accountUID: String): Boolean {
-        val account = getRecordOrNull(accountUID)
-        if (account != null) return account.isFavorite
-        val isFavorite = getAttribute(accountUID, AccountEntry.COLUMN_FAVORITE)
-        return isFavorite.toInt() != 0
+        val account = getRecordOrNull(accountUID) ?: return false
+        return account.isFavorite
     }
 
     /**
