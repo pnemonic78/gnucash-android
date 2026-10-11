@@ -4,7 +4,6 @@ import android.os.Parcel
 import android.os.Parcelable
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.Money.CurrencyMismatchException
-import org.gnucash.android.model.Split.Companion.CREATOR
 import org.gnucash.android.model.Split.Companion.getFormattedAmount
 import org.gnucash.android.util.NEVER
 
