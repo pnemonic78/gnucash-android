@@ -39,7 +39,7 @@ robolectric = "4.16.1"
 timber = "5.0.1"
 times-square = "1.7.11"
 wizardpager = "1.0.3"
-work-runtime = "2.12.0"
+work-runtime = "2.9.1"  # 2.9.1 for workaround for "No virtual method forNamespace(Ljava/lang/String;)Landroid/app/job/JobScheduler; in class Landroid/app/job/JobScheduler"
 
 [libraries]
 android-test-core = { module = "androidx.test:core-ktx", version.ref = "android-test-core" }
