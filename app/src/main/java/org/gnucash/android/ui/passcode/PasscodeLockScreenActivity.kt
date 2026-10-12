@@ -21,6 +21,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashActivity
+import org.gnucash.android.app.arguments
 import org.gnucash.android.app.withArguments
 import org.gnucash.android.ui.settings.ThemeHelper
 
@@ -36,7 +37,7 @@ class PasscodeLockScreenActivity : GnuCashActivity() {
         setContentView(R.layout.passcode_lockscreen)
 
         val fragment = PasscodeFragment().withArguments {
-            putAll(intent.extras ?: Bundle())
+            putAll(intent.arguments())
             putString(PasscodeFragment.EXTRA_ACTION, intent.action)
         }
 

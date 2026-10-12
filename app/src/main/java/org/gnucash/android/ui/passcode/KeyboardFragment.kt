@@ -45,10 +45,10 @@ open class KeyboardFragment : Fragment() {
     ): View {
         val rootView = inflater.inflate(R.layout.fragment_numeric_keyboard, container, false)
 
-        pass1 = rootView.findViewById<TextView>(R.id.passcode1)
-        pass2 = rootView.findViewById<TextView>(R.id.passcode2)
-        pass3 = rootView.findViewById<TextView>(R.id.passcode3)
-        pass4 = rootView.findViewById<TextView>(R.id.passcode4)
+        pass1 = rootView.findViewById(R.id.passcode1)
+        pass2 = rootView.findViewById(R.id.passcode2)
+        pass3 = rootView.findViewById(R.id.passcode3)
+        pass4 = rootView.findViewById(R.id.passcode4)
 
         rootView.findViewById<View>(R.id.one_btn).setOnClickListener {
             add("1")
@@ -108,6 +108,7 @@ open class KeyboardFragment : Fragment() {
     }
 
     private fun add(num: String) {
+        if (length < 0) return
         length++
         when (length) {
             1 -> pass1.text = num
@@ -116,10 +117,11 @@ open class KeyboardFragment : Fragment() {
             4 -> {
                 pass4.text = num
                 val code = pass1.text + pass2.text + pass3.text + num
-                length = 0
+                length = Int.MIN_VALUE
 
                 pass4.postDelayed({
                     onPasscodeEntered(code)
+                    length = 0
                     pass1.text = null
                     pass2.text = null
                     pass3.text = null
