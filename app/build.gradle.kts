@@ -17,7 +17,8 @@ val versionMinor = 3
 val versionPatch = 11
 val versionBuild = 0
 
-val dropboxAppKey = (project.findProperty("RELEASE_DROPBOX_APP_KEY") as? String) ?: "dhjh8ke9wf05948"
+val dropboxAppKey =
+    (project.findProperty("RELEASE_DROPBOX_APP_KEY") as? String) ?: "dhjh8ke9wf05948"
 
 android {
     namespace = "org.gnucash.android"
@@ -169,15 +170,6 @@ kotlin {
 }
 
 dependencies {
-    constraints {
-        // 1.17.0 - "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
-        implementation("androidx.core:core:1.17.0")
-        // 1.17.0 - "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
-        implementation("androidx.core:core-ktx:1.17.0")
-        // 2.9.1 - "No virtual method forNamespace(Ljava/lang/String;)Landroid/app/job/JobScheduler; in class Landroid/app/job/JobScheduler"
-        implementation("androidx.work:work-runtime:2.9.1")
-    }
-
     // Jetpack
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
@@ -232,6 +224,18 @@ dependencies {
     androidTestImplementation(libs.bundles.android.test)
     androidTestImplementation(libs.bundles.espresso)
     androidTestImplementation(libs.assertj.core)
+}
+
+configurations.all {
+    resolutionStrategy {
+        // "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
+        force("androidx.activity:activity-ktx:1.11.0")
+        force("androidx.appcompat:appcompat:1.7.0")
+        force("androidx.core:core:1.17.0")
+        force("androidx.core:core-ktx:1.17.0")
+        // "No virtual method forNamespace(Ljava/lang/String;)Landroid/app/job/JobScheduler"
+        force("androidx.work:work-runtime:2.9.1")
+    }
 }
 
 afterEvaluate {
