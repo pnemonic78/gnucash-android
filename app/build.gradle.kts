@@ -169,6 +169,15 @@ kotlin {
 }
 
 dependencies {
+    constraints {
+        // 1.17.0 - "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
+        implementation("androidx.core:core:1.17.0")
+        // 1.17.0 - "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
+        implementation("androidx.core:core-ktx:1.17.0")
+        // 2.9.1 - "No virtual method forNamespace(Ljava/lang/String;)Landroid/app/job/JobScheduler; in class Landroid/app/job/JobScheduler"
+        implementation("androidx.work:work-runtime:2.9.1")
+    }
+
     // Jetpack
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)

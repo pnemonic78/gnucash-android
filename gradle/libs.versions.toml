@@ -14,7 +14,7 @@ betterpickers = "3.1.0"
 cardview = "1.0.0"
 chart = "v3.1.0"
 compose-bom = "2026.09.00"
-core = "1.17.0"  # 1.17.0 - "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
+core = "1.17.0"
 crashlytics = "20.1.1"
 crashlytics-plugin = "3.0.8"
 drawerlayout = "1.2.0"
@@ -39,7 +39,7 @@ robolectric = "4.16.1"
 timber = "5.0.1"
 times-square = "1.7.11"
 wizardpager = "1.0.3"
-work-runtime = "2.9.1"  # 2.9.1 - "No virtual method forNamespace(Ljava/lang/String;)Landroid/app/job/JobScheduler; in class Landroid/app/job/JobScheduler"
+work-runtime = "2.9.1"
 
 [libraries]
 android-test-core = { module = "androidx.test:core-ktx", version.ref = "android-test-core" }
