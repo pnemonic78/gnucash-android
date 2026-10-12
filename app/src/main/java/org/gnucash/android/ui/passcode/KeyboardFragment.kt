@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment
 import org.gnucash.android.R
 import org.gnucash.android.lang.plus
 import org.gnucash.android.ui.snackLong
+import java.text.NumberFormat
 
 /**
  * Soft numeric keyboard for lock screen and passcode preference.
@@ -50,35 +51,47 @@ open class KeyboardFragment : Fragment() {
         pass3 = rootView.findViewById(R.id.passcode3)
         pass4 = rootView.findViewById(R.id.passcode4)
 
-        rootView.findViewById<View>(R.id.one_btn).setOnClickListener {
-            add("1")
+        val formatter = NumberFormat.getIntegerInstance()
+
+        rootView.findViewById<TextView>(R.id.one_btn).apply {
+            text = formatter.format(1L)
+            setOnClickListener { add("1") }
         }
-        rootView.findViewById<View>(R.id.two_btn).setOnClickListener {
-            add("2")
+        rootView.findViewById<TextView>(R.id.two_btn).apply {
+            text = formatter.format(2L)
+            setOnClickListener { add("2") }
         }
-        rootView.findViewById<View>(R.id.three_btn).setOnClickListener {
-            add("3")
+        rootView.findViewById<TextView>(R.id.three_btn).apply {
+            text = formatter.format(3L)
+            setOnClickListener { add("3") }
         }
-        rootView.findViewById<View>(R.id.four_btn).setOnClickListener {
-            add("4")
+        rootView.findViewById<TextView>(R.id.four_btn).apply {
+            text = formatter.format(4L)
+            setOnClickListener { add("4") }
         }
-        rootView.findViewById<View>(R.id.five_btn).setOnClickListener {
-            add("5")
+        rootView.findViewById<TextView>(R.id.five_btn).apply {
+            text = formatter.format(5L)
+            setOnClickListener { add("5") }
         }
-        rootView.findViewById<View>(R.id.six_btn).setOnClickListener {
-            add("6")
+        rootView.findViewById<TextView>(R.id.six_btn).apply {
+            text = formatter.format(6L)
+            setOnClickListener { add("6") }
         }
-        rootView.findViewById<View>(R.id.seven_btn).setOnClickListener {
-            add("7")
+        rootView.findViewById<TextView>(R.id.seven_btn).apply {
+            text = formatter.format(7L)
+            setOnClickListener { add("7") }
         }
-        rootView.findViewById<View>(R.id.eight_btn).setOnClickListener {
-            add("8")
+        rootView.findViewById<TextView>(R.id.eight_btn).apply {
+            text = formatter.format(8L)
+            setOnClickListener { add("8") }
         }
-        rootView.findViewById<View>(R.id.nine_btn).setOnClickListener {
-            add("9")
+        rootView.findViewById<TextView>(R.id.nine_btn).apply {
+            text = formatter.format(9L)
+            setOnClickListener { add("9") }
         }
-        rootView.findViewById<View>(R.id.zero_btn).setOnClickListener {
-            add("0")
+        rootView.findViewById<TextView>(R.id.zero_btn).apply {
+            text = formatter.format(0L)
+            setOnClickListener { add("0") }
         }
         rootView.findViewById<View>(R.id.delete_btn).setOnClickListener {
             when (length) {
