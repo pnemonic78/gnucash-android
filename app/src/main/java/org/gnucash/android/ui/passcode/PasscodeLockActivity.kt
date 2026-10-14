@@ -60,13 +60,7 @@ open class PasscodeLockActivity : DatabaseActivity() {
 
         if (isPassEnabled && !skipPasscode && !isSessionActive() && !passCode.isNullOrEmpty()) {
             Timber.v("Show passcode screen")
-            val intent = Intent(this, PasscodeLockScreenActivity::class.java)
-                .setAction(intent.action)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                .putExtras(intent.arguments())
-                .putExtra(PasscodeFragment.PASSCODE_CLASS_CALLER, this.javaClass.getName())
-            startActivity(intent)
+            PasscodeLockScreenActivity.show(this, 0)
         }
     }
 

@@ -58,4 +58,11 @@ class PasscodeLockScreenActivity : GnuCashActivity() {
         startActivity(intent)
         finish()
     }
+
+    companion object {
+        fun show(caller: GnuCashActivity, requestCode: Int) {
+            val intent = Intent(caller, PasscodeLockScreenActivity::class.java)
+            caller.startActivityForResult(intent, requestCode)
+        }
+    }
 }
