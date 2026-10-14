@@ -16,6 +16,7 @@
 package org.gnucash.android.ui.passcode
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
@@ -57,5 +58,13 @@ class PasscodeLockScreenActivity : GnuCashActivity() {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
         finish()
+    }
+
+    companion object {
+        fun show(caller: GnuCashActivity, requestCode: Int) {
+            val context: Context = caller
+            val intent = Intent(context, PasscodeLockScreenActivity::class.java)
+            caller.startActivityForResult(intent, requestCode)
+        }
     }
 }
