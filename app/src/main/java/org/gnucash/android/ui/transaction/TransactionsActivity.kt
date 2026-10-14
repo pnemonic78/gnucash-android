@@ -506,7 +506,7 @@ class TransactionsActivity : BaseDrawerActivity(),
             Timber.e(e)
         }
         if (account == null) {
-            throw IllegalArgumentException("Account required")
+            throw IllegalArgumentException("Account not found for $intent")
         }
         return account
     }

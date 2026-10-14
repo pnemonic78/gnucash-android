@@ -352,7 +352,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         if (transaction == null) {
             setResult(RESULT_CANCELED)
             finish()
-            throw IllegalArgumentException("Transaction required")
+            throw IllegalArgumentException("Transaction not found for $intent")
         }
         return transaction
     }
@@ -373,7 +373,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         if (account == null) {
             setResult(RESULT_CANCELED)
             finish()
-            throw IllegalArgumentException("Account required")
+            throw IllegalArgumentException("Account not found for $intent")
         }
         return account
     }

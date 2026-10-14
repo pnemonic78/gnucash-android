@@ -13,14 +13,8 @@ open class DatabaseActivity : GnuCashActivity(), BookProvider {
     override fun onCreate(savedInstanceState: Bundle?) {
         val context: Context = this
 
-        val args = try {
-            requireArguments()
-        } catch (e: NullPointerException) {
-            Timber.e(e)
-            throw IllegalArgumentException(intent.toString(), e)
-        }
         //if a parameter was passed to open an account within a specific book, then switch
-        val bookUID = args.getString(UxArgument.BOOK_UID)!!
+        val bookUID = requireArguments().getString(UxArgument.BOOK_UID)!!
         if (bookUID.isEmpty()) {
             Timber.e("Book required")
             finish()
