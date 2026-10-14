@@ -56,7 +56,6 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context: Context = this
 
         binding = ActivityTransactionDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -67,7 +66,7 @@ class TransactionDetailActivity : PasscodeLockActivity(), FragmentResultListener
         actionBar?.setDisplayHomeAsUpEnabled(true)
         actionBar?.setDisplayShowTitleEnabled(false)
 
-        val holder = readableDatabaseHolder
+        val holder = databaseHolder
         transactionsDbAdapter = holder.transactionsDbAdapter
         accountsDbAdapter = holder.accountsDbAdapter
         scheduledActionDbAdapter = holder.scheduledActionDbAdapter

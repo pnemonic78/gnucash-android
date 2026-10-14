@@ -226,18 +226,6 @@ dependencies {
     androidTestImplementation(libs.assertj.core)
 }
 
-configurations.all {
-    resolutionStrategy {
-        // "No static method systemOverlays()I in class Landroid/view/WindowInsets$Type"
-        force("androidx.activity:activity-ktx:1.11.0")
-        force("androidx.appcompat:appcompat:1.7.0")
-        force("androidx.core:core:1.17.0")
-        force("androidx.core:core-ktx:1.17.0")
-        // "No virtual method forNamespace(Ljava/lang/String;)Landroid/app/job/JobScheduler"
-        force("androidx.work:work-runtime:2.9.1")
-    }
-}
-
 afterEvaluate {
     // Disable Google Services plugin for some flavors.
     android.productFlavors.forEach { flavor ->
