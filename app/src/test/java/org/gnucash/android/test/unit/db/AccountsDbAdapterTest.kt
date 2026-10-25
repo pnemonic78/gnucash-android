@@ -537,6 +537,78 @@ class AccountsDbAdapterTest : DatabaseTest() {
         }
     }
 
+    @Test
+    fun `calculate account balances for same types`() {
+        val account1 = Account("Expenses", Commodity.USD)
+        account1.type = AccountType.EXPENSE
+        account1.isPlaceholder = true
+        accountsDbAdapter.addRecord(account1)
+
+        val account2 = Account(ALPHA_ACCOUNT_NAME, Commodity.USD)
+        account2.type = AccountType.EXPENSE
+        account2.parentUID = account1.uid
+        accountsDbAdapter.addRecord(account2)
+
+        val account3 = Account(BRAVO_ACCOUNT_NAME, Commodity.USD)
+        account3.type = AccountType.EXPENSE
+        account3.parentUID = account1.uid
+        accountsDbAdapter.addRecord(account3)
+
+        val amount1 = Money("10", Commodity.USD)
+        val transaction1 = Transaction("Description").apply {
+            addSplit(Split(amount1, account2))
+        }
+        transactionsDbAdapter.addRecord(transaction1)
+
+        val balance1 = accountsDbAdapter.getAccountBalance(account1)
+        assertThat(balance1).isEqualTo(amount1)
+
+        val amount2 = Money("20", Commodity.USD)
+        val transaction2 = Transaction("Description").apply {
+            addSplit(Split(amount2, account3))
+        }
+        transactionsDbAdapter.addRecord(transaction2)
+
+        val balance2 = accountsDbAdapter.getAccountBalance(account1)
+        assertThat(balance2).isEqualTo(amount1 + amount2)
+    }
+
+    @Test
+    fun `calculate account balances for different types`() {
+        val account1 = Account("Expenses", Commodity.USD)
+        account1.type = AccountType.EXPENSE
+        account1.isPlaceholder = true
+        accountsDbAdapter.addRecord(account1)
+
+        val account2 = Account(ALPHA_ACCOUNT_NAME, Commodity.USD)
+        account2.type = AccountType.EXPENSE
+        account2.parentUID = account1.uid
+        accountsDbAdapter.addRecord(account2)
+
+        val account3 = Account(BRAVO_ACCOUNT_NAME, Commodity.USD)
+        account3.type = AccountType.INCOME
+        account3.parentUID = account1.uid
+        accountsDbAdapter.addRecord(account3)
+
+        val amount1 = Money("10", Commodity.USD)
+        val transaction1 = Transaction("Description").apply {
+            addSplit(Split(amount1, account2))
+        }
+        transactionsDbAdapter.addRecord(transaction1)
+
+        val balance1 = accountsDbAdapter.getAccountBalance(account1)
+        assertThat(balance1).isEqualTo(amount1)
+
+        val amount2 = Money("20", Commodity.USD)
+        val transaction2 = Transaction("Description").apply {
+            addSplit(Split(amount2, account3))
+        }
+        transactionsDbAdapter.addRecord(transaction2)
+
+        val balance2 = accountsDbAdapter.getAccountBalance(account1)
+        assertThat(balance2).isEqualTo(amount1 - amount2)
+    }
+
     companion object {
         private const val BRAVO_ACCOUNT_NAME = "Bravo"
         private const val ALPHA_ACCOUNT_NAME = "Alpha"
