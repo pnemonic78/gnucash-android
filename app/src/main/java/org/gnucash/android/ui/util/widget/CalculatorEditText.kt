@@ -117,6 +117,11 @@ class CalculatorEditText @JvmOverloads constructor(
                     setSelection(getText()!!.length)
                     showKeyboard()
                 } else {
+                    // Activity being destroyed causes view to lose focus.
+                    if (!v.isAttachedToWindow) return
+                    val activity = v.getActivity() ?: return
+                    if (activity.isFinishing) return
+
                     hideKeyboard()
                     evaluate()
                 }
