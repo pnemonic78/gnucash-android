@@ -28,8 +28,8 @@ open class DatabaseActivity : GnuCashActivity(), BookProvider {
     }
 
     override fun onDestroy() {
-        if (::dbHelper.isInitialized) dbHelper.close()
         super.onDestroy()
+        if (::dbHelper.isInitialized) dbHelper.close()
     }
 
     override fun onStop() {
