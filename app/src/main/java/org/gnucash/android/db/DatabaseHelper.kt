@@ -400,12 +400,14 @@ class DatabaseHelper(private val context: Context, databaseName: String) :
             return escaper.toString()
         }
 
+        fun sqlResetBalances(): String =("UPDATE " + AccountEntry.TABLE_NAME + " SET "
+                + AccountEntry.COLUMN_BALANCE + " = NULL, "
+                + AccountEntry.COLUMN_CLEARED_BALANCE + " = NULL, "
+                + AccountEntry.COLUMN_NOCLOSING_BALANCE + " = NULL, "
+                + AccountEntry.COLUMN_RECONCILED_BALANCE + " = NULL")
+
         fun createResetBalancesTriggers(db: SQLiteDatabase) {
-            val sqlReset = ("UPDATE " + AccountEntry.TABLE_NAME + " SET "
-                    + AccountEntry.COLUMN_BALANCE + " = NULL, "
-                    + AccountEntry.COLUMN_CLEARED_BALANCE + " = NULL, "
-                    + AccountEntry.COLUMN_NOCLOSING_BALANCE + " = NULL, "
-                    + AccountEntry.COLUMN_RECONCILED_BALANCE + " = NULL")
+            val sqlReset = sqlResetBalances()
 
             val sqlWhenDelete = ("CREATE TRIGGER reset_balances_delete_" + SplitEntry.TABLE_NAME
                     + " AFTER DELETE ON " + SplitEntry.TABLE_NAME
@@ -436,6 +438,12 @@ class DatabaseHelper(private val context: Context, databaseName: String) :
                         + " AFTER DELETE ON " + AccountEntry.TABLE_NAME
                         + " BEGIN " + sqlReset + "; END;")
             db.execSQL(sqlWhenDeleteAccount)
+
+            val sqlWhenInsertAccount =
+                ("CREATE TRIGGER reset_balances_insert_" + AccountEntry.TABLE_NAME
+                        + " AFTER INSERT ON " + AccountEntry.TABLE_NAME
+                        + " BEGIN " + sqlReset + "; END;")
+            db.execSQL(sqlWhenInsertAccount)
 
             val sqlWhenUpdateAccount =
                 ("CREATE TRIGGER reset_balances_update_" + AccountEntry.TABLE_NAME

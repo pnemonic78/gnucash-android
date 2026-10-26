@@ -23,6 +23,7 @@ import android.database.sqlite.SQLiteException
 import androidx.annotation.VisibleForTesting
 import org.gnucash.android.R
 import org.gnucash.android.db.DatabaseHelper.Companion.PRICES_TABLE_CREATE
+import org.gnucash.android.db.DatabaseHelper.Companion.sqlResetBalances
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.DatabaseSchema.BudgetAmountEntry
 import org.gnucash.android.db.DatabaseSchema.CommodityEntry
@@ -102,6 +103,9 @@ object MigrationHelper {
         }
         if (oldVersion < 30) {
             migrateTo30(db)
+        }
+        if (oldVersion < 31) {
+            migrateTo31(db)
         }
     }
 
@@ -371,6 +375,23 @@ object MigrationHelper {
         } finally {
             db.endTransaction()
         }
+    }
+
+    /**
+     * Upgrade the database to version 31.
+     *
+     * @param db the database.
+     */
+    private fun migrateTo31(db: SQLiteDatabase) {
+        Timber.i("Upgrading database to version 31")
+
+        val sqlReset = sqlResetBalances()
+        val sqlWhenInsertAccount =
+            ("CREATE TRIGGER reset_balances_insert_" + AccountEntry.TABLE_NAME
+                    + " AFTER INSERT ON " + AccountEntry.TABLE_NAME
+                    + " BEGIN " + sqlReset + "; END;")
+        db.execSQL(sqlWhenInsertAccount)
+
     }
 
     private class AccountCurrency(

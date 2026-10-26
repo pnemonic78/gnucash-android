@@ -15,12 +15,14 @@
  */
 package org.gnucash.android.test.unit.db
 
+import android.database.DatabaseUtils
 import android.graphics.Color
 import android.net.Uri
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Index
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashApplication
+import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.importer.xml.GncXmlImporter
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
@@ -609,8 +611,141 @@ class AccountsDbAdapterTest : DatabaseTest() {
         assertThat(balance2).isEqualTo(amount1 - amount2)
     }
 
+    private fun generateSomeAccounts(): List<Account> {
+        assertThat(accountsDbAdapter.recordsCount).isOne() // with root account
+
+        val account1 = Account("Expenses", Commodity.USD)
+        account1.type = AccountType.EXPENSE
+        account1.isPlaceholder = true
+        accountsDbAdapter.addRecord(account1)
+
+        val account2 = Account(ALPHA_ACCOUNT_NAME, Commodity.USD)
+        account2.type = AccountType.EXPENSE
+        account2.parentUID = account1.uid
+        accountsDbAdapter.addRecord(account2)
+
+        val account3 = Account(BRAVO_ACCOUNT_NAME, Commodity.USD)
+        account3.type = AccountType.INCOME
+        account3.parentUID = account2.uid
+        accountsDbAdapter.addRecord(account3)
+
+        assertThat(accountsDbAdapter.recordsCount).isEqualTo(4)
+
+        val amount = Money("100", Commodity.USD)
+        val tx = Transaction("Test").addSplit(Split(amount, account3))
+        transactionsDbAdapter.addRecord(tx)
+
+        return listOf(account1, account2, account3)
+    }
+
+    @Test
+    fun `reset account balances AFTER INSERT`() {
+        val accounts = generateSomeAccounts()
+        val account1 = accounts[0]
+        val account2 = accounts[1]
+        val amount = Money("100", Commodity.USD)
+
+        val sql =
+            "SELECT COUNT(*) FROM ${AccountEntry.TABLE_NAME} WHERE ${AccountEntry.COLUMN_BALANCE} IS NULL"
+        val db = dbHelper.holder.db
+
+        // [Root, Imbalance, Expenses, Alpha, Beta]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(5)
+        assertThat(accountsDbAdapter.getAccountBalance(account1)).isEqualTo(-amount)
+        // [Root, Imbalance]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(2)
+
+        // "INSERT" should reset the balances.
+        val account4 = Account("Gamma", Commodity.USD)
+        account4.parentUID = account1.uid
+        accountsDbAdapter.addRecord(account4)
+        // [Root, Imbalance, Expenses, Alpha, Beta, Gamma]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(6)
+    }
+
+    @Test
+    fun `reset account balances AFTER DELETE`() {
+        val accounts = generateSomeAccounts()
+        val account1 = accounts[0]
+        val account3 = accounts[2]
+        val amount = Money("100", Commodity.USD)
+
+        val sql =
+            "SELECT COUNT(*) FROM ${AccountEntry.TABLE_NAME} WHERE ${AccountEntry.COLUMN_BALANCE} IS NULL"
+        val db = dbHelper.holder.db
+
+        // [Root, Imbalance, Expenses, Alpha, Beta]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(5)
+        assertThat(accountsDbAdapter.getAccountBalance(account1)).isEqualTo(-amount)
+        // [Root, Imbalance]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(2)
+
+        // "DELETE" should reset the balances.
+        accountsDbAdapter.deleteRecord(account3)
+        // [Root, Imbalance, Expenses, Alpha]
+        assertThat(accountsDbAdapter.recordsCount).isEqualTo(4)
+        // [Root, Imbalance, Expenses, Alpha]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(4)
+        assertThat(accountsDbAdapter.getAccountBalance(account1).asBigDecimal()).isZero()
+
+        // bulk "DELETE" should reset the balances.
+        accountsDbAdapter.recursiveDeleteAccount(account1.uid)
+        // [Root, Imbalance]
+        assertThat(accountsDbAdapter.recordsCount).isEqualTo(2)
+        // [Root, Imbalance]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(2)
+    }
+
+    @Test
+    fun `reset account balances AFTER REPLACE`() {
+        val accounts = generateSomeAccounts()
+        val account1 = accounts[0]
+        val account3 = accounts[2]
+        val amount = Money("100", Commodity.USD)
+
+        val sql =
+            "SELECT COUNT(*) FROM ${AccountEntry.TABLE_NAME} WHERE ${AccountEntry.COLUMN_BALANCE} IS NULL"
+        val db = dbHelper.holder.db
+
+        // [Root, Imbalance, Expenses, Alpha, Beta]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(5)
+        assertThat(accountsDbAdapter.getAccountBalance(account1)).isEqualTo(-amount)
+        // [Root, Imbalance]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(2)
+
+        // "REPLACE" should reset the balances.
+        account3.parentUID = account1.uid
+        accountsDbAdapter.replace(account3)
+        // [Root, Imbalance, Expenses, Alpha, Beta]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(5)
+    }
+
+    @Test
+    fun `reset account balances AFTER UPDATE`() {
+        val accounts = generateSomeAccounts()
+        val account1 = accounts[0]
+        val account2 = accounts[1]
+        val amount = Money("100", Commodity.USD)
+
+        val sql =
+            "SELECT COUNT(*) FROM ${AccountEntry.TABLE_NAME} WHERE ${AccountEntry.COLUMN_BALANCE} IS NULL"
+        val db = dbHelper.holder.db
+
+        // [Root, Imbalance, Expenses, Alpha, Beta]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(5)
+        assertThat(accountsDbAdapter.getAccountBalance(account1)).isEqualTo(-amount)
+        // [Root, Imbalance]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(2)
+
+        // "UPDATE" should reset the balances.
+        accountsDbAdapter.reassignDescendantAccounts(account2.uid, account1.uid)
+        // [Root, Imbalance, Expenses, Alpha, Beta]
+        assertThat(DatabaseUtils.longForQuery(db, sql, null)).isEqualTo(5)
+        assertThat(accountsDbAdapter.getAccountBalance(account1)).isEqualTo(-amount)
+    }
+
     companion object {
-        private const val BRAVO_ACCOUNT_NAME = "Bravo"
         private const val ALPHA_ACCOUNT_NAME = "Alpha"
+        private const val BRAVO_ACCOUNT_NAME = "Bravo"
     }
 }

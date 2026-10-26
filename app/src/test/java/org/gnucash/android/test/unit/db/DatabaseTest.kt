@@ -16,7 +16,8 @@ import org.junit.After
 import org.junit.Before
 
 abstract class DatabaseTest : GnuCashTest() {
-    private lateinit var dbHelper: DatabaseHelper
+    protected lateinit var dbHelper: DatabaseHelper
+        private set
     protected lateinit var accountsDbAdapter: AccountsDbAdapter
         private set
     protected lateinit var budgetAmountsDbAdapter: BudgetAmountsDbAdapter

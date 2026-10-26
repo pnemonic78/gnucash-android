@@ -197,7 +197,7 @@ class Transaction : BaseModel {
      *
      * @param split Split for this transaction
      */
-    fun addSplit(split: Split) {
+    fun addSplit(split: Split): Transaction {
         //sets the currency of the split to the currency of the transaction
         split.transactionUID = uid
         if (splits.isEmpty() && (commodity === Commodity.DEFAULT_COMMODITY)) {
@@ -206,6 +206,7 @@ class Transaction : BaseModel {
         if (splits.none { it.uid == split.uid || it == split }) {
             _splits.add(split)
         }
+        return this
     }
 
     /**
