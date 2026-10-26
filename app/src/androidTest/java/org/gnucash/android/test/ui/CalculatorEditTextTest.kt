@@ -19,19 +19,24 @@ import android.content.Intent
 import android.text.InputType
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
+import androidx.test.espresso.action.ViewActions.swipeDown
+import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withInputType
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
 import org.gnucash.android.R
 import org.gnucash.android.db.adapter.AccountsDbAdapter
 import org.gnucash.android.model.Account
 import org.gnucash.android.test.ui.util.DisableAnimationsRule
 import org.gnucash.android.test.ui.util.SoftwareKeyboard.isKeyboardOpen
+import org.gnucash.android.test.ui.util.performClick
 import org.gnucash.android.ui.common.UxArgument
 import org.gnucash.android.ui.transaction.TransactionsActivity
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.Matchers.not
 import org.junit.After
@@ -116,6 +121,43 @@ class CalculatorEditTextTest : GnuAndroidTest() {
         assertThat(isKeyboardOpen, `is`(true))
         onView(withId(R.id.calculator_keyboard))
             .check(matches(not(isDisplayed())))
+    }
+
+    @Test
+    fun doNotCalculateWhenActivityIsDestroyed() {
+        waitForView(R.id.fab_add)
+        clickViewId(R.id.fab_add)
+
+        waitForView(R.id.input_transaction_amount)
+
+        // Giving the focus to the amount field shows the keyboard
+        clickViewId(R.id.input_transaction_amount)
+        onView(withId(R.id.calculator_keyboard))
+            .check(matches(isDisplayed()))
+
+        onView(withId(R.id.input_transaction_amount))
+            .perform(typeText("123"))
+
+        // Show the splits screen
+        clickViewId(R.id.btn_split_editor)
+        waitForView(R.id.split_list_scroll)
+        onView(withId(R.id.split_list_scroll))
+            .perform(swipeDown())
+
+        // Giving the focus to the amount field shows the keyboard
+        onView(
+            allOf(
+                withId(R.id.input_split_amount),
+                withText("123")
+            )
+        )
+            .performClick()
+        onView(withId(R.id.calculator_keyboard))
+            .check(matches(isDisplayed()))
+
+        activityRule.finishActivity()
+        sleep(5000) // time for view to be destroyed
+        // Should not error when evaluate when focus lost.
     }
 
     companion object {
