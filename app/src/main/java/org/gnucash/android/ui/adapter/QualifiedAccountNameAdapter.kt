@@ -12,11 +12,11 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.R
 import org.gnucash.android.db.DatabaseSchema.AccountEntry
 import org.gnucash.android.db.adapter.AccountsDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Account
 import org.gnucash.android.model.AccountType
 
@@ -133,7 +133,7 @@ class QualifiedAccountNameAdapter(
 
     fun load(callback: ((QualifiedAccountNameAdapter) -> Unit)? = null): QualifiedAccountNameAdapter {
         loadJob?.cancel()
-        loadJob = scope.launch(Dispatchers.IO) {
+        loadJob = scope.launchCatching(Dispatchers.IO) {
             val records = loadData(adapter)
             val items = records.map { account -> toItem(account) }
             withContext(Dispatchers.Main) {
@@ -168,7 +168,7 @@ class QualifiedAccountNameAdapter(
     fun notifyAccountChanged(uid: String) {
         val position = getPosition(uid)
         if (position < 0) return
-        scope.launch(Dispatchers.IO) {
+        scope.launchCatching(Dispatchers.IO) {
             val record = adapter.getRecord(uid)
             val itemOld = getItem(position)
             val itemNew = toItem(record)

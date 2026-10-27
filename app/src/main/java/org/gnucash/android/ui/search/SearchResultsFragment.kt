@@ -13,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.coroutines.launch
 import org.gnucash.android.R
 import org.gnucash.android.app.DatabaseFragment
 import org.gnucash.android.app.GnuCashApplication.Companion.isDoubleEntryEnabled
@@ -21,6 +20,7 @@ import org.gnucash.android.app.GnuCashApplication.Companion.shouldBackupTransact
 import org.gnucash.android.app.actionBar
 import org.gnucash.android.app.isLandscape
 import org.gnucash.android.databinding.FragmentTransactionsListBinding
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Transaction
 import org.gnucash.android.model.TransactionType
 import org.gnucash.android.ui.common.FormActivity
@@ -54,7 +54,7 @@ class SearchResultsFragment : DatabaseFragment(), SearchResultCallback, Fragment
 
         val accountsDbAdapter = readableDatabaseHolder.accountsDbAdapter
         transactionsAdapter = SearchResultsAdapter(null, accountsDbAdapter, isDoubleEntry, this)
-        lifecycleScope.launch {
+        lifecycleScope.launchCatching {
             viewModel.results.collect { cursor ->
                 transactionsAdapter?.changeCursor(cursor)
             }

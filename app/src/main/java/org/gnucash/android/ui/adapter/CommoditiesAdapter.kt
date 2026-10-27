@@ -7,11 +7,11 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gnucash.android.R
 import org.gnucash.android.db.DatabaseSchema.CommodityEntry
 import org.gnucash.android.db.adapter.CommoditiesDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.Commodity
 
 class CommoditiesAdapter(
@@ -54,7 +54,7 @@ class CommoditiesAdapter(
 
     fun load(callback: ((CommoditiesAdapter) -> Unit)? = null): CommoditiesAdapter {
         loadJob?.cancel()
-        loadJob = scope.launch(Dispatchers.IO) {
+        loadJob = scope.launchCatching(Dispatchers.IO) {
             val records = loadData(adapter)
             val labels = records.map { commodity ->
                 SpinnerItem(commodity, commodity.formatListItem())

@@ -28,7 +28,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.gnucash.android.R
 import org.gnucash.android.app.GnuCashActivity
 import org.gnucash.android.app.GnuCashApplication.Companion.activeBookUID
@@ -39,6 +38,7 @@ import org.gnucash.android.db.BookDbHelper
 import org.gnucash.android.db.DatabaseHelper
 import org.gnucash.android.db.DatabaseHolder
 import org.gnucash.android.db.adapter.AccountsDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.receivers.TransactionAppWidgetProvider
 import org.gnucash.android.ui.account.AccountsActivity
 import org.gnucash.android.ui.adapter.DefaultItemSelectedListener
@@ -347,7 +347,7 @@ class WidgetConfigurationActivity : GnuCashActivity() {
             //update widgets asynchronously so as not to block method which called the update
             //inside the computation of the account balance
             updateJob?.cancel()
-            updateJob = GlobalScope.launch {
+            updateJob = GlobalScope.launchCatching {
                 for (widgetId in appWidgetIds) {
                     updateWidget(context, widgetId)
                 }

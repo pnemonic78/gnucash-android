@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gnucash.android.R
 import org.gnucash.android.db.adapter.PricesDbAdapter
+import org.gnucash.android.lang.launchCatching
 import org.gnucash.android.model.BaseModel.Companion.markNew
 import org.gnucash.android.model.Commodity
 import org.gnucash.android.model.Price
@@ -36,7 +37,7 @@ class PriceFormViewModel(
     }
 
     fun load(priceUID: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launchCatching(Dispatchers.IO) {
             loadPrice(priceUID)
         }
     }
